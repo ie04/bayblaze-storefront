@@ -3,21 +3,38 @@
 import Link from "next/link";
 import { FormEvent, useState } from "react";
 
+import { useCart } from "@/app/components/cart/CartContext";
+
 type HeaderProps = {
-  cartCount?: number;
   searchAction?: string;
   checkoutHref?: string;
   accountHref?: string;
 };
 
+type DrawerItem = {
+  id: string;
+  name: string;
+  flavor?: string;
+  image?: string;
+  price?: string;
+  quantity: number;
+};
+
 export default function Header({
-  cartCount = 0,
   searchAction = "/search",
   checkoutHref = "/checkout",
   accountHref = "/account",
 }: HeaderProps) {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [isCartOpen, setIsCartOpen] = useState(false);
+
+  const {
+    items,
+    cartCount,
+    isCartOpen,
+    openCart,
+    closeCart,
+    removeItem,
+  } = useCart();
 
   function handleSearch(event: FormEvent<HTMLFormElement>) {
     const form = event.currentTarget;
@@ -64,6 +81,7 @@ export default function Header({
             <label className="sr-only" htmlFor="header-product-search">
               Search products
             </label>
+
             <input
               id="header-product-search"
               name="q"
@@ -72,6 +90,7 @@ export default function Header({
               autoComplete="off"
               className="min-w-0 flex-1 border border-[#e7e7e7] bg-white px-[21px] text-[16px] italic text-neutral-900 shadow-sm outline-none placeholder:text-[#9b9b9b] focus:border-black"
             />
+
             <button
               type="submit"
               className="bayblaze-search-submit flex w-[46px] items-center justify-center bg-black text-white transition-colors hover:bg-[var(--ast-global-color-0)]"
@@ -83,14 +102,20 @@ export default function Header({
 
           <button
             type="button"
-            className="flex h-[43px] w-[46px] shrink-0 items-center justify-center text-black transition-colors hover:text-[var(--ast-global-color-0)]"
+            className="relative flex h-[43px] w-[46px] shrink-0 items-center justify-center text-black transition-colors hover:text-[var(--ast-global-color-0)]"
             aria-expanded={isCartOpen}
             aria-label={`Open shopping cart, ${cartCount} item${
               cartCount === 1 ? "" : "s"
             }`}
-            onClick={() => setIsCartOpen(true)}
+            onClick={openCart}
           >
             <CartIcon className="size-[30px]" />
+
+            {cartCount > 0 ? (
+              <span className="absolute -right-1 -top-1 flex size-5 items-center justify-center rounded-full bg-[var(--ast-global-color-0)] text-[11px] font-semibold leading-none text-white">
+                {cartCount}
+              </span>
+            ) : null}
           </button>
 
           <Link
@@ -104,27 +129,34 @@ export default function Header({
       </div>
 
       <CartDrawer
+        items={items}
         cartCount={cartCount}
         checkoutHref={checkoutHref}
         isOpen={isCartOpen}
-        onClose={() => setIsCartOpen(false)}
+        onClose={closeCart}
+        onRemoveItem={removeItem}
       />
     </header>
   );
 }
 
 function CartDrawer({
+  items,
   cartCount,
   checkoutHref,
   isOpen,
   onClose,
+  onRemoveItem,
 }: {
+  items: DrawerItem[];
   cartCount: number;
   checkoutHref: string;
   isOpen: boolean;
   onClose: () => void;
+  onRemoveItem: (id: string) => void;
 }) {
   const jostFont = "var(--font-jost), Jost, Arial, sans-serif";
+  const hasItems = items.length > 0;
 
   return (
     <div
@@ -150,6 +182,7 @@ function CartDrawer({
       >
         <div className="grid grid-cols-[40px_1fr_40px] items-center border-b-2 border-black px-6 py-5">
           <div aria-hidden="true" />
+
           <h2 className="text-center text-[28px] font-medium leading-none">
             View Cart
           </h2>
@@ -160,24 +193,80 @@ function CartDrawer({
             aria-label="Close cart drawer"
             onClick={onClose}
           >
-            x
+            ×
           </button>
         </div>
 
-        <div className="flex flex-1 flex-col justify-center px-6 text-center">
-          <p
-            className="text-[22px] font-medium leading-tight text-black"
-            style={{ fontFamily: jostFont }}
-          >
-            Your cart is empty.
-          </p>
-          <p
-            className="mx-auto mt-3 max-w-[300px] text-[16px] leading-[1.7] text-[#585858]"
-            style={{ fontFamily: jostFont }}
-          >
-            Add products from the shop and come back here when you are ready for
-            local delivery checkout.
-          </p>
+        <div className="flex flex-1 flex-col overflow-y-auto px-6 py-6">
+          {!hasItems ? (
+            <div className="flex flex-1 flex-col justify-center text-center">
+              <p
+                className="text-[22px] font-medium leading-tight text-black"
+                style={{ fontFamily: jostFont }}
+              >
+                Your cart is empty.
+              </p>
+
+              <p
+                className="mx-auto mt-3 max-w-[300px] text-[16px] leading-[1.7] text-[#585858]"
+                style={{ fontFamily: jostFont }}
+              >
+                Add products from the shop and come back here when you are ready
+                for local delivery checkout.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {items.map((item) => (
+                <div
+                  key={item.id}
+                  className="flex gap-4 border-b border-[#e7e7e7] pb-4"
+                >
+                  {item.image ? (
+                    <img
+                      src={item.image}
+                      alt={item.name}
+                      className="size-20 shrink-0 border border-[#e7e7e7] bg-white object-contain p-2"
+                    />
+                  ) : (
+                    <div className="flex size-20 shrink-0 items-center justify-center border border-[#e7e7e7] bg-white text-[12px] text-[#777]">
+                      No image
+                    </div>
+                  )}
+
+                  <div className="min-w-0 flex-1 text-left">
+                    <p className="text-[16px] font-semibold leading-snug text-black">
+                      {item.name}
+                    </p>
+
+                    {item.flavor ? (
+                      <p className="mt-1 text-[14px] leading-snug text-[#585858]">
+                        Flavor: {item.flavor}
+                      </p>
+                    ) : null}
+
+                    <p className="mt-1 text-[14px] text-[#585858]">
+                      Qty: {item.quantity}
+                    </p>
+
+                    {item.price ? (
+                      <p className="mt-1 text-[15px] font-medium text-black">
+                        {item.price}
+                      </p>
+                    ) : null}
+
+                    <button
+                      type="button"
+                      className="mt-3 text-[12px] font-semibold uppercase tracking-[0.12em] text-[#585858] transition-colors hover:text-black"
+                      onClick={() => onRemoveItem(item.id)}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="border-t border-[#e7e7e7] bg-[var(--ast-global-color-4)] p-6">
@@ -188,7 +277,12 @@ function CartDrawer({
 
           <Link
             href={checkoutHref}
-            className="bayblaze-hero-button flex h-12 w-full items-center justify-center rounded-[3px] bg-[var(--ast-global-color-0)] text-white transition-colors hover:bg-black"
+            className={`bayblaze-hero-button flex h-12 w-full items-center justify-center rounded-[3px] text-white transition-colors ${
+              hasItems
+                ? "bg-[var(--ast-global-color-0)] hover:bg-black"
+                : "pointer-events-none bg-[#b9c8af]"
+            }`}
+            aria-disabled={!hasItems}
             onClick={onClose}
           >
             CHECKOUT

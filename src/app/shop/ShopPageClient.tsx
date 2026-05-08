@@ -183,7 +183,7 @@ export default function ShopPageClient() {
             {activeCategoryCopy.title}
           </h1>
 
-          <p className="mt-3 max-w-[640px] text-[18px] leading-[1.7] text-[#585858]">
+          <p className="mt-3 max-w-[640px] text-[18px] font-semibold leading-[1.7] text-[#585858]">
             {activeCategoryCopy.description}
           </p>
         </header>

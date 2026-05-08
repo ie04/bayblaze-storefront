@@ -1,5 +1,7 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Jost } from "next/font/google";
+import { CartProvider } from "@/app/components/cart/CartContext";
+import PwaInstallPrompt from "@/app/components/pwa/PwaInstallPrompt";
 import "./globals.css";
 
 const jost = Jost({
@@ -8,9 +10,26 @@ const jost = Jost({
   variable: "--font-jost",
 });
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://bayblaze.net";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
   title: "Bayblaze",
   description: "Tampa Bay mobile smoke shop",
+  applicationName: "Bayblaze",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Bayblaze",
+  },
+  icons: {
+    apple: "/icons/apple-touch-icon.png",
+  },
+  manifest: "/manifest.webmanifest",
+};
+
+export const viewport: Viewport = {
+  themeColor: "#56833e",
 };
 
 export default function RootLayout({
@@ -20,7 +39,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${jost.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <CartProvider>{children}</CartProvider>
+        <PwaInstallPrompt />
+      </body>
     </html>
   );
 }

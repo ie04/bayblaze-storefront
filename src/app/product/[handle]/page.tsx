@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 
 import Header from "@/app/components/layout/Header";
 import { getProductByStorefrontHandle } from "@/app/lib/medusa-products";
-import LostMaryProductPage from "./ProductPageClient";
+import ProductPage from "./ProductPageClient";
 
 type ProductPageProps = {
   params: Promise<{ handle: string }>;
@@ -38,7 +38,7 @@ export default async function Page({ params }: ProductPageProps) {
   return (
     <main className="min-h-screen bg-white">
       <Header />
-      <LostMaryProductPage product={product} />
+      <ProductPage product={product} />
     </main>
   );
 }

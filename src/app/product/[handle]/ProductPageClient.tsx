@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { FormEvent, useMemo, useState } from "react";
 
+import { useCart } from "@/app/components/cart/CartContext";
 import type { StorefrontProduct } from "@/app/lib/medusa-products";
 
 type TabId = "description" | "information" | "reviews";
@@ -14,11 +15,13 @@ const tabs: { id: TabId; label: string }[] = [
   { id: "reviews", label: "Reviews (0)" },
 ];
 
-export default function LostMaryProductPage({
+export default function ProductPage({
   product,
 }: {
   product: StorefrontProduct;
 }) {
+  const { addItem } = useCart();
+
   const [activeImage, setActiveImage] = useState(0);
   const [activeTab, setActiveTab] = useState<TabId>("description");
   const [flavor, setFlavor] = useState("");
@@ -27,6 +30,7 @@ export default function LostMaryProductPage({
 
   const currentImage = product.images[activeImage] ?? product.images[0];
   const primaryCategory = product.categories[0];
+
   const selectedSummary = useMemo(() => {
     if (!flavor) {
       return "";
@@ -43,8 +47,23 @@ export default function LostMaryProductPage({
     event.preventDefault();
 
     if (product.flavors.length > 0 && !flavor) {
+      setCartNotice("Please choose a flavor.");
       return;
     }
+
+    const cartItemId = [
+      product.sku || product.name,
+      flavor || "default",
+    ].join("::");
+
+    addItem({
+      id: cartItemId,
+      name: product.name,
+      flavor: flavor || undefined,
+      image: product.images[0]?.src,
+      price: product.salePrice,
+      quantity,
+    });
 
     setCartNotice(`${selectedSummary || `${quantity} x ${product.name}`} added.`);
   }
@@ -56,16 +75,22 @@ export default function LostMaryProductPage({
           aria-label="Breadcrumb"
           className="mb-8 flex flex-wrap items-center gap-2 text-[14px] leading-none text-[#7a7a7a]"
         >
-          <Link className="text-black transition-colors hover:text-[var(--ast-global-color-0)]" href="/">
+          <Link
+            className="text-black transition-colors hover:text-[var(--ast-global-color-0)]"
+            href="/"
+          >
             Home
           </Link>
+
           <span aria-hidden="true">/</span>
+
           <Link
             className="text-black transition-colors hover:text-[var(--ast-global-color-0)]"
             href={`/product-category/${primaryCategory?.handle ?? "vapes"}`}
           >
             {primaryCategory?.name ?? "Vapes"}
           </Link>
+
           <span aria-hidden="true">/</span>
           <span>{product.name}</span>
         </nav>
@@ -104,6 +129,7 @@ export default function LostMaryProductPage({
                     {product.saleBadge}
                   </span>
                 ) : null}
+
                 {currentImage ? (
                   <Image
                     src={currentImage.src}
@@ -124,6 +150,7 @@ export default function LostMaryProductPage({
                 {product.brand}
               </p>
             ) : null}
+
             <h1 className="bayblaze-product-title text-black">
               {product.name}
             </h1>
@@ -132,7 +159,10 @@ export default function LostMaryProductPage({
               {product.originalPrice ? (
                 <del className="text-[#7a7a7a]">{product.originalPrice}</del>
               ) : null}
-              <ins className="text-black no-underline">{product.salePrice}</ins>
+
+              <ins className="text-black no-underline">
+                {product.salePrice}
+              </ins>
             </p>
 
             {product.details[0] ? (
@@ -155,28 +185,34 @@ export default function LostMaryProductPage({
             </dl>
 
             <form className="mt-8" onSubmit={handleSubmit}>
-              <label
-                className="mb-2 block text-[15px] font-semibold text-black"
-                htmlFor="lost-mary-flavor"
-              >
-                Flavor
-              </label>
-              <select
-                id="lost-mary-flavor"
-                value={flavor}
-                className="h-12 w-full border border-[#d6d6d6] bg-white px-4 text-[16px] text-black outline-none transition focus:border-black"
-                onChange={(event) => {
-                  setFlavor(event.target.value);
-                  setCartNotice("");
-                }}
-              >
-                <option value="">Choose an option</option>
-                {product.flavors.map((item) => (
-                  <option key={item} value={item}>
-                    {item}
-                  </option>
-                ))}
-              </select>
+              {product.flavors.length > 0 ? (
+                <>
+                  <label
+                    className="mb-2 block text-[15px] font-semibold text-black"
+                    htmlFor="product-flavor"
+                  >
+                    Flavor
+                  </label>
+
+                  <select
+                    id="product-flavor"
+                    value={flavor}
+                    className="h-12 w-full border border-[#d6d6d6] bg-white px-4 text-[16px] text-black outline-none transition focus:border-black"
+                    onChange={(event) => {
+                      setFlavor(event.target.value);
+                      setCartNotice("");
+                    }}
+                  >
+                    <option value="">Choose an option</option>
+
+                    {product.flavors.map((item) => (
+                      <option key={item} value={item}>
+                        {item}
+                      </option>
+                    ))}
+                  </select>
+                </>
+              ) : null}
 
               <div className="mt-5 flex flex-wrap gap-3">
                 <div className="grid h-12 grid-cols-[44px_56px_44px] border border-[#d6d6d6]">
@@ -188,6 +224,7 @@ export default function LostMaryProductPage({
                   >
                     -
                   </button>
+
                   <input
                     aria-label="Quantity"
                     className="min-w-0 border-x border-[#d6d6d6] text-center text-[16px] text-black outline-none"
@@ -200,6 +237,7 @@ export default function LostMaryProductPage({
                       updateQuantity(Number(event.target.value) || 1)
                     }
                   />
+
                   <button
                     type="button"
                     className="flex items-center justify-center text-[22px] text-black transition-colors hover:bg-[#f4f4f4]"
@@ -232,6 +270,7 @@ export default function LostMaryProductPage({
                 <span className="font-semibold text-black">SKU:</span>{" "}
                 {product.sku}
               </p>
+
               <p>
                 <span className="font-semibold text-black">Categories:</span>{" "}
                 {product.categories.map((category, index) => (
@@ -246,12 +285,15 @@ export default function LostMaryProductPage({
                   </span>
                 ))}
               </p>
+
               {product.brand ? (
                 <p>
                   <span className="font-semibold text-black">Brand:</span>{" "}
                   <Link
                     className="text-[#585858] transition-colors hover:text-[var(--ast-global-color-0)]"
-                    href={`/brand/${product.brand.toLowerCase().replaceAll(" ", "-")}`}
+                    href={`/brand/${product.brand
+                      .toLowerCase()
+                      .replaceAll(" ", "-")}`}
                   >
                     {product.brand}
                   </Link>
@@ -287,9 +329,9 @@ export default function LostMaryProductPage({
           <div className="max-w-[920px] py-8">
             {activeTab === "description" && (
               <div className="space-y-5 text-[17px] leading-[1.85] text-[#585858]">
-                {product.details.map((paragraph) => (
+                {product.details.map((paragraph) =>
                   paragraph ? <p key={paragraph}>{paragraph}</p> : null
-                ))}
+                )}
               </div>
             )}
 
@@ -311,6 +353,7 @@ export default function LostMaryProductPage({
                   <h2 className="mb-3 text-[18px] font-semibold text-black">
                     Flavor
                   </h2>
+
                   <div className="flex flex-wrap gap-2">
                     {product.flavors.length ? (
                       product.flavors.map((item) => (
@@ -336,6 +379,7 @@ export default function LostMaryProductPage({
                 <h2 className="text-[24px] font-semibold text-black">
                   Reviews
                 </h2>
+
                 <p className="mt-4 text-[17px] leading-[1.8]">
                   There are no reviews yet.
                 </p>

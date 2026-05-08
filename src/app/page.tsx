@@ -7,13 +7,19 @@ import HomeHero from "@/app/home/HomeHero";
 import { getProductPreviewsByCategoryHandle } from "@/app/lib/medusa-products";
 
 export default async function Home() {
-  const vapeProducts = await getProductPreviewsByCategoryHandle("vapes");
+  const [vapeProducts, accessoryProducts] = await Promise.all([
+    getProductPreviewsByCategoryHandle("vapes"),
+    getProductPreviewsByCategoryHandle("smoking-accessories"),
+  ]);
 
   return (
     <main className="relative">
       <Header />
       <HomeHero />
-      <HomeExploreProducts vapeProducts={vapeProducts} />
+      <HomeExploreProducts
+        vapeProducts={vapeProducts}
+        accessoryProducts={accessoryProducts}
+      />
       <HomeAbout />
       <HomeContact />
       <HomeFooter />

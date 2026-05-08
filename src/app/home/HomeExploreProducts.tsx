@@ -10,33 +10,12 @@ import "swiper/css/effect-coverflow";
 
 import type { ProductPreviewItem } from "@/app/lib/medusa-products";
 
-const accessoryProducts = [
-  {
-    name: "Raw Cones King Size (3 Pack)",
-    image:
-      "https://bayblaze.net/wp-content/uploads/2026/03/raw-king-cones-3pk-1024x1024.jpg",
-    href: "https://bayblaze.net/product/raw-cones-king-size-3-pack/",
-    originalPrice: "",
-    salePrice: "$3.99",
-    position: "left",
-    isSale: false,
-  },
-  {
-    name: "RAW Cone Classic 1 1/4 (20 Pack)",
-    image:
-      "https://bayblaze.net/wp-content/uploads/2026/03/raw-classic-cone-20pk-1-1024x1024.jpg",
-    href: "https://bayblaze.net/product/raw-classic-cones-20pack/",
-    originalPrice: "",
-    salePrice: "$6.99",
-    position: "center",
-    isSale: false,
-  },
-];
-
 export default function HomeExploreProducts({
   vapeProducts,
+  accessoryProducts,
 }: {
   vapeProducts: ProductPreviewItem[];
+  accessoryProducts: ProductPreviewItem[];
 }) {
   const productGroups = [
     {
@@ -54,8 +33,8 @@ export default function HomeExploreProducts({
   ];
 
   return (
-    <section className="bayblaze-products-section bayblaze-products-section--bottom-torn border-t-2 border-black bg-white">
-      <div className="mx-auto flex w-full max-w-[1140px] flex-col gap-5 px-0 pb-[70px] pt-5">
+    <section className="bayblaze-products-section border-b-2 border-black bg-[var(--ast-global-color-4)]">
+      <div className="mx-auto flex w-full max-w-[1180px] flex-col gap-8 px-5 py-14">
         <h2 className="bayblaze-section-heading text-center">
           EXPLORE OUR PRODUCTS
         </h2>
@@ -88,18 +67,24 @@ function ProductPreview({
   products: ProductPreviewItem[];
 }) {
   return (
-    <article className="flex w-full flex-col items-center gap-0 rounded-[20px] bg-[var(--ast-global-color-4)] p-2.5 text-center shadow-[0_10px_24px_rgba(0,0,0,0.25)]">
+    <article className="flex w-full flex-col items-center gap-0 border-2 border-black bg-white p-4 text-center">
       <div className="flex w-full flex-col items-center">
         <h3 className="bayblaze-product-preview-title">{title}</h3>
         <p className="bayblaze-product-preview-description pb-[30px]">
           {description}
         </p>
 
-        <ProductCarouselMock products={products} />
+        {products.length ? (
+          <ProductCarouselMock products={products} />
+        ) : (
+          <div className="flex min-h-[220px] w-full items-center justify-center border border-dashed border-[#bdbdbd] bg-[var(--ast-global-color-4)] px-5 text-[18px] font-medium leading-[1.45] text-[#585858]">
+            Products will appear here once the catalog is connected.
+          </div>
+        )}
 
         <a
           href={href}
-          className="bayblaze-hero-button mt-5 rounded-[3px] bg-[var(--ast-global-color-0)] px-5 py-2.5 text-center text-white transition-colors hover:bg-black"
+          className="bayblaze-hero-button mt-5 rounded-[3px] border border-black bg-[var(--ast-global-color-0)] px-5 py-2.5 text-center text-white transition-colors hover:bg-black"
         >
           Shop All
         </a>
@@ -220,8 +205,8 @@ function ProductCarouselMock({ products }: { products: ProductPreviewItem[] }) {
 
 function ProductSlide({ product }: { product: ProductPreviewItem }) {
   return (
-    <article className="mx-auto w-full max-w-[360px] overflow-hidden rounded-[20px] bg-white text-left shadow-sm">
-      <div className="relative bg-white">
+    <article className="mx-auto w-full max-w-[360px] overflow-hidden border-2 border-black bg-[var(--ast-global-color-4)] text-left">
+      <div className="relative bg-[var(--ast-global-color-4)]">
         {product.isSale !== false && (
           <span className="absolute left-3 top-3 z-10 bg-[var(--ast-global-color-0)] px-2 py-1 text-xs font-medium text-white">
             Sale!

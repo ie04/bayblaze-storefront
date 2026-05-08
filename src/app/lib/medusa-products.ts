@@ -67,6 +67,8 @@ type MedusaProductCategoriesResponse = {
 
 type MedusaProductCategory = {
   id: string;
+  parent_category_id?: string | null;
+  mpath?: string | null;
   category_children?: MedusaProductCategory[];
 };
 
@@ -148,10 +150,16 @@ async function getDefaultRegionId() {
     return defaultRegionId;
   }
 
-  const response = await fetch(`${backendUrl}/store/regions?limit=1`, {
-    headers: getHeaders(),
-    cache: "no-store",
-  });
+  let response: Response;
+
+  try {
+    response = await fetch(`${backendUrl}/store/regions?limit=1`, {
+      headers: getHeaders(),
+      cache: "no-store",
+    });
+  } catch {
+    return undefined;
+  }
 
   if (!response.ok) {
     return undefined;
@@ -316,6 +324,53 @@ function getCategoryIdsWithChildren(category: MedusaProductCategory): string[] {
   return [category.id, ...childIds];
 }
 
+async function getAllProductCategories() {
+  const categoryParams = new URLSearchParams({
+    limit: "100",
+    fields: "id,parent_category_id,mpath,*category_children",
+  });
+  let categoryResponse: Response;
+
+  try {
+    categoryResponse = await fetch(
+      `${backendUrl}/store/product-categories?${categoryParams.toString()}`,
+      {
+        headers: getHeaders(),
+        cache: "no-store",
+      },
+    );
+  } catch {
+    return [];
+  }
+
+  if (!categoryResponse.ok) {
+    return [];
+  }
+
+  const categoryData =
+    (await categoryResponse.json()) as MedusaProductCategoriesResponse;
+
+  return categoryData.product_categories;
+}
+
+async function getCategoryIdsWithDescendants(category: MedusaProductCategory) {
+  const allCategories = await getAllProductCategories();
+
+  if (!allCategories.length) {
+    return getCategoryIdsWithChildren(category);
+  }
+
+  return allCategories
+    .filter((candidate) => {
+      return (
+        candidate.id === category.id ||
+        candidate.parent_category_id === category.id ||
+        candidate.mpath?.split(".").includes(category.id)
+      );
+    })
+    .map((candidate) => candidate.id);
+}
+
 export async function getProductByStorefrontHandle(handle: string) {
   const regionId = await getDefaultRegionId();
   const searchParams = new URLSearchParams({
@@ -353,16 +408,22 @@ export async function getProductPreviewsByCategoryHandle(
     handle: categoryHandle,
     limit: "1",
   });
-  const categoryResponse = await fetch(
-    `${backendUrl}/store/product-categories?${categoryParams.toString()}`,
-    {
-      headers: getHeaders(),
-      cache: "no-store",
-    },
-  );
+  let categoryResponse: Response;
+
+  try {
+    categoryResponse = await fetch(
+      `${backendUrl}/store/product-categories?${categoryParams.toString()}`,
+      {
+        headers: getHeaders(),
+        cache: "no-store",
+      },
+    );
+  } catch {
+    return [];
+  }
 
   if (!categoryResponse.ok) {
-    throw new Error(`Unable to load category "${categoryHandle}" from Medusa.`);
+    return [];
   }
 
   const categoryData =
@@ -373,7 +434,7 @@ export async function getProductPreviewsByCategoryHandle(
     return [];
   }
 
-  const categoryIds = getCategoryIdsWithChildren(category);
+  const categoryIds = await getCategoryIdsWithDescendants(category);
 
   const regionId = await getDefaultRegionId();
   const productParams = new URLSearchParams({
@@ -389,18 +450,22 @@ export async function getProductPreviewsByCategoryHandle(
     productParams.set("region_id", regionId);
   }
 
-  const productResponse = await fetch(
-    `${backendUrl}/store/products?${productParams.toString()}`,
-    {
-      headers: getHeaders(),
-      cache: "no-store",
-    },
-  );
+  let productResponse: Response;
+
+  try {
+    productResponse = await fetch(
+      `${backendUrl}/store/products?${productParams.toString()}`,
+      {
+        headers: getHeaders(),
+        cache: "no-store",
+      },
+    );
+  } catch {
+    return [];
+  }
 
   if (!productResponse.ok) {
-    throw new Error(
-      `Unable to load products for category "${categoryHandle}" from Medusa.`,
-    );
+    return [];
   }
 
   const data = (await productResponse.json()) as MedusaProductsResponse;
