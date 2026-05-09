@@ -107,6 +107,14 @@ const publishableKey = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY;
 
 const defaultRegionId = process.env.NEXT_PUBLIC_MEDUSA_REGION_ID;
 
+function normalizeMedusaAssetUrl(url: string) {
+  if (!url) {
+    return url;
+  }
+
+  return url.replace(/^https?:\/\/localhost:9000(?=\/)/, backendUrl);
+}
+
 const knownProductCopy: Record<
   string,
   Pick<StorefrontProduct, "brand" | "details">
@@ -265,8 +273,10 @@ function toStorefrontProduct(product: MedusaProduct): StorefrontProduct {
   const knownCopy = knownProductCopy[product.handle];
   const metadataSpecs = getMetadataSpecs(product);
   const images = product.images?.length
-    ? product.images.map((image) => image.url)
-    : [product.thumbnail].filter((image): image is string => Boolean(image));
+    ? product.images.map((image) => normalizeMedusaAssetUrl(image.url))
+    : [product.thumbnail]
+        .filter((image): image is string => Boolean(image))
+        .map(normalizeMedusaAssetUrl);
   const categories = product.categories?.length
     ? product.categories.map((category) => ({
         name: category.name,
@@ -303,7 +313,9 @@ function toProductPreviewItem(
   index: number,
 ): ProductPreviewItem {
   const price = product.variants?.[0]?.calculated_price;
-  const image = product.thumbnail ?? product.images?.[0]?.url ?? "";
+  const image = normalizeMedusaAssetUrl(
+    product.thumbnail ?? product.images?.[0]?.url ?? "",
+  );
   const positions = ["left", "center", "right"];
 
   return {
