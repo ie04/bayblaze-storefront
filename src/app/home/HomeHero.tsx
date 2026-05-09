@@ -3,7 +3,7 @@ export default function HomeHero() {
     <section className="relative min-h-[720px] overflow-hidden border-b-2 border-black bg-white sm:min-h-screen">
       <div
         aria-hidden="true"
-        className="bayblaze-hero-fixed-bg absolute inset-0 z-0 bg-[url('/images/tampa_skyline_trial7_grain.png')] bg-cover bg-[position:68%_38%] bg-no-repeat sm:bg-[position:100%_36%]"
+        className="absolute inset-0 z-0 bg-[url('/images/tampa_skyline_trial7_grain.png')] bg-cover bg-[position:68%_38%] bg-no-repeat sm:bg-[position:100%_36%] md:bg-fixed"
       />
       <div
         aria-hidden="true"

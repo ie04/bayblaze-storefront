@@ -125,10 +125,6 @@ body {
   line-height: 1;
 }
 
-.bayblaze-hero-fixed-bg {
-  background-attachment: fixed;
-}
-
 .bayblaze-products-section {
   font-family: var(--font-jost), Jost, Arial, sans-serif;
   position: relative;
@@ -391,9 +387,23 @@ body {
 }
 
 .bayblaze-home-contact {
+  background: transparent;
+  clip-path: inset(0);
+  isolation: isolate;
+  overflow: hidden;
+  position: relative;
+}
+
+.bayblaze-home-contact::before {
+  background-image: url("/images/contactus-bg.jpg");
   background-position: center center;
   background-repeat: no-repeat;
   background-size: cover;
+  content: "";
+  inset: 0;
+  pointer-events: none;
+  position: fixed;
+  z-index: 0;
 }
 
 .bayblaze-contact-title {
@@ -483,12 +493,6 @@ body {
   .bayblaze-hero-button {
     font-size: 15px;
     letter-spacing: 1px;
-  }
-
-  .bayblaze-hero-fixed-bg {
-    background-attachment: fixed;
-    clip-path: inset(0);
-    position: fixed;
   }
 
   .bayblaze-section-heading {
