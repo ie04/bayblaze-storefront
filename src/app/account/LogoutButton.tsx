@@ -22,7 +22,7 @@ export default function LogoutButton() {
     <button
       type="button"
       disabled={isLoggingOut}
-      className="border border-black bg-white px-5 py-3 text-[15px] font-semibold leading-none text-black transition-colors hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-70"
+      className="w-full border border-black bg-white px-5 py-3 text-[15px] font-semibold leading-none text-black transition-colors hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto"
       onClick={handleLogout}
     >
       {isLoggingOut ? "Signing out..." : "Sign Out"}

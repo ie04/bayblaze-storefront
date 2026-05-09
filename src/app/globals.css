@@ -252,27 +252,128 @@ body {
 }
 
 .bayblaze-home-about {
+  background-color: var(--ast-global-color-4);
+  isolation: isolate;
+  overflow: hidden;
   position: relative;
   z-index: 1;
 }
 
-.bayblaze-about-paper {
-  background-color: #ffffff;
-  isolation: isolate;
-  padding: clamp(2rem, 4vw, 3.25rem);
+.bayblaze-home-about > * {
   position: relative;
+  z-index: 1;
 }
 
-.bayblaze-about-paper::before {
-  background-image: url("data:image/svg+xml,%3Csvg%20viewBox%3D%270%200%201180%20620%27%20preserveAspectRatio%3D%27none%27%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%3E%3Cpath%20fill%3D%27none%27%20stroke%3D%27%23000000%27%20stroke-width%3D%274%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%20vector-effect%3D%27non-scaling-stroke%27%20d%3D%27M18%2038L58%2012L98%2040L138%2018L178%2043L218%2014L258%2038L298%2018L338%2044L378%2012L418%2039L458%2017L498%2042L538%2014L578%2038L618%2018L658%2044L698%2013L738%2040L778%2017L818%2043L858%2014L898%2038L938%2018L978%2044L1018%2012L1058%2040L1098%2017L1162%2038L1138%2078L1164%20118L1136%20158L1162%20198L1138%20238L1164%20278L1136%20318L1162%20358L1138%20398L1164%20438L1136%20478L1162%20518L1138%20558L1160%20594L1118%20580L1078%20608L1038%20582L998%20604L958%20578L918%20608L878%20582L838%20604L798%20578L758%20608L718%20582L678%20604L638%20578L598%20608L558%20582L518%20604L478%20578L438%20608L398%20582L358%20604L318%20578L278%20608L238%20582L198%20604L158%20578L118%20608L78%20582L18%20594L42%20554L16%20514L44%20474L18%20434L42%20394L16%20354L44%20314L18%20274L42%20234L16%20194L44%20154L18%20114L42%2074Z%27/%3E%3C/svg%3E");
-  background-position: center;
+.bayblaze-home-about::before {
+  background-color: #ffffff;
+  clip-path: polygon(
+    0 9px,
+    2.5% 4px,
+    5% 12px,
+    7.5% 6px,
+    10% 13px,
+    12.5% 5px,
+    15% 11px,
+    17.5% 3px,
+    20% 10px,
+    22.5% 7px,
+    25% 14px,
+    27.5% 5px,
+    30% 10px,
+    32.5% 4px,
+    35% 13px,
+    37.5% 6px,
+    40% 11px,
+    42.5% 5px,
+    45% 14px,
+    47.5% 4px,
+    50% 9px,
+    52.5% 6px,
+    55% 13px,
+    57.5% 5px,
+    60% 11px,
+    62.5% 3px,
+    65% 12px,
+    67.5% 6px,
+    70% 14px,
+    72.5% 4px,
+    75% 10px,
+    77.5% 5px,
+    80% 13px,
+    82.5% 6px,
+    85% 11px,
+    87.5% 3px,
+    90% 12px,
+    92.5% 5px,
+    95% 10px,
+    100% 6px,
+    100% calc(100% - 6px),
+    95% calc(100% - 10px),
+    92.5% calc(100% - 5px),
+    90% calc(100% - 12px),
+    87.5% calc(100% - 3px),
+    85% calc(100% - 11px),
+    82.5% calc(100% - 6px),
+    80% calc(100% - 13px),
+    77.5% calc(100% - 5px),
+    75% calc(100% - 10px),
+    72.5% calc(100% - 4px),
+    70% calc(100% - 14px),
+    67.5% calc(100% - 6px),
+    65% calc(100% - 12px),
+    62.5% calc(100% - 3px),
+    60% calc(100% - 11px),
+    57.5% calc(100% - 5px),
+    55% calc(100% - 13px),
+    52.5% calc(100% - 6px),
+    50% calc(100% - 9px),
+    47.5% calc(100% - 4px),
+    45% calc(100% - 14px),
+    42.5% calc(100% - 5px),
+    40% calc(100% - 11px),
+    37.5% calc(100% - 6px),
+    35% calc(100% - 13px),
+    32.5% calc(100% - 4px),
+    30% calc(100% - 10px),
+    27.5% calc(100% - 5px),
+    25% calc(100% - 14px),
+    22.5% calc(100% - 7px),
+    20% calc(100% - 10px),
+    17.5% calc(100% - 3px),
+    15% calc(100% - 11px),
+    12.5% calc(100% - 5px),
+    10% calc(100% - 13px),
+    7.5% calc(100% - 6px),
+    5% calc(100% - 12px),
+    2.5% calc(100% - 4px),
+    0 calc(100% - 9px)
+  );
+  content: "";
+  inset: 0;
+  left: 0;
+  pointer-events: none;
+  position: absolute;
+  right: 0;
+  z-index: 0;
+}
+
+.bayblaze-home-about::after {
+  background-image: url("data:image/svg+xml,%3Csvg%20viewBox%3D%270%200%201440%2018%27%20preserveAspectRatio%3D%27none%27%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%3E%3Cpath%20fill%3D%27none%27%20stroke%3D%27%23000000%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27square%27%20stroke-linejoin%3D%27miter%27%20vector-effect%3D%27non-scaling-stroke%27%20d%3D%27M0%209L36%204L72%2012L108%206L144%2013L180%205L216%2011L252%203L288%2010L324%207L360%2014L396%205L432%2010L468%204L504%2013L540%206L576%2011L612%205L648%2014L684%204L720%209L756%206L792%2013L828%205L864%2011L900%203L936%2012L972%206L1008%2014L1044%204L1080%2010L1116%205L1152%2013L1188%206L1224%2011L1260%203L1296%2012L1332%205L1368%2010L1440%206%27/%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg%20viewBox%3D%270%200%201440%2018%27%20preserveAspectRatio%3D%27none%27%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%3E%3Cpath%20fill%3D%27none%27%20stroke%3D%27%23000000%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27square%27%20stroke-linejoin%3D%27miter%27%20vector-effect%3D%27non-scaling-stroke%27%20d%3D%27M0%209L36%204L72%2012L108%206L144%2013L180%205L216%2011L252%203L288%2010L324%207L360%2014L396%205L432%2010L468%204L504%2013L540%206L576%2011L612%205L648%2014L684%204L720%209L756%206L792%2013L828%205L864%2011L900%203L936%2012L972%206L1008%2014L1044%204L1080%2010L1116%205L1152%2013L1188%206L1224%2011L1260%203L1296%2012L1332%205L1368%2010L1440%206%27/%3E%3C/svg%3E");
+  background-position: top center, bottom center;
   background-repeat: no-repeat;
-  background-size: 100% 100%;
+  background-size: 100% 18px, 100% 18px;
   content: "";
   inset: 0;
   pointer-events: none;
   position: absolute;
-  z-index: 0;
+  z-index: 2;
+}
+
+.bayblaze-about-paper {
+  isolation: isolate;
+  padding: clamp(2rem, 4vw, 3.25rem);
+  position: relative;
 }
 
 .bayblaze-home-info-title {
@@ -347,6 +448,83 @@ body {
 
 .bayblaze-search-submit:hover::before {
   border-right-color: var(--ast-global-color-0);
+}
+
+@media (max-width: 767px) {
+  body,
+  button,
+  input,
+  select,
+  textarea {
+    line-height: 1.55;
+  }
+
+  .bayblaze-header-logo {
+    font-size: 24px;
+  }
+
+  .bayblaze-hero-title {
+    font-size: clamp(2.6rem, 13vw, 3.45rem);
+    letter-spacing: 3px;
+    line-height: 0.98;
+  }
+
+  .bayblaze-hero-subtitle {
+    font-size: clamp(1.1rem, 5.2vw, 1.45rem);
+    letter-spacing: 1.5px;
+    line-height: 1.25;
+    max-width: 17rem;
+  }
+
+  .bayblaze-hero-button {
+    font-size: 15px;
+    letter-spacing: 1px;
+  }
+
+  .bayblaze-section-heading {
+    font-size: clamp(1.9rem, 9vw, 2.35rem);
+    line-height: 1.12;
+  }
+
+  .bayblaze-product-preview-title {
+    font-size: clamp(2rem, 10vw, 2.55rem);
+    line-height: 1.08;
+  }
+
+  .bayblaze-product-preview-description {
+    font-size: 18px;
+    line-height: 1.35;
+  }
+
+  .bayblaze-product-title,
+  .bayblaze-shop-title,
+  .bayblaze-checkout-title,
+  .bayblaze-auth-title {
+    font-size: clamp(2rem, 9vw, 2.55rem);
+    font-weight: 500;
+    line-height: 1.08;
+  }
+
+  .bayblaze-home-info-title,
+  .bayblaze-contact-title {
+    font-size: clamp(2rem, 9vw, 2.45rem);
+    letter-spacing: 0;
+    line-height: 1.1;
+  }
+
+  .bayblaze-product-carousel {
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .bayblaze-product-carousel .swiper {
+    height: 470px !important;
+  }
+
+  .bayblaze-products-section--bottom-torn::after {
+    bottom: -54px;
+    height: 58px;
+  }
 }
 
 ::selection {

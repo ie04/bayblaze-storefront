@@ -8,12 +8,25 @@ export type Customer = {
   phone?: string | null;
 };
 
+export type CustomerOrder = {
+  id: string;
+  display_id?: number | string | null;
+  status?: string | null;
+  total?: number | null;
+  currency_code?: string | null;
+  created_at?: string | null;
+};
+
 type MedusaTokenResponse = {
   token: string;
 };
 
 type MedusaCustomerResponse = {
   customer: Customer;
+};
+
+type MedusaOrdersResponse = {
+  orders: CustomerOrder[];
 };
 
 type RequestOptions = RequestInit & {
@@ -77,6 +90,14 @@ export async function authenticateCustomer(email: string, password: string) {
     },
   );
 
+  try {
+    await retrieveCustomer(data.token);
+  } catch {
+    throw new Error(
+      "Those credentials are valid, but they are not attached to a Bayblaze customer account. Please create a storefront account first.",
+    );
+  }
+
   return data.token;
 }
 
@@ -121,4 +142,20 @@ export async function retrieveCustomer(token: string) {
   );
 
   return data.customer;
+}
+
+export async function retrieveCustomerOrders(token: string) {
+  const params = new URLSearchParams({
+    limit: "10",
+    fields: "id,display_id,status,total,currency_code,created_at",
+  });
+  const data = await medusaRequest<MedusaOrdersResponse>(
+    `/store/orders?${params.toString()}`,
+    {
+      token,
+      usePublishableKey: true,
+    },
+  );
+
+  return data.orders;
 }

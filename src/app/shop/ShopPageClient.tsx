@@ -165,8 +165,8 @@ export default function ShopPageClient() {
   }
 
   return (
-    <div className="bayblaze-shop-page bg-white pb-20 pt-[112px]">
-      <div className="mx-auto w-full max-w-[1180px] px-5">
+    <div className="bayblaze-shop-page bg-white pb-14 pt-[92px] sm:pb-20 sm:pt-[112px]">
+      <div className="mx-auto w-full max-w-[1180px] px-4 sm:px-5">
         <nav
           aria-label="Breadcrumb"
           className="mb-6 flex flex-wrap items-center gap-2 text-[14px] leading-none text-[#7a7a7a]"
@@ -178,23 +178,23 @@ export default function ShopPageClient() {
           <span>Shop</span>
         </nav>
 
-        <header className="mb-8 border-b border-[#eeeeee] pb-8">
+        <header className="mb-6 border-b border-[#eeeeee] pb-6 sm:mb-8 sm:pb-8">
           <h1 className="bayblaze-shop-title text-black">
             {activeCategoryCopy.title}
           </h1>
 
-          <p className="mt-3 max-w-[640px] text-[18px] font-semibold leading-[1.7] text-[#585858]">
+          <p className="mt-3 max-w-[640px] text-[16px] font-medium leading-[1.65] text-[#585858] sm:text-[18px] sm:font-semibold sm:leading-[1.7]">
             {activeCategoryCopy.description}
           </p>
         </header>
 
-        <section className="mb-8">
-          <div className="flex flex-wrap gap-2">
+        <section className="mb-6 sm:mb-8">
+          <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-2 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0">
             {categories.map((category) => (
               <button
                 key={category}
                 type="button"
-                className={`border px-4 py-2 text-[14px] font-medium leading-none transition-colors ${
+                className={`shrink-0 border px-4 py-2.5 text-[14px] font-medium leading-none transition-colors ${
                   activeCategory === category
                     ? "border-black bg-black text-white"
                     : "border-[#dedede] bg-white text-black hover:border-[var(--ast-global-color-0)] hover:text-[var(--ast-global-color-0)]"
@@ -211,7 +211,7 @@ export default function ShopPageClient() {
           </div>
         </section>
 
-        <div className="mb-7 flex flex-col gap-4 border-y border-[#eeeeee] py-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mb-6 flex flex-col gap-4 border-y border-[#eeeeee] py-4 sm:mb-7 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-[15px] text-[#585858]">
             Showing {visibleProducts.length === products.length ? "all " : ""}
             {visibleProducts.length} result
@@ -243,7 +243,7 @@ export default function ShopPageClient() {
 
         <section
           aria-label="Products"
-          className="grid grid-cols-1 gap-x-7 gap-y-10 sm:grid-cols-2 lg:grid-cols-4"
+          className="grid grid-cols-1 gap-x-7 gap-y-6 sm:grid-cols-2 sm:gap-y-10 lg:grid-cols-4"
         >
           {visibleProducts.map((product) => (
             <ProductCard
@@ -278,10 +278,10 @@ function ProductCard({
   }
 
   return (
-    <article className="group relative flex min-h-full flex-col border border-[#eeeeee] bg-white">
+    <article className="group relative flex min-h-full flex-col border border-[#d0d0d0] bg-[var(--ast-global-color-4)]">
       <Link
         href={product.href}
-        className="relative block aspect-square overflow-hidden bg-white"
+        className="relative block aspect-[1.08] overflow-hidden bg-[var(--ast-global-color-4)] sm:aspect-square"
         target={isInternal ? undefined : "_blank"}
       >
         {product.isSale && (
@@ -294,11 +294,11 @@ function ProductCard({
           alt={product.name}
           fill
           sizes="(max-width: 640px) 90vw, (max-width: 1024px) 45vw, 260px"
-          className="object-contain p-5 transition-transform duration-300 group-hover:scale-[1.03]"
+          className="object-contain p-4 transition-transform duration-300 group-hover:scale-[1.03] sm:p-5"
         />
       </Link>
 
-      <div className="flex flex-1 flex-col px-4 pb-5 pt-4 text-center">
+      <div className="flex flex-1 flex-col px-4 pb-5 pt-4 text-center sm:px-4">
         <p className="mb-2 text-[12px] font-semibold uppercase tracking-[0.12em] text-[#7a7a7a]">
           {product.categories[0]}
         </p>
@@ -308,7 +308,7 @@ function ProductCard({
           className="text-black transition-colors hover:text-[var(--ast-global-color-0)]"
           target={isInternal ? undefined : "_blank"}
         >
-          <h2 className="text-[18px] font-semibold leading-[1.3]">
+          <h2 className="text-[17px] font-semibold leading-[1.3] sm:text-[18px]">
             {product.name}
           </h2>
         </Link>
@@ -335,7 +335,7 @@ function ProductCard({
         {product.action === "Add to cart" ? (
           <button
             type="button"
-            className="mt-5 h-11 bg-[var(--ast-global-color-0)] px-4 text-[13px] font-semibold uppercase tracking-[0.12em] text-white transition-colors hover:bg-black"
+            className="mt-5 h-12 bg-[var(--ast-global-color-0)] px-4 text-[13px] font-semibold uppercase tracking-[0.1em] text-white transition-colors hover:bg-black sm:h-11 sm:tracking-[0.12em]"
             onClick={() => onQuickAdd(product)}
           >
             Add to cart
@@ -343,7 +343,7 @@ function ProductCard({
         ) : (
           <button
             type="button"
-            className="mt-5 h-11 bg-[var(--ast-global-color-0)] px-4 text-[13px] font-semibold uppercase tracking-[0.12em] text-white transition-colors hover:bg-black"
+            className="mt-5 h-12 bg-[var(--ast-global-color-0)] px-4 text-[13px] font-semibold uppercase tracking-[0.1em] text-white transition-colors hover:bg-black sm:h-11 sm:tracking-[0.12em]"
             onClick={handleSelectOptions}
           >
             Select options

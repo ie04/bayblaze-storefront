@@ -4,9 +4,9 @@ import {
   createContext,
   ReactNode,
   useContext,
+  useEffect,
   useMemo,
   useState,
-  useSyncExternalStore,
 } from "react";
 
 export type CartItem = {
@@ -34,11 +34,6 @@ const EMPTY_CART_ITEMS: CartItem[] = [];
 
 const CartContext = createContext<CartContextValue | null>(null);
 
-let cartSnapshot = EMPTY_CART_ITEMS;
-let cartSnapshotRaw = "";
-
-const cartListeners = new Set<() => void>();
-
 function readStoredCartItems() {
   if (typeof window === "undefined") {
     return EMPTY_CART_ITEMS;
@@ -48,91 +43,60 @@ function readStoredCartItems() {
     const savedCart = window.localStorage.getItem(CART_STORAGE_KEY);
 
     if (!savedCart) {
-      cartSnapshot = EMPTY_CART_ITEMS;
-      cartSnapshotRaw = "";
-      return cartSnapshot;
-    }
-
-    if (savedCart === cartSnapshotRaw) {
-      return cartSnapshot;
+      return EMPTY_CART_ITEMS;
     }
 
     const parsedCart = JSON.parse(savedCart);
 
-    cartSnapshot = Array.isArray(parsedCart)
+    return Array.isArray(parsedCart)
       ? (parsedCart as CartItem[])
       : EMPTY_CART_ITEMS;
-    cartSnapshotRaw = savedCart;
   } catch {
-    cartSnapshot = EMPTY_CART_ITEMS;
-    cartSnapshotRaw = "";
+    return EMPTY_CART_ITEMS;
   }
-
-  return cartSnapshot;
-}
-
-function getCartSnapshot() {
-  return readStoredCartItems();
-}
-
-function getCartServerSnapshot() {
-  return EMPTY_CART_ITEMS;
-}
-
-function emitCartChange() {
-  cartListeners.forEach((listener) => listener());
-}
-
-function subscribeToCart(listener: () => void) {
-  cartListeners.add(listener);
-
-  function handleStorage(event: StorageEvent) {
-    if (event.key === CART_STORAGE_KEY) {
-      cartSnapshotRaw = "";
-      emitCartChange();
-    }
-  }
-
-  window.addEventListener("storage", handleStorage);
-
-  return () => {
-    cartListeners.delete(listener);
-    window.removeEventListener("storage", handleStorage);
-  };
 }
 
 function saveCartItems(items: CartItem[]) {
-  cartSnapshot = items;
-  cartSnapshotRaw = JSON.stringify(items);
-
-  window.localStorage.setItem(CART_STORAGE_KEY, cartSnapshotRaw);
-  emitCartChange();
-}
-
-function updateCartItems(updater: (items: CartItem[]) => CartItem[]) {
-  saveCartItems(updater(readStoredCartItems()));
+  if (typeof window !== "undefined") {
+    window.localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
+  }
 }
 
 export function CartProvider({ children }: { children: ReactNode }) {
-  const items = useSyncExternalStore(
-    subscribeToCart,
-    getCartSnapshot,
-    getCartServerSnapshot,
-  );
+  const [items, setItems] = useState<CartItem[]>(EMPTY_CART_ITEMS);
   const [isCartOpen, setIsCartOpen] = useState(false);
+
+  useEffect(() => {
+    const hydrationTimer = window.setTimeout(() => {
+      setItems(readStoredCartItems());
+    }, 0);
+
+    function handleStorage(event: StorageEvent) {
+      if (event.key === CART_STORAGE_KEY) {
+        setItems(readStoredCartItems());
+      }
+    }
+
+    window.addEventListener("storage", handleStorage);
+
+    return () => {
+      window.clearTimeout(hydrationTimer);
+      window.removeEventListener("storage", handleStorage);
+    };
+  }, []);
 
   const cartCount = useMemo(() => {
     return items.reduce((total, item) => total + item.quantity, 0);
   }, [items]);
 
   function addItem(item: CartItem) {
-    updateCartItems((currentItems) => {
+    setItems((currentItems) => {
       const existingItem = currentItems.find(
         (currentItem) => currentItem.id === item.id
       );
 
       if (existingItem) {
-        return currentItems.map((currentItem) =>
+        const nextItems = currentItems.map((currentItem) =>
           currentItem.id === item.id
             ? {
                 ...currentItem,
@@ -140,22 +104,32 @@ export function CartProvider({ children }: { children: ReactNode }) {
               }
             : currentItem
         );
+
+        saveCartItems(nextItems);
+        return nextItems;
       }
 
-      return [...currentItems, item];
+      const nextItems = [...currentItems, item];
+
+      saveCartItems(nextItems);
+      return nextItems;
     });
 
     setIsCartOpen(true);
   }
 
   function removeItem(id: string) {
-    updateCartItems((currentItems) =>
-      currentItems.filter((item) => item.id !== id)
-    );
+    setItems((currentItems) => {
+      const nextItems = currentItems.filter((item) => item.id !== id);
+
+      saveCartItems(nextItems);
+      return nextItems;
+    });
   }
 
   function clearCart() {
     saveCartItems(EMPTY_CART_ITEMS);
+    setItems(EMPTY_CART_ITEMS);
   }
 
   function openCart() {

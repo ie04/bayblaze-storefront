@@ -7,6 +7,7 @@ import { FormEvent, useMemo, useState } from "react";
 type AuthMode = "login" | "register";
 
 type FormState = {
+  code: string;
   email: string;
   password: string;
   firstName: string;
@@ -14,6 +15,7 @@ type FormState = {
 };
 
 const initialFormState: FormState = {
+  code: "",
   email: "",
   password: "",
   firstName: "",
@@ -26,7 +28,10 @@ export default function LoginPageClient() {
   const [mode, setMode] = useState<AuthMode>("login");
   const [form, setForm] = useState<FormState>(initialFormState);
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [verificationEmail, setVerificationEmail] = useState("");
+  const isVerifyingRegistration = mode === "register" && Boolean(verificationEmail);
 
   const redirectTo = useMemo(() => {
     const requestedRedirect = searchParams.get("redirect");
@@ -45,9 +50,15 @@ export default function LoginPageClient() {
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
+    setNotice("");
     setIsSubmitting(true);
 
-    const endpoint = mode === "login" ? "/api/auth/login" : "/api/auth/register";
+    const endpoint =
+      mode === "login"
+        ? "/api/auth/login"
+        : isVerifyingRegistration
+          ? "/api/auth/register"
+          : "/api/auth/register/start";
     const payload =
       mode === "login"
         ? {
@@ -59,6 +70,7 @@ export default function LoginPageClient() {
             password: form.password,
             firstName: form.firstName,
             lastName: form.lastName,
+            ...(isVerifyingRegistration ? { code: form.code } : {}),
           };
 
     try {
@@ -77,6 +89,12 @@ export default function LoginPageClient() {
         );
       }
 
+      if (mode === "register" && !isVerifyingRegistration) {
+        setVerificationEmail(form.email.trim().toLowerCase());
+        setNotice("We sent a 6-digit code to your email.");
+        return;
+      }
+
       router.replace(redirectTo);
       router.refresh();
     } catch (submitError) {
@@ -91,8 +109,8 @@ export default function LoginPageClient() {
   }
 
   return (
-    <div className="bayblaze-auth-page bg-white pb-20 pt-[112px]">
-      <div className="mx-auto w-full max-w-[1180px] px-5">
+    <div className="bayblaze-auth-page bg-white pb-14 pt-[92px] sm:pb-20 sm:pt-[112px]">
+      <div className="mx-auto w-full max-w-[1180px] px-4 sm:px-5">
         <nav
           aria-label="Breadcrumb"
           className="mb-6 flex flex-wrap items-center gap-2 text-[14px] leading-none text-[#7a7a7a]"
@@ -107,114 +125,180 @@ export default function LoginPageClient() {
           <span>{mode === "login" ? "Login" : "Register"}</span>
         </nav>
 
-        <section className="grid gap-10 border-y-2 border-black py-10 lg:grid-cols-[minmax(0,0.86fr)_minmax(420px,0.64fr)] lg:items-center">
+        <section className="grid gap-7 border-y-2 border-black py-7 sm:gap-10 sm:py-10 lg:grid-cols-[minmax(0,0.86fr)_minmax(420px,0.64fr)] lg:items-center">
           <div>
             <p className="mb-3 text-[13px] font-semibold uppercase tracking-[0.22em] text-[var(--ast-global-color-1)]">
               Bayblaze Account
             </p>
             <h1 className="bayblaze-auth-title text-black">
-              {mode === "login" ? "Welcome back." : "Create your account."}
+              {mode === "login"
+                ? "Welcome back."
+                : isVerifyingRegistration
+                  ? "Check your email."
+                  : "Create your account."}
             </h1>
-            <p className="mt-5 max-w-[560px] text-[18px] leading-[1.75] text-[#585858]">
+            <p className="mt-4 max-w-[560px] text-[16px] leading-[1.65] text-[#585858] sm:mt-5 sm:text-[18px] sm:leading-[1.75]">
               {mode === "login"
                 ? "Sign in to manage your Bayblaze details and keep checkout moving."
-                : "Register once, then use your account for future Bayblaze orders."}
+                : isVerifyingRegistration
+                  ? "Enter the 6-digit code we sent before creating your account."
+                  : "Register once, then use your account for future Bayblaze orders."}
             </p>
           </div>
 
-          <div className="border border-[#d9d9d9] bg-white p-5 shadow-[8px_8px_0_#000] sm:p-7">
-            <div className="mb-7 grid grid-cols-2 border border-black">
-              <button
-                type="button"
-                aria-pressed={mode === "login"}
-                className={`h-12 text-[15px] font-semibold transition-colors ${
-                  mode === "login"
-                    ? "bg-black text-white"
-                    : "bg-white text-black hover:bg-[#f6f8f5]"
-                }`}
-                onClick={() => {
-                  setMode("login");
-                  setError("");
-                }}
-              >
-                Login
-              </button>
-              <button
-                type="button"
-                aria-pressed={mode === "register"}
-                className={`h-12 border-l border-black text-[15px] font-semibold transition-colors ${
-                  mode === "register"
-                    ? "bg-black text-white"
-                    : "bg-white text-black hover:bg-[#f6f8f5]"
-                }`}
-                onClick={() => {
-                  setMode("register");
-                  setError("");
-                }}
-              >
-                Register
-              </button>
-            </div>
+          <div className="border border-[#cfcfcf] bg-[var(--ast-global-color-4)] p-4 shadow-[5px_5px_0_#000] sm:p-7 sm:shadow-[8px_8px_0_#000]">
+            {!isVerifyingRegistration ? (
+              <div className="mb-6 grid grid-cols-2 border border-black sm:mb-7">
+                <button
+                  type="button"
+                  aria-pressed={mode === "login"}
+                  className={`h-12 text-[15px] font-semibold transition-colors ${
+                    mode === "login"
+                      ? "bg-black text-white"
+                      : "bg-white text-black hover:bg-[#f6f8f5]"
+                  }`}
+                  onClick={() => {
+                    setMode("login");
+                    setError("");
+                    setNotice("");
+                    setVerificationEmail("");
+                  }}
+                >
+                  Login
+                </button>
+                <button
+                  type="button"
+                  aria-pressed={mode === "register"}
+                  className={`h-12 border-l border-black text-[15px] font-semibold transition-colors ${
+                    mode === "register"
+                      ? "bg-black text-white"
+                      : "bg-white text-black hover:bg-[#f6f8f5]"
+                  }`}
+                  onClick={() => {
+                    setMode("register");
+                    setError("");
+                    setNotice("");
+                  }}
+                >
+                  Register
+                </button>
+              </div>
+            ) : null}
 
             <form className="space-y-5" onSubmit={handleSubmit}>
-              {mode === "register" && (
-                <div className="grid gap-4 sm:grid-cols-2">
+              {isVerifyingRegistration ? (
+                <div className="space-y-5">
+                  <div>
+                    <p className="text-[13px] font-semibold uppercase tracking-[0.18em] text-[var(--ast-global-color-1)]">
+                      Verify email
+                    </p>
+                    <h2 className="mt-2 text-[24px] font-semibold leading-tight text-black sm:text-[28px]">
+                      Enter your code
+                    </h2>
+                    <p className="mt-3 text-[15px] leading-[1.6] text-[#585858] sm:text-[16px]">
+                      We sent a 6-digit code to{" "}
+                      <span className="font-semibold text-black">
+                        {verificationEmail}
+                      </span>
+                      .
+                    </p>
+                  </div>
+
                   <label className="block text-[14px] font-semibold text-black">
-                    First name
+                    Verification code
                     <input
                       required
-                      autoComplete="given-name"
-                      value={form.firstName}
-                      className="mt-2 h-12 w-full border border-[#d6d6d6] bg-white px-4 text-[16px] font-normal text-black outline-none transition focus:border-black"
+                      inputMode="numeric"
+                      maxLength={6}
+                      pattern="[0-9]{6}"
+                      value={form.code}
+                      className="mt-2 h-12 w-full border border-[#d6d6d6] bg-white px-4 text-center text-[18px] font-semibold tracking-[0.2em] text-black outline-none transition focus:border-black"
                       onChange={(event) =>
-                        updateField("firstName", event.target.value)
+                        updateField(
+                          "code",
+                          event.target.value.replace(/\D/g, "").slice(0, 6),
+                        )
                       }
                     />
                   </label>
 
-                  <label className="block text-[14px] font-semibold text-black">
-                    Last name
-                    <input
-                      required
-                      autoComplete="family-name"
-                      value={form.lastName}
-                      className="mt-2 h-12 w-full border border-[#d6d6d6] bg-white px-4 text-[16px] font-normal text-black outline-none transition focus:border-black"
-                      onChange={(event) =>
-                        updateField("lastName", event.target.value)
-                      }
-                    />
-                  </label>
+                  <button
+                    type="button"
+                    className="text-[13px] font-semibold uppercase tracking-[0.12em] text-[#585858] transition-colors hover:text-black"
+                    onClick={() => {
+                      setVerificationEmail("");
+                      setForm((current) => ({ ...current, code: "" }));
+                      setError("");
+                      setNotice("");
+                    }}
+                  >
+                    Change email
+                  </button>
                 </div>
+              ) : (
+                <>
+                  {mode === "register" && (
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <label className="block text-[14px] font-semibold text-black">
+                        First name
+                        <input
+                          required
+                          autoComplete="given-name"
+                          value={form.firstName}
+                          className="mt-2 h-12 w-full border border-[#d6d6d6] bg-white px-4 text-[16px] font-normal text-black outline-none transition focus:border-black"
+                          onChange={(event) =>
+                            updateField("firstName", event.target.value)
+                          }
+                        />
+                      </label>
+
+                      <label className="block text-[14px] font-semibold text-black">
+                        Last name
+                        <input
+                          required
+                          autoComplete="family-name"
+                          value={form.lastName}
+                          className="mt-2 h-12 w-full border border-[#d6d6d6] bg-white px-4 text-[16px] font-normal text-black outline-none transition focus:border-black"
+                          onChange={(event) =>
+                            updateField("lastName", event.target.value)
+                          }
+                        />
+                      </label>
+                    </div>
+                  )}
+
+                  <label className="block text-[14px] font-semibold text-black">
+                    Email
+                    <input
+                      required
+                      type="email"
+                      autoComplete="email"
+                      value={form.email}
+                      className="mt-2 h-12 w-full border border-[#d6d6d6] bg-white px-4 text-[16px] font-normal text-black outline-none transition focus:border-black"
+                      onChange={(event) =>
+                        updateField("email", event.target.value)
+                      }
+                    />
+                  </label>
+
+                  <label className="block text-[14px] font-semibold text-black">
+                    Password
+                    <input
+                      required
+                      type="password"
+                      minLength={6}
+                      autoComplete={
+                        mode === "login" ? "current-password" : "new-password"
+                      }
+                      value={form.password}
+                      className="mt-2 h-12 w-full border border-[#d6d6d6] bg-white px-4 text-[16px] font-normal text-black outline-none transition focus:border-black"
+                      onChange={(event) =>
+                        updateField("password", event.target.value)
+                      }
+                    />
+                  </label>
+                </>
               )}
-
-              <label className="block text-[14px] font-semibold text-black">
-                Email
-                <input
-                  required
-                  type="email"
-                  autoComplete="email"
-                  value={form.email}
-                  className="mt-2 h-12 w-full border border-[#d6d6d6] bg-white px-4 text-[16px] font-normal text-black outline-none transition focus:border-black"
-                  onChange={(event) => updateField("email", event.target.value)}
-                />
-              </label>
-
-              <label className="block text-[14px] font-semibold text-black">
-                Password
-                <input
-                  required
-                  type="password"
-                  minLength={6}
-                  autoComplete={
-                    mode === "login" ? "current-password" : "new-password"
-                  }
-                  value={form.password}
-                  className="mt-2 h-12 w-full border border-[#d6d6d6] bg-white px-4 text-[16px] font-normal text-black outline-none transition focus:border-black"
-                  onChange={(event) =>
-                    updateField("password", event.target.value)
-                  }
-                />
-              </label>
 
               <p
                 aria-live="polite"
@@ -222,19 +306,31 @@ export default function LoginPageClient() {
               >
                 {error}
               </p>
+              {notice ? (
+                <p
+                  aria-live="polite"
+                  className="-mt-3 text-[14px] font-semibold text-[var(--ast-global-color-1)]"
+                >
+                  {notice}
+                </p>
+              ) : null}
 
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="bayblaze-hero-button flex h-[52px] w-full items-center justify-center bg-[var(--ast-global-color-0)] px-7 text-center text-white transition-colors hover:bg-[var(--ast-global-color-1)] disabled:cursor-not-allowed disabled:opacity-70"
+                className="bayblaze-hero-button flex h-[50px] w-full items-center justify-center bg-[var(--ast-global-color-0)] px-5 text-center text-white transition-colors hover:bg-black disabled:cursor-not-allowed disabled:opacity-70 sm:h-[52px] sm:px-7"
               >
                 {isSubmitting
                   ? mode === "login"
                     ? "Signing in..."
-                    : "Creating account..."
+                    : verificationEmail
+                      ? "Verifying..."
+                      : "Sending code..."
                   : mode === "login"
-                    ? "Sign In"
-                    : "Create Account"}
+                    ? "SIGN IN"
+                    : verificationEmail
+                      ? "VERIFY & CREATE ACCOUNT"
+                      : "CREATE ACCOUNT"}
               </button>
             </form>
           </div>

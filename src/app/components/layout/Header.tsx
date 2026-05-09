@@ -47,7 +47,7 @@ export default function Header({
 
   return (
     <header className="absolute inset-x-0 top-0 z-50 bg-transparent text-black">
-      <div className="flex h-[80px] items-center justify-between gap-4 pl-[var(--bayblaze-header-x)] pr-[29px]">
+      <div className="flex h-[68px] items-center justify-between gap-3 pl-[var(--bayblaze-header-x)] pr-[var(--bayblaze-header-x)] md:h-[80px] md:gap-4 md:pr-[29px]">
         <Link
           href="/"
           className="bayblaze-header-logo shrink-0 text-black transition-colors hover:text-[var(--ast-global-color-0)]"
@@ -59,12 +59,12 @@ export default function Header({
         <div className="flex min-w-0 items-center justify-end gap-[13px]">
           <button
             type="button"
-            className="flex size-[52px] items-center justify-center bg-black text-white shadow-sm transition-colors hover:bg-[var(--ast-global-color-0)] md:hidden"
+            className="flex size-[44px] items-center justify-center bg-black text-white shadow-sm transition-colors hover:bg-[var(--ast-global-color-0)] md:hidden"
             aria-label="Open product search"
             aria-expanded={isSearchOpen}
             onClick={() => setIsSearchOpen((isOpen) => !isOpen)}
           >
-            <SearchIcon className="size-[30px]" />
+            <SearchIcon className="size-[24px]" />
           </button>
 
           <form
@@ -102,14 +102,14 @@ export default function Header({
 
           <button
             type="button"
-            className="relative flex h-[43px] w-[46px] shrink-0 items-center justify-center text-black transition-colors hover:text-[var(--ast-global-color-0)]"
+            className="relative flex h-[42px] w-[42px] shrink-0 items-center justify-center text-black transition-colors hover:text-[var(--ast-global-color-0)] md:h-[43px] md:w-[46px]"
             aria-expanded={isCartOpen}
             aria-label={`Open shopping cart, ${cartCount} item${
               cartCount === 1 ? "" : "s"
             }`}
             onClick={openCart}
           >
-            <CartIcon className="size-[30px]" />
+            <CartIcon className="size-[27px] md:size-[30px]" />
 
             {cartCount > 0 ? (
               <span className="absolute -right-1 -top-1 flex size-5 items-center justify-center rounded-full bg-[var(--ast-global-color-0)] text-[11px] font-semibold leading-none text-white">
@@ -120,10 +120,10 @@ export default function Header({
 
           <Link
             href={accountHref}
-            className="flex h-[43px] w-[43px] shrink-0 items-center justify-center text-black transition-colors hover:text-[var(--ast-global-color-0)]"
+            className="flex h-[42px] w-[42px] shrink-0 items-center justify-center text-black transition-colors hover:text-[var(--ast-global-color-0)] md:h-[43px] md:w-[43px]"
             aria-label="Account"
           >
-            <AccountIcon className="size-[30px]" />
+            <AccountIcon className="size-[27px] md:size-[30px]" />
           </Link>
         </div>
       </div>
@@ -175,15 +175,15 @@ function CartDrawer({
       />
 
       <aside
-        className={`bayblaze-cart-drawer absolute right-0 top-0 flex h-full w-full max-w-[420px] flex-col border-l-2 border-black bg-white text-black shadow-[-12px_0_30px_rgba(0,0,0,0.22)] transition-transform duration-300 ${
+        className={`bayblaze-cart-drawer absolute right-0 top-0 flex h-full w-full max-w-[420px] flex-col border-l-2 border-black bg-white text-black shadow-[-12px_0_30px_rgba(0,0,0,0.22)] transition-transform duration-300 max-sm:border-l-0 ${
           isOpen ? "translate-x-0" : "translate-x-full"
         }`}
         aria-label="Shopping cart"
       >
-        <div className="grid grid-cols-[40px_1fr_40px] items-center border-b-2 border-black px-6 py-5">
+        <div className="grid grid-cols-[40px_1fr_40px] items-center border-b-2 border-black px-4 py-4 sm:px-6 sm:py-5">
           <div aria-hidden="true" />
 
-          <h2 className="text-center text-[28px] font-medium leading-none">
+          <h2 className="text-center text-[23px] font-medium leading-none sm:text-[28px]">
             View Cart
           </h2>
 
@@ -197,7 +197,7 @@ function CartDrawer({
           </button>
         </div>
 
-        <div className="flex flex-1 flex-col overflow-y-auto px-6 py-6">
+        <div className="flex flex-1 flex-col overflow-y-auto px-4 py-5 sm:px-6 sm:py-6">
           {!hasItems ? (
             <div className="flex flex-1 flex-col justify-center text-center">
               <p
@@ -269,7 +269,7 @@ function CartDrawer({
           )}
         </div>
 
-        <div className="border-t border-[#e7e7e7] bg-[var(--ast-global-color-4)] p-6">
+        <div className="border-t border-[#e7e7e7] bg-[var(--ast-global-color-4)] p-4 sm:p-6">
           <div className="mb-4 flex items-center justify-between text-[15px]">
             <span className="font-semibold text-black">Items</span>
             <span className="text-[#585858]">{cartCount}</span>

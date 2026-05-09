@@ -6,8 +6,13 @@ import Link from "next/link";
 
 import Header from "@/app/components/layout/Header";
 import { useCart } from "@/app/components/cart/CartContext";
+import type { Customer } from "@/app/lib/medusa-auth";
 
-export default function CheckoutPageClient() {
+export default function CheckoutPageClient({
+  customer,
+}: {
+  customer?: Customer;
+}) {
   const { items, cartCount, removeItem } = useCart();
 
   const subtotal = useMemo(() => {
@@ -22,11 +27,11 @@ export default function CheckoutPageClient() {
     <main className="bayblaze-checkout-page min-h-screen bg-white text-[#585858]">
       <Header />
 
-      <section className="border-b-2 border-black bg-[var(--ast-global-color-4)] pb-12 pt-[128px]">
-        <div className="mx-auto w-full max-w-[1180px] px-5">
+      <section className="border-b-2 border-black bg-[var(--ast-global-color-4)] pb-8 pt-[96px] sm:pb-12 sm:pt-[128px]">
+        <div className="mx-auto w-full max-w-[1180px] px-4 sm:px-5">
           <nav
             aria-label="Breadcrumb"
-            className="mb-6 flex flex-wrap items-center gap-2 text-[15px] leading-tight text-[#7a7a7a]"
+            className="mb-5 flex flex-wrap items-center gap-2 text-[14px] leading-tight text-[#7a7a7a] sm:mb-6 sm:text-[15px]"
           >
             <Link
               className="text-black transition-colors hover:text-[var(--ast-global-color-0)]"
@@ -45,14 +50,14 @@ export default function CheckoutPageClient() {
             <h1 className="bayblaze-checkout-title mt-2 text-black">
               Checkout
             </h1>
-            <p className="mt-4 max-w-[620px] text-[20px] font-medium leading-[1.55] text-black sm:text-[21px]">
+            <p className="mt-4 max-w-[620px] text-[17px] font-medium leading-[1.55] text-black sm:text-[21px]">
               Place your order online. Pay the driver when it arrives.
             </p>
           </div>
         </div>
       </section>
 
-      <section className="mx-auto grid w-full max-w-[1180px] gap-8 px-5 py-10 lg:grid-cols-[minmax(0,1fr)_360px]">
+      <section className="mx-auto grid w-full max-w-[1180px] gap-7 px-4 py-8 sm:px-5 sm:py-10 lg:grid-cols-[minmax(0,1fr)_360px]">
         <form className="grid gap-8" action="/checkout" method="post">
           <input
             type="hidden"
@@ -66,11 +71,46 @@ export default function CheckoutPageClient() {
           />
 
           <CheckoutPanel title="Contact information">
+            {customer ? (
+              <p className="mb-5 border border-[#d9d9d9] bg-[var(--ast-global-color-4)] px-4 py-3 text-[16px] font-medium leading-[1.5] text-black">
+                Signed in as {customer.email}.
+              </p>
+            ) : (
+              <p className="mb-5 border border-[#d9d9d9] bg-[var(--ast-global-color-4)] px-4 py-3 text-[16px] font-medium leading-[1.5] text-black">
+                Have an account?{" "}
+                <Link
+                  href="/login?redirect=/checkout"
+                  className="font-semibold text-[var(--ast-global-color-1)] underline-offset-4 hover:underline"
+                >
+                  Sign in
+                </Link>{" "}
+                to fill this faster.
+              </p>
+            )}
+
             <div className="grid gap-5 sm:grid-cols-2">
-              <CheckoutField label="First name" name="first_name" />
-              <CheckoutField label="Last name" name="last_name" />
-              <CheckoutField label="Email" name="email" type="email" />
-              <CheckoutField label="Phone" name="phone" type="tel" />
+              <CheckoutField
+                label="First name"
+                name="first_name"
+                defaultValue={customer?.first_name ?? undefined}
+              />
+              <CheckoutField
+                label="Last name"
+                name="last_name"
+                defaultValue={customer?.last_name ?? undefined}
+              />
+              <CheckoutField
+                label="Email"
+                name="email"
+                type="email"
+                defaultValue={customer?.email}
+              />
+              <CheckoutField
+                label="Phone"
+                name="phone"
+                type="tel"
+                defaultValue={customer?.phone ?? undefined}
+              />
             </div>
           </CheckoutPanel>
 
@@ -84,10 +124,10 @@ export default function CheckoutPageClient() {
                 <CheckoutField label="ZIP" name="zip" inputMode="numeric" />
               </div>
 
-              <label className="grid gap-2 text-[16px] font-semibold text-black">
+              <label className="grid gap-2 text-[15px] font-semibold text-black sm:text-[16px]">
                 Delivery notes
                 <textarea
-                  className="min-h-[128px] resize-y border border-[#d6d6d6] bg-white px-4 py-3 text-[17px] font-normal text-black outline-none transition focus:border-black"
+                  className="min-h-[120px] resize-y border border-[#d6d6d6] bg-white px-4 py-3 text-[16px] font-normal text-black outline-none transition focus:border-black sm:min-h-[128px] sm:text-[17px]"
                   name="notes"
                   placeholder="Gate code, drop-off notes, or product preferences"
                 />
@@ -124,7 +164,7 @@ export default function CheckoutPageClient() {
 
         <aside className="h-fit border-2 border-black bg-white">
           <div className="border-b-2 border-black px-5 py-4">
-            <h2 className="text-[24px] font-medium leading-tight text-black">
+            <h2 className="text-[21px] font-medium leading-tight text-black sm:text-[24px]">
               Order summary
             </h2>
           </div>
@@ -231,8 +271,8 @@ function CheckoutPanel({
   title: string;
 }) {
   return (
-    <section className="border border-[#e7e7e7] bg-white p-5 sm:p-6">
-      <h2 className="mb-5 text-[24px] font-medium leading-tight text-black">
+    <section className="border border-[#d0d0d0] bg-[var(--ast-global-color-4)] p-4 sm:p-6">
+      <h2 className="mb-4 text-[21px] font-medium leading-tight text-black sm:mb-5 sm:text-[24px]">
         {title}
       </h2>
       {children}
@@ -254,10 +294,10 @@ function CheckoutField({
   type?: string;
 }) {
   return (
-    <label className="grid gap-2 text-[16px] font-semibold text-black">
+    <label className="grid gap-2 text-[15px] font-semibold text-black sm:text-[16px]">
       {label}
       <input
-        className="h-[52px] w-full min-w-0 border border-[#d6d6d6] bg-white px-4 text-[17px] font-normal text-black outline-none transition focus:border-black"
+        className="h-[50px] w-full min-w-0 border border-[#d6d6d6] bg-white px-4 text-[16px] font-normal text-black outline-none transition focus:border-black sm:h-[52px] sm:text-[17px]"
         defaultValue={defaultValue}
         inputMode={inputMode}
         name={name}

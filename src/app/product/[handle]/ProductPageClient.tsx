@@ -69,11 +69,11 @@ export default function ProductPage({
   }
 
   return (
-    <div className="bayblaze-product-page bg-white pb-20 pt-[112px] text-[#585858]">
-      <div className="mx-auto w-full max-w-[1180px] px-5">
+    <div className="bayblaze-product-page bg-white pb-14 pt-[92px] text-[#585858] sm:pb-20 sm:pt-[112px]">
+      <div className="mx-auto w-full max-w-[1180px] px-4 sm:px-5">
         <nav
           aria-label="Breadcrumb"
-          className="mb-8 flex flex-wrap items-center gap-2 text-[14px] leading-none text-[#7a7a7a]"
+          className="mb-6 flex flex-wrap items-center gap-2 text-[14px] leading-snug text-[#7a7a7a] sm:mb-8 sm:leading-none"
         >
           <Link
             className="text-black transition-colors hover:text-[var(--ast-global-color-0)]"
@@ -95,7 +95,7 @@ export default function ProductPage({
           <span>{product.name}</span>
         </nav>
 
-        <section className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(390px,0.82fr)] lg:gap-14">
+        <section className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(390px,0.82fr)] lg:gap-14">
           <div className="grid gap-4 sm:grid-cols-[84px_minmax(0,1fr)]">
             <div className="order-2 flex gap-3 sm:order-1 sm:flex-col">
               {product.images.map((image, index) => (
@@ -123,7 +123,7 @@ export default function ProductPage({
             </div>
 
             <div className="order-1 sm:order-2">
-              <div className="relative flex aspect-square items-center justify-center border border-[#eeeeee] bg-white">
+              <div className="relative flex aspect-[1.05] items-center justify-center border border-[#d0d0d0] bg-[var(--ast-global-color-4)] sm:aspect-square">
                 {product.saleBadge ? (
                   <span className="absolute left-4 top-4 z-10 bg-[var(--ast-global-color-0)] px-3 py-1.5 text-[13px] font-semibold leading-none text-white">
                     {product.saleBadge}
@@ -137,7 +137,7 @@ export default function ProductPage({
                     fill
                     priority
                     sizes="(max-width: 1024px) 90vw, 610px"
-                    className="object-contain p-8 sm:p-12"
+                    className="object-contain p-6 sm:p-12"
                   />
                 ) : null}
               </div>
@@ -166,12 +166,12 @@ export default function ProductPage({
             </p>
 
             {product.details[0] ? (
-              <p className="mt-6 text-[17px] leading-[1.8] text-[#585858]">
+              <p className="mt-5 text-[16px] leading-[1.7] text-[#585858] sm:mt-6 sm:text-[17px] sm:leading-[1.8]">
                 {product.details[0]}
               </p>
             ) : null}
 
-            <dl className="mt-7 grid grid-cols-2 gap-3 sm:grid-cols-3">
+            <dl className="mt-6 grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 sm:mt-7 sm:grid-cols-3">
               {product.specs.slice(0, 3).map(([label, value]) => (
                 <div key={label} className="border border-[#ececec] px-4 py-3">
                   <dt className="text-[12px] font-semibold uppercase tracking-[0.12em] text-[#7a7a7a]">
@@ -214,8 +214,8 @@ export default function ProductPage({
                 </>
               ) : null}
 
-              <div className="mt-5 flex flex-wrap gap-3">
-                <div className="grid h-12 grid-cols-[44px_56px_44px] border border-[#d6d6d6]">
+              <div className="mt-5 flex flex-col gap-3 min-[420px]:flex-row min-[420px]:flex-wrap">
+                <div className="grid h-12 w-full grid-cols-[44px_minmax(56px,1fr)_44px] border border-[#d6d6d6] min-[420px]:w-auto min-[420px]:grid-cols-[44px_56px_44px]">
                   <button
                     type="button"
                     className="flex items-center justify-center text-[22px] text-black transition-colors hover:bg-[#f4f4f4]"
@@ -251,7 +251,7 @@ export default function ProductPage({
                 <button
                   type="submit"
                   disabled={product.flavors.length > 0 && !flavor}
-                  className="h-12 min-w-[180px] bg-[var(--ast-global-color-0)] px-7 text-[15px] font-semibold uppercase tracking-[0.12em] text-white transition-colors hover:bg-black disabled:cursor-not-allowed disabled:bg-[#b9c8af]"
+                  className="h-12 min-w-[180px] flex-1 bg-[var(--ast-global-color-0)] px-7 text-[15px] font-semibold uppercase tracking-[0.1em] text-white transition-colors hover:bg-black disabled:cursor-not-allowed disabled:bg-[#b9c8af] min-[420px]:flex-none sm:tracking-[0.12em]"
                 >
                   Add to cart
                 </button>
@@ -307,13 +307,13 @@ export default function ProductPage({
           </article>
         </section>
 
-        <section className="mt-16 border-t border-[#e8e8e8] pt-8">
-          <div className="flex flex-wrap gap-2 border-b border-[#e8e8e8]">
+        <section className="mt-12 border-t border-[#e8e8e8] pt-6 sm:mt-16 sm:pt-8">
+          <div className="-mx-4 flex gap-2 overflow-x-auto border-b border-[#e8e8e8] px-4 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
                 type="button"
-                className={`bayblaze-product-tab px-4 py-3 text-left text-[15px] font-semibold transition-colors ${
+                className={`bayblaze-product-tab shrink-0 px-4 py-3 text-left text-[15px] font-semibold transition-colors ${
                   activeTab === tab.id
                     ? "border-black text-black"
                     : "border-transparent text-[#7a7a7a] hover:text-black"

@@ -33,13 +33,13 @@ export default function HomeExploreProducts({
   ];
 
   return (
-    <section className="bayblaze-products-section border-b-2 border-black bg-[var(--ast-global-color-4)]">
-      <div className="mx-auto flex w-full max-w-[1180px] flex-col gap-8 px-5 py-14">
+    <section className="bayblaze-products-section bg-[var(--ast-global-color-4)]">
+      <div className="mx-auto flex w-full max-w-[1180px] flex-col gap-6 px-4 py-10 sm:gap-8 sm:px-5 sm:py-14">
         <h2 className="bayblaze-section-heading text-center">
           EXPLORE OUR PRODUCTS
         </h2>
 
-        <div className="grid w-full grid-cols-1 grid-rows-[repeat(2,minmax(0,auto))] gap-x-px gap-y-[60px]">
+        <div className="grid w-full grid-cols-1 grid-rows-[repeat(2,minmax(0,auto))] gap-x-px gap-y-8 sm:gap-y-[60px]">
           {productGroups.map((group) => (
             <ProductPreview
               key={group.title}
@@ -67,10 +67,10 @@ function ProductPreview({
   products: ProductPreviewItem[];
 }) {
   return (
-    <article className="flex w-full flex-col items-center gap-0 border-2 border-black bg-white p-4 text-center">
+    <article className="flex w-full flex-col items-center gap-0 border-2 border-black bg-white p-3 text-center sm:p-4">
       <div className="flex w-full flex-col items-center">
         <h3 className="bayblaze-product-preview-title">{title}</h3>
-        <p className="bayblaze-product-preview-description pb-[30px]">
+        <p className="bayblaze-product-preview-description pb-5 sm:pb-[30px]">
           {description}
         </p>
 
@@ -144,7 +144,7 @@ function ProductCarouselMock({ products }: { products: ProductPreviewItem[] }) {
   }, []);
 
   return (
-    <div className="bayblaze-product-carousel mx-auto w-full max-w-[1110px] overflow-hidden px-6 pb-5 pt-4">
+    <div className="bayblaze-product-carousel mx-auto w-full max-w-[1110px] overflow-hidden px-1 pb-4 pt-3 sm:px-6 sm:pb-5 sm:pt-4">
       <Swiper
         modules={[EffectCoverflow]}
         effect="coverflow"
@@ -173,7 +173,7 @@ function ProductCarouselMock({ products }: { products: ProductPreviewItem[] }) {
         {loopedProducts.map((product, index) => (
           <SwiperSlide
             key={`${product.name}-${index}`}
-            className="!w-[360px] max-w-[82vw]"
+            className="!w-[300px] max-w-[84vw] sm:!w-[360px] sm:max-w-[82vw]"
           >
             <ProductSlide product={product} />
           </SwiperSlide>
@@ -215,7 +215,7 @@ function ProductSlide({ product }: { product: ProductPreviewItem }) {
         <a
           href={product.href}
           aria-label={product.name}
-          className="block h-[330px] w-full bg-center bg-no-repeat"
+          className="block h-[265px] w-full bg-center bg-no-repeat sm:h-[330px]"
           style={{
             backgroundImage: `url("${product.image}")`,
             backgroundSize: "auto 86%",
@@ -223,13 +223,13 @@ function ProductSlide({ product }: { product: ProductPreviewItem }) {
         />
       </div>
 
-      <div className="p-[15px] text-center">
+      <div className="p-3 text-center sm:p-[15px]">
         <a href={product.href} className="text-black no-underline">
-          <h4 className="text-[18px] font-medium leading-[1.3]">
+          <h4 className="text-[16px] font-medium leading-[1.3] sm:text-[18px]">
             {product.name}
           </h4>
         </a>
-        <p className="mt-2 text-[17px] font-normal leading-none">
+        <p className="mt-2 text-[16px] font-normal leading-none sm:text-[17px]">
           {product.originalPrice ? (
             <>
               <del className="text-[#7a7a7a]">{product.originalPrice}</del>{" "}

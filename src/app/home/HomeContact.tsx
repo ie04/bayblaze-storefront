@@ -2,15 +2,15 @@ export default function HomeContact() {
   return (
     <section
       id="contact"
-      className="bayblaze-home-contact flex justify-center border-b-2 border-black px-5 py-24 md:px-[200px] md:py-[160px]"
+      className="bayblaze-home-contact flex justify-center border-b-2 border-black px-4 py-14 sm:px-5 sm:py-24 md:px-[200px] md:py-[160px]"
       style={{
         backgroundImage:
           "url('https://bayblaze.net/wp-content/uploads/2026/03/lookandlearn.com-YB0028329-1-scaled.jpg')",
       }}
     >
-      <div className="w-full max-w-[780px] border-2 border-black bg-white/90 px-5 py-8 text-center">
+      <div className="w-full max-w-[780px] border-2 border-black bg-white/90 px-4 py-7 text-center sm:px-5 sm:py-8">
         <h2 className="bayblaze-contact-title">Contact US</h2>
-        <p className="mx-auto mt-3 max-w-[610px] text-[17px] font-bold leading-[1.7] text-[#585858]">
+        <p className="mx-auto mt-3 max-w-[610px] text-[16px] font-semibold leading-[1.6] text-[#585858] sm:text-[17px] sm:font-bold sm:leading-[1.7]">
           If you have any questions, concerns, or product recommendations please
           reach out to us. You can contact us by email or phone.
         </p>
