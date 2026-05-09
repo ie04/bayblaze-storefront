@@ -5,7 +5,7 @@ export default function HomeContact() {
       className="bayblaze-home-contact flex justify-center border-b-2 border-black px-4 py-14 sm:px-5 sm:py-24 md:px-[200px] md:py-[160px]"
       style={{
         backgroundImage:
-          "url('https://bayblaze.net/wp-content/uploads/2026/03/lookandlearn.com-YB0028329-1-scaled.jpg')",
+          "url('/images/contactus-bg.jpg')",
       }}
     >
       <div className="w-full max-w-[780px] border-2 border-black bg-white/90 px-4 py-7 text-center sm:px-5 sm:py-8">
