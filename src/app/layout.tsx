@@ -16,11 +16,11 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: "Bayblaze",
   description: "Tampa Bay mobile smoke shop",
-  applicationName: "Bayblaze",
+  applicationName: "BAYBLAZE",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Bayblaze",
+    title: "BAYBLAZE",
   },
   icons: {
     apple: "/icons/apple-touch-icon.png",

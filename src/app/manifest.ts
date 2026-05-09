@@ -2,8 +2,8 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Bayblaze",
-    short_name: "Bayblaze",
+    name: "BAYBLAZE",
+    short_name: "BAYBLAZE",
     description: "Tampa Bay mobile smoke shop with local delivery.",
     start_url: "/",
     scope: "/",

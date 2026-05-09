@@ -121,6 +121,10 @@ export default function PwaInstallPrompt() {
     setIsDismissed(true);
   }
 
+  function handleIosHelpClick() {
+    setShowIosPrompt(true);
+  }
+
   return (
     <aside className="fixed bottom-4 left-4 right-4 z-[70] mx-auto max-w-[420px] border-2 border-black bg-white p-4 font-[var(--font-jost)] shadow-[5px_5px_0_rgba(0,0,0,0.22)] sm:left-auto sm:mx-0">
       <p className="text-[18px] font-semibold leading-tight text-black">
@@ -128,16 +132,25 @@ export default function PwaInstallPrompt() {
       </p>
       <p className="mt-2 text-[15px] leading-[1.45] text-[#585858]">
         {showIosPrompt
-          ? "On iPhone, tap Share, then Add to Home Screen."
+          ? "On iPhone, tap the Share button, then choose Add to Home Screen."
           : "Quick access when you want to order again."}
       </p>
 
-      <div className="mt-4 flex gap-3">
+      <div className="mt-4 grid gap-3 sm:flex">
         {installPrompt ? (
           <button
             type="button"
-            className="h-10 border border-black bg-[var(--ast-global-color-0)] px-4 text-[15px] font-semibold uppercase tracking-[0.08em] text-white transition-colors hover:bg-black"
+            className="h-11 border border-black bg-[var(--ast-global-color-0)] px-4 text-[15px] font-semibold uppercase tracking-[0.08em] text-white transition-colors hover:bg-black sm:h-10"
             onClick={handleInstallClick}
+          >
+            Add app
+          </button>
+        ) : showIosPrompt ? (
+          <button
+            type="button"
+            className="h-11 border border-black bg-[var(--ast-global-color-0)] px-4 text-[15px] font-semibold uppercase tracking-[0.08em] text-white transition-colors hover:bg-black sm:h-10"
+            aria-label="Show add app instructions"
+            onClick={handleIosHelpClick}
           >
             Add app
           </button>
@@ -145,7 +158,7 @@ export default function PwaInstallPrompt() {
 
         <button
           type="button"
-          className="h-10 border border-black bg-white px-4 text-[15px] font-semibold uppercase tracking-[0.08em] text-black transition-colors hover:bg-black hover:text-white"
+          className="h-11 border border-black bg-white px-4 text-[15px] font-semibold uppercase tracking-[0.08em] text-black transition-colors hover:bg-black hover:text-white sm:h-10"
           onClick={handleDismiss}
         >
           Not now
