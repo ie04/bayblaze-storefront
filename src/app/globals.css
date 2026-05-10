@@ -387,23 +387,9 @@ body {
 }
 
 .bayblaze-home-contact {
-  background: transparent;
-  clip-path: inset(0);
-  isolation: isolate;
-  overflow: hidden;
-  position: relative;
-}
-
-.bayblaze-home-contact::before {
-  background-image: url("/images/contactus-bg.jpg");
   background-position: center center;
   background-repeat: no-repeat;
   background-size: cover;
-  content: "";
-  inset: 0;
-  pointer-events: none;
-  position: fixed;
-  z-index: 0;
 }
 
 .bayblaze-contact-title {
@@ -532,7 +518,7 @@ body {
   }
 
   .bayblaze-product-carousel .swiper {
-    height: 470px !important;
+    height: 430px !important;
   }
 
   .bayblaze-products-section--bottom-torn::after {

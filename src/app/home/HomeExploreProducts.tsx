@@ -39,7 +39,7 @@ export default function HomeExploreProducts({
           EXPLORE OUR PRODUCTS
         </h2>
 
-        <div className="grid w-full grid-cols-1 grid-rows-[repeat(2,minmax(0,auto))] gap-x-px gap-y-8 sm:gap-y-[60px]">
+        <div className="grid w-full grid-cols-1 grid-rows-[repeat(2,minmax(0,auto))] gap-y-7 sm:gap-y-12">
           {productGroups.map((group) => (
             <ProductPreview
               key={group.title}
@@ -67,10 +67,10 @@ function ProductPreview({
   products: ProductPreviewItem[];
 }) {
   return (
-    <article className="flex w-full flex-col items-center gap-0 border-2 border-black bg-white p-3 text-center sm:p-4">
+    <article className="flex w-full flex-col items-center gap-0 border border-[#d2d8cf] bg-white/85 px-3 py-5 text-center shadow-[0_10px_28px_rgba(0,0,0,0.07)] sm:px-4 sm:py-6">
       <div className="flex w-full flex-col items-center">
         <h3 className="bayblaze-product-preview-title">{title}</h3>
-        <p className="bayblaze-product-preview-description pb-5 sm:pb-[30px]">
+        <p className="bayblaze-product-preview-description pb-4 sm:pb-6">
           {description}
         </p>
 
@@ -84,7 +84,7 @@ function ProductPreview({
 
         <a
           href={href}
-          className="bayblaze-hero-button mt-5 rounded-[3px] border border-black bg-[var(--ast-global-color-0)] px-5 py-2.5 text-center text-white transition-colors hover:bg-black"
+          className="bayblaze-hero-button mt-4 inline-flex min-h-11 w-full items-center justify-center rounded-[3px] border border-black bg-[var(--ast-global-color-0)] px-5 py-2.5 text-center text-white transition-colors hover:bg-black sm:mt-5 sm:w-auto"
         >
           Shop All
         </a>
@@ -144,7 +144,7 @@ function ProductCarouselMock({ products }: { products: ProductPreviewItem[] }) {
   }, []);
 
   return (
-    <div className="bayblaze-product-carousel mx-auto w-full max-w-[1110px] overflow-hidden px-1 pb-4 pt-3 sm:px-6 sm:pb-5 sm:pt-4">
+    <div className="bayblaze-product-carousel mx-auto w-full max-w-[1110px] overflow-visible px-0 pb-4 pt-2 sm:px-6 sm:pb-5 sm:pt-4">
       <Swiper
         modules={[EffectCoverflow]}
         effect="coverflow"
@@ -160,20 +160,31 @@ function ProductCarouselMock({ products }: { products: ProductPreviewItem[] }) {
         onSwiper={handleSwiperReady}
         onSlideChange={(swiper) => setActiveState(getStateIndex(swiper))}
         coverflowEffect={{
-          rotate: 50,
-          stretch: 10,
-          depth: 100,
+          rotate: 18,
+          stretch: 0,
+          depth: 80,
           modifier: 1,
           slideShadows: false,
         }}
-        className={`h-[590px] w-full transition-opacity duration-200 ${
+        breakpoints={{
+          768: {
+            coverflowEffect: {
+              rotate: 50,
+              stretch: 10,
+              depth: 100,
+              modifier: 1,
+              slideShadows: false,
+            },
+          },
+        }}
+        className={`h-[430px] w-full transition-opacity duration-200 sm:h-[590px] ${
           isCarouselReady ? "opacity-100" : "opacity-0"
         }`}
       >
         {loopedProducts.map((product, index) => (
           <SwiperSlide
             key={`${product.name}-${index}`}
-            className="!w-[300px] max-w-[84vw] sm:!w-[360px] sm:max-w-[82vw]"
+            className="!w-[278px] max-w-[76vw] sm:!w-[360px] sm:max-w-[82vw]"
           >
             <ProductSlide product={product} />
           </SwiperSlide>
@@ -205,7 +216,7 @@ function ProductCarouselMock({ products }: { products: ProductPreviewItem[] }) {
 
 function ProductSlide({ product }: { product: ProductPreviewItem }) {
   return (
-    <article className="mx-auto w-full max-w-[360px] overflow-hidden border-2 border-black bg-[var(--ast-global-color-4)] text-left">
+    <article className="mx-auto w-full max-w-[360px] overflow-hidden border border-[#c8d0c4] bg-[var(--ast-global-color-4)] text-left shadow-[0_8px_20px_rgba(0,0,0,0.08)]">
       <div className="relative bg-[var(--ast-global-color-4)]">
         {product.isSale !== false && (
           <span className="absolute left-3 top-3 z-10 bg-[var(--ast-global-color-0)] px-2 py-1 text-xs font-medium text-white">
@@ -215,7 +226,7 @@ function ProductSlide({ product }: { product: ProductPreviewItem }) {
         <a
           href={product.href}
           aria-label={product.name}
-          className="block h-[265px] w-full bg-center bg-no-repeat sm:h-[330px]"
+          className="block h-[245px] w-full bg-center bg-no-repeat sm:h-[330px]"
           style={{
             backgroundImage: `url("${product.image}")`,
             backgroundSize: "auto 86%",
@@ -223,7 +234,7 @@ function ProductSlide({ product }: { product: ProductPreviewItem }) {
         />
       </div>
 
-      <div className="p-3 text-center sm:p-[15px]">
+      <div className="border-t border-[#d9ded6] bg-white/70 p-3 text-center sm:p-[15px]">
         <a href={product.href} className="text-black no-underline">
           <h4 className="text-[16px] font-medium leading-[1.3] sm:text-[18px]">
             {product.name}
