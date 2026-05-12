@@ -10,6 +10,11 @@ const nextConfig: NextConfig = {
         pathname: "/wp-content/uploads/**",
       },
       {
+        protocol: "https",
+        hostname: "api.bayblaze.net",
+        pathname: "/static/**",
+      },
+      {
         protocol: "http",
         hostname: "localhost",
         port: "9000",

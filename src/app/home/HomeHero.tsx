@@ -1,3 +1,5 @@
+import HeroSearch from "@/app/home/HeroSearch";
+
 export default function HomeHero() {
   return (
     <section className="relative min-h-[720px] overflow-hidden border-b-2 border-black bg-white sm:min-h-screen">
@@ -22,12 +24,7 @@ export default function HomeHero() {
           TAMPA BAY MOBILE SMOKE SHOP
         </h2>
 
-        <a
-          href="/shop"
-          className="bayblaze-hero-button mt-[33px] rounded-[3px] border border-black bg-[var(--ast-global-color-0)] px-5 py-2.5 text-center text-white transition-colors hover:bg-black"
-        >
-          SHOP
-        </a>
+        <HeroSearch />
       </div>
     </section>
   );
