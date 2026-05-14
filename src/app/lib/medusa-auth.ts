@@ -52,6 +52,28 @@ const backendUrl =
 
 const publishableKey = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY;
 
+function normalizeMedusaAssetUrl(url?: string | null) {
+  if (!url) {
+    return url;
+  }
+
+  if (url.startsWith("/")) {
+    return `${backendUrl}${url}`;
+  }
+
+  return url.replace(/^https?:\/\/localhost:9000(?=\/)/, backendUrl);
+}
+
+function normalizeCustomerOrder(order: CustomerOrder): CustomerOrder {
+  return {
+    ...order,
+    items: order.items?.map((item) => ({
+      ...item,
+      thumbnail: normalizeMedusaAssetUrl(item.thumbnail),
+    })),
+  };
+}
+
 function getHeaders(options: RequestOptions) {
   const headers = new Headers(options.headers);
 
@@ -169,5 +191,5 @@ export async function retrieveCustomerOrders(token: string) {
     },
   );
 
-  return data.orders;
+  return data.orders.map(normalizeCustomerOrder);
 }

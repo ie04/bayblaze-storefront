@@ -8,6 +8,8 @@ import type {
 } from "@/app/lib/medusa-auth";
 
 const RECENT_ORDER_STORAGE_KEY = "bayblaze-recent-order";
+const medusaBackendUrl =
+  process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL?.replace(/\/$/, "") ?? "";
 
 type OrdersResponse = {
   orders?: CustomerOrder[];
@@ -239,6 +241,7 @@ function OrderItemRow({
   currencyCode?: string | null;
   item: CustomerOrderItem;
 }) {
+  const thumbnail = normalizeOrderThumbnail(item.thumbnail);
   const itemTotal =
     typeof item.total === "number"
       ? item.total
@@ -248,9 +251,9 @@ function OrderItemRow({
 
   return (
     <li className="flex gap-3 border border-[#eeeeee] bg-[#f7f6f2] p-3">
-      {item.thumbnail ? (
+      {thumbnail ? (
         <img
-          src={item.thumbnail}
+          src={thumbnail}
           alt={getOrderItemTitle(item)}
           className="size-14 shrink-0 border border-[#e3ded5] bg-white object-contain p-1"
         />
@@ -416,4 +419,18 @@ function getVariantLabel(item: CustomerOrderItem) {
   }
 
   return item.variant_title;
+}
+
+function normalizeOrderThumbnail(thumbnail?: string | null) {
+  if (!thumbnail) {
+    return "";
+  }
+
+  if (thumbnail.startsWith("/")) {
+    return medusaBackendUrl ? `${medusaBackendUrl}${thumbnail}` : thumbnail;
+  }
+
+  return medusaBackendUrl
+    ? thumbnail.replace(/^https?:\/\/localhost:9000(?=\/)/, medusaBackendUrl)
+    : thumbnail;
 }
