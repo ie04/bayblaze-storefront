@@ -368,6 +368,10 @@ function isCustomerOrder(value: unknown): value is CustomerOrder {
 }
 
 function formatOrderNumber(order: CustomerOrder) {
+  if (order.custom_display_id) {
+    return `#${order.custom_display_id}`;
+  }
+
   if (order.display_id !== null && order.display_id !== undefined) {
     return `#${order.display_id}`;
   }

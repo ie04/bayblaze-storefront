@@ -91,8 +91,8 @@ export default function CheckoutPageClient({
       }
 
       setOrderMessage(
-        data.order?.display_id
-          ? `Order #${data.order.display_id} was placed.`
+        getOrderReference(data.order)
+          ? `Order #${getOrderReference(data.order)} was placed.`
           : "Your order was placed.",
       );
     } catch {
@@ -461,6 +461,10 @@ function saveRecentOrder(order: CustomerOrder) {
   } catch {
     // The account page can still refresh orders directly from Medusa.
   }
+}
+
+function getOrderReference(order?: CustomerOrder) {
+  return order?.custom_display_id ?? order?.display_id;
 }
 
 function formatMoney(amount: number) {

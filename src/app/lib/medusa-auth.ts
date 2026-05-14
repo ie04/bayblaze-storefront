@@ -22,6 +22,7 @@ export type CustomerOrderItem = {
 export type CustomerOrder = {
   id: string;
   display_id?: number | string | null;
+  custom_display_id?: string | null;
   status?: string | null;
   total?: number | null;
   currency_code?: string | null;
@@ -181,7 +182,8 @@ export async function retrieveCustomer(token: string) {
 export async function retrieveCustomerOrders(token: string) {
   const params = new URLSearchParams({
     limit: "10",
-    fields: "id,display_id,status,total,currency_code,created_at,*items",
+    fields:
+      "id,display_id,custom_display_id,status,total,currency_code,created_at,*items",
   });
   const data = await medusaRequest<MedusaOrdersResponse>(
     `/store/orders?${params.toString()}`,

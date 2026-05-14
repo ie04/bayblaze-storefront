@@ -47,6 +47,7 @@ type MedusaCart = {
 type MedusaOrder = {
   id: string;
   display_id?: number;
+  custom_display_id?: string;
   email?: string;
 };
 
