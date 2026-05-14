@@ -20,6 +20,7 @@ export default function CheckoutPageClient({
   const { items, cartCount, clearCart, removeItem } = useCart();
   const [checkoutError, setCheckoutError] = useState("");
   const [orderMessage, setOrderMessage] = useState("");
+  const [orderTrackingHref, setOrderTrackingHref] = useState("");
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
 
   const subtotal = useMemo(() => {
@@ -40,6 +41,7 @@ export default function CheckoutPageClient({
 
     setCheckoutError("");
     setOrderMessage("");
+    setOrderTrackingHref("");
     setIsPlacingOrder(true);
 
     try {
@@ -94,6 +96,13 @@ export default function CheckoutPageClient({
         getOrderReference(data.order)
           ? `Order #${getOrderReference(data.order)} was placed.`
           : "Your order was placed.",
+      );
+      setOrderTrackingHref(
+        recentOrder
+          ? `/orders/${encodeURIComponent(
+              String(recentOrder.custom_display_id ?? recentOrder.id),
+            )}`
+          : "",
       );
     } catch {
       setCheckoutError("Unable to reach checkout right now. Please try again.");
@@ -249,6 +258,17 @@ export default function CheckoutPageClient({
           {orderMessage ? (
             <p className="border border-[#c8d8bd] bg-[#f5faf0] px-4 py-3 text-[16px] font-semibold leading-[1.5] text-[var(--ast-global-color-0)]">
               {orderMessage}
+              {orderTrackingHref ? (
+                <>
+                  {" "}
+                  <Link
+                    className="underline underline-offset-4"
+                    href={orderTrackingHref}
+                  >
+                    Track it here.
+                  </Link>
+                </>
+              ) : null}
             </p>
           ) : null}
 

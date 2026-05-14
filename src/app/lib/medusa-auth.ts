@@ -19,14 +19,39 @@ export type CustomerOrderItem = {
   thumbnail?: string | null;
 };
 
+export type CustomerOrderAddress = {
+  first_name?: string | null;
+  last_name?: string | null;
+  address_1?: string | null;
+  address_2?: string | null;
+  city?: string | null;
+  province?: string | null;
+  postal_code?: string | null;
+  country_code?: string | null;
+  phone?: string | null;
+};
+
+export type CustomerOrderShippingMethod = {
+  id?: string | null;
+  name?: string | null;
+  amount?: number | null;
+  total?: number | null;
+};
+
 export type CustomerOrder = {
   id: string;
   display_id?: number | string | null;
   custom_display_id?: string | null;
+  email?: string | null;
   status?: string | null;
+  payment_status?: string | null;
+  fulfillment_status?: string | null;
   total?: number | null;
   currency_code?: string | null;
   created_at?: string | null;
+  shipping_address?: CustomerOrderAddress | null;
+  billing_address?: CustomerOrderAddress | null;
+  shipping_methods?: CustomerOrderShippingMethod[];
   items?: CustomerOrderItem[];
 };
 
@@ -42,6 +67,10 @@ type MedusaOrdersResponse = {
   orders: CustomerOrder[];
 };
 
+type MedusaOrderResponse = {
+  order: CustomerOrder;
+};
+
 type RequestOptions = RequestInit & {
   token?: string;
   usePublishableKey?: boolean;
@@ -52,6 +81,20 @@ const backendUrl =
   "http://localhost:9000";
 
 const publishableKey = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY;
+const orderFields = [
+  "id",
+  "display_id",
+  "custom_display_id",
+  "email",
+  "status",
+  "total",
+  "currency_code",
+  "created_at",
+  "*items",
+  "*shipping_address",
+  "*billing_address",
+  "*shipping_methods",
+].join(",");
 
 function normalizeMedusaAssetUrl(url?: string | null) {
   if (!url) {
@@ -182,8 +225,7 @@ export async function retrieveCustomer(token: string) {
 export async function retrieveCustomerOrders(token: string) {
   const params = new URLSearchParams({
     limit: "10",
-    fields:
-      "id,display_id,custom_display_id,status,total,currency_code,created_at,*items",
+    fields: orderFields,
   });
   const data = await medusaRequest<MedusaOrdersResponse>(
     `/store/orders?${params.toString()}`,
@@ -194,4 +236,62 @@ export async function retrieveCustomerOrders(token: string) {
   );
 
   return data.orders.map(normalizeCustomerOrder);
+}
+
+export async function retrieveOrder(orderId: string, token?: string) {
+  const params = new URLSearchParams({
+    fields: orderFields,
+  });
+  const data = await medusaRequest<MedusaOrderResponse>(
+    `/store/orders/${encodeURIComponent(orderId)}?${params.toString()}`,
+    {
+      token,
+      usePublishableKey: true,
+    },
+  );
+
+  return normalizeCustomerOrder(data.order);
+}
+
+export async function retrieveOrderByReference(
+  orderReference: string,
+  token?: string,
+) {
+  try {
+    const data = await medusaRequest<MedusaOrderResponse>(
+      `/store/order-lookup/${encodeURIComponent(orderReference)}`,
+      {
+        usePublishableKey: true,
+      },
+    );
+
+    return normalizeCustomerOrder(data.order);
+  } catch {
+    // Fall through to Medusa's native order retrieve route for deployments
+    // that do not have the public lookup endpoint yet.
+  }
+
+  try {
+    return await retrieveOrder(orderReference, token);
+  } catch (error) {
+    if (!token) {
+      throw error;
+    }
+
+    const orders = await retrieveCustomerOrders(token);
+    const order = orders.find((customerOrder) => {
+      return (
+        customerOrder.id === orderReference ||
+        customerOrder.custom_display_id?.toLowerCase() ===
+          orderReference.toLowerCase() ||
+        String(customerOrder.display_id) === orderReference
+      );
+    });
+
+    if (!order) {
+      throw error;
+    }
+
+    return order;
+  }
 }
