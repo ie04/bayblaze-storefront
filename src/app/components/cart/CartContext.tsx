@@ -11,6 +11,8 @@ import {
 
 export type CartItem = {
   id: string;
+  variantId?: string;
+  productHandle?: string;
   name: string;
   flavor?: string;
   image?: string;

@@ -1,9 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useState } from "react";
+import {
+  type FormEvent,
+  type RefObject,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 
 import { useCart } from "@/app/components/cart/CartContext";
+import styles from "./Header.module.css";
 
 type HeaderProps = {
   searchAction?: string;
@@ -21,11 +28,12 @@ type DrawerItem = {
 };
 
 export default function Header({
-  searchAction = "/search",
+  searchAction = "/shop",
   checkoutHref = "/checkout",
   accountHref = "/account",
 }: HeaderProps) {
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isSearchOverlayOpen, setIsSearchOverlayOpen] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   const {
     items,
@@ -45,6 +53,32 @@ export default function Header({
     }
   }
 
+  useEffect(() => {
+    if (!isSearchOverlayOpen) {
+      return;
+    }
+
+    const previousOverflow = document.body.style.overflow;
+    const focusTimer = window.setTimeout(() => {
+      searchInputRef.current?.focus();
+    }, 50);
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setIsSearchOverlayOpen(false);
+      }
+    }
+
+    document.body.style.overflow = "hidden";
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.clearTimeout(focusTimer);
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isSearchOverlayOpen]);
+
   return (
     <header className="absolute inset-x-0 top-0 z-50 bg-transparent text-black">
       <div className="flex h-[68px] items-center justify-between gap-3 pl-[var(--bayblaze-header-x)] pr-[var(--bayblaze-header-x)] md:h-[80px] md:gap-4 md:pr-[29px]">
@@ -56,49 +90,26 @@ export default function Header({
           BAYBLAZE
         </Link>
 
-        <div className="flex min-w-0 items-center justify-end gap-[13px]">
+        <div className={styles.actions}>
+          <Link
+            href="/account"
+            className={styles.fulfillment}
+            aria-label="Track your order"
+          >
+            <TruckIcon className={styles.fulfillmentIcon} />
+            <span>Track Order</span>
+          </Link>
+
           <button
             type="button"
-            className="flex size-[44px] items-center justify-center bg-black text-white shadow-sm transition-colors hover:bg-[var(--ast-global-color-0)] md:hidden"
-            aria-label="Open product search"
-            aria-expanded={isSearchOpen}
-            onClick={() => setIsSearchOpen((isOpen) => !isOpen)}
+            className={styles.searchTrigger}
+            aria-label="Search products"
+            aria-expanded={isSearchOverlayOpen}
+            aria-controls="bayblaze-header-search-overlay"
+            onClick={() => setIsSearchOverlayOpen(true)}
           >
-            <SearchIcon className="size-[24px]" />
+            <SearchIcon className={styles.searchIcon} />
           </button>
-
-          <form
-            action={searchAction}
-            className={`${
-              isSearchOpen
-                ? "absolute left-[var(--bayblaze-header-x)] right-[var(--bayblaze-header-x)] top-[calc(100%-12px)] flex"
-                : "hidden"
-            } h-10 items-stretch md:static md:mr-[8.5px] md:flex md:w-[230px]`}
-            method="get"
-            role="search"
-            onSubmit={handleSearch}
-          >
-            <label className="sr-only" htmlFor="header-product-search">
-              Search products
-            </label>
-
-            <input
-              id="header-product-search"
-              name="q"
-              type="search"
-              placeholder="Search Products..."
-              autoComplete="off"
-              className="min-w-0 flex-1 border border-[#e7e7e7] bg-white px-[21px] text-[16px] italic text-neutral-900 shadow-sm outline-none placeholder:text-[#9b9b9b] focus:border-black"
-            />
-
-            <button
-              type="submit"
-              className="bayblaze-search-submit flex w-[46px] items-center justify-center bg-black text-white transition-colors hover:bg-[var(--ast-global-color-0)]"
-              aria-label="Search"
-            >
-              <SearchIcon className="size-5" />
-            </button>
-          </form>
 
           <button
             type="button"
@@ -128,6 +139,15 @@ export default function Header({
         </div>
       </div>
 
+      {isSearchOverlayOpen ? (
+        <HeaderSearchOverlay
+          inputRef={searchInputRef}
+          searchAction={searchAction}
+          onClose={() => setIsSearchOverlayOpen(false)}
+          onSubmit={handleSearch}
+        />
+      ) : null}
+
       <CartDrawer
         items={items}
         cartCount={cartCount}
@@ -137,6 +157,109 @@ export default function Header({
         onRemoveItem={removeItem}
       />
     </header>
+  );
+}
+
+const headerSearchSuggestions = [
+  "RAZ",
+  "Lost Mary",
+  "ZYN",
+  "vapes",
+  "wraps",
+  "cones",
+  "lighters",
+  "rolling papers",
+];
+
+function HeaderSearchOverlay({
+  inputRef,
+  searchAction,
+  onClose,
+  onSubmit,
+}: {
+  inputRef: RefObject<HTMLInputElement | null>;
+  searchAction: string;
+  onClose: () => void;
+  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+}) {
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    onSubmit(event);
+
+    if (!event.defaultPrevented) {
+      onClose();
+    }
+  }
+
+  function getSuggestionHref(term: string) {
+    return `${searchAction}?q=${encodeURIComponent(term)}`;
+  }
+
+  return (
+    <div
+      id="bayblaze-header-search-overlay"
+      className={styles.searchOverlay}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Search products"
+    >
+      <button
+        type="button"
+        className={styles.searchBackdrop}
+        aria-label="Close search"
+        onClick={onClose}
+      />
+
+      <div className={styles.searchPanel}>
+        <form
+          action={searchAction}
+          className={styles.searchOverlayForm}
+          method="get"
+          role="search"
+          onSubmit={handleSubmit}
+        >
+          <label className="sr-only" htmlFor="header-overlay-product-search">
+            Search products
+          </label>
+
+          <SearchIcon className={styles.searchOverlayIcon} />
+
+          <input
+            ref={inputRef}
+            id="header-overlay-product-search"
+            name="q"
+            type="search"
+            autoComplete="off"
+            className={styles.searchOverlayInput}
+            placeholder="Search vapes, wraps, cones..."
+          />
+
+          <button
+            type="button"
+            className={styles.searchOverlayClose}
+            aria-label="Close search"
+            onClick={onClose}
+          >
+            ×
+          </button>
+        </form>
+
+        <div className={styles.searchSuggestions}>
+          <p className={styles.searchSuggestionsTitle}>Popular searches</p>
+          <div className={styles.searchSuggestionList}>
+            {headerSearchSuggestions.map((term) => (
+              <Link
+                key={term}
+                href={getSuggestionHref(term)}
+                className={styles.searchSuggestion}
+                onClick={onClose}
+              >
+                {term}
+              </Link>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -298,12 +421,37 @@ function SearchIcon({ className }: { className?: string }) {
     <svg
       aria-hidden="true"
       className={className}
-      fill="currentColor"
-      viewBox="0 0 51.539 51.361"
+      fill="none"
+      stroke="currentColor"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="1.8"
+      viewBox="0 0 24 24"
       xmlns="http://www.w3.org/2000/svg"
-      xmlSpace="preserve"
     >
-      <path d="M51.539,49.356L37.247,35.065c3.273-3.74,5.272-8.623,5.272-13.983c0-11.742-9.518-21.26-21.26-21.26 S0,9.339,0,21.082s9.518,21.26,21.26,21.26c5.361,0,10.244-1.999,13.983-5.272l14.292,14.292L51.539,49.356z M2.835,21.082 c0-10.176,8.249-18.425,18.425-18.425s18.425,8.249,18.425,18.425S31.436,39.507,21.26,39.507S2.835,31.258,2.835,21.082z" />
+      <circle cx="11" cy="11" r="8" />
+      <path d="m21 21-4.35-4.35" />
+    </svg>
+  );
+}
+
+function TruckIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      aria-hidden="true"
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="1.6"
+      viewBox="0 0 24 24"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <rect x="1" y="3" width="15" height="13" />
+      <polygon points="16 8 20 8 23 11 23 16 16 16 16 8" />
+      <circle cx="5.5" cy="18.5" r="2.5" />
+      <circle cx="18.5" cy="18.5" r="2.5" />
     </svg>
   );
 }

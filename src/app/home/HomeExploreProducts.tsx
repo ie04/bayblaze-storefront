@@ -10,36 +10,21 @@ import type { ProductPreviewItem } from "@/app/lib/medusa-products";
 
 export default function HomeExploreProducts({
   vapeProducts,
-  accessoryProducts,
 }: {
   vapeProducts: ProductPreviewItem[];
-  accessoryProducts: ProductPreviewItem[];
 }) {
   const productGroups = [
     {
-      title: "Vapes",
+      title: "Best Sellers",
       description: "Fast Local Delivery on Top Selling Vape Brands",
       href: "/product-category/vapes",
       products: vapeProducts,
     },
-    {
-      title: "Accessories",
-      description: "Quality Smoking Accessories for Everyday Needs",
-      href: "/shop",
-      products: accessoryProducts,
-    },
   ];
 
   return (
-    <section className="bayblaze-products-section bg-[#dfe8d8]">
+    <section className="bayblaze-products-section bg-[#F7F6F2]">
       <div className="mx-auto flex w-full max-w-[1240px] flex-col px-4 py-12 sm:px-5 sm:py-16">
-        <div className="flex flex-col gap-3 border-b-2 border-black pb-5 sm:flex-row sm:items-end sm:justify-between">
-          <h2 className="bayblaze-section-heading">EXPLORE PRODUCTS</h2>
-          <p className="max-w-[430px] text-[16px] font-medium leading-[1.55] text-[#3f4d39] sm:text-right sm:text-[17px]">
-            Local delivery staples, organized for quick browsing.
-          </p>
-        </div>
-
         <div className="divide-y divide-[#a5b29d]">
           {productGroups.map((group) => (
             <ProductPreview

@@ -1,19 +1,26 @@
 "use client";
 
-import type { ReactNode } from "react";
-import { useMemo } from "react";
+import type { FormEvent, ReactNode } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 import Header from "@/app/components/layout/Header";
-import { useCart } from "@/app/components/cart/CartContext";
-import type { Customer } from "@/app/lib/medusa-auth";
+import { useCart, type CartItem } from "@/app/components/cart/CartContext";
+import type { Customer, CustomerOrder } from "@/app/lib/medusa-auth";
+
+const RECENT_ORDER_STORAGE_KEY = "bayblaze-recent-order";
 
 export default function CheckoutPageClient({
   customer,
 }: {
   customer?: Customer;
 }) {
-  const { items, cartCount, removeItem } = useCart();
+  const router = useRouter();
+  const { items, cartCount, clearCart, removeItem } = useCart();
+  const [checkoutError, setCheckoutError] = useState("");
+  const [orderMessage, setOrderMessage] = useState("");
+  const [isPlacingOrder, setIsPlacingOrder] = useState(false);
 
   const subtotal = useMemo(() => {
     return items.reduce((total, item) => {
@@ -22,6 +29,78 @@ export default function CheckoutPageClient({
   }, [items]);
 
   const hasItems = items.length > 0;
+  const canPlaceOrder = hasItems && !isPlacingOrder;
+
+  async function handlePlaceOrder(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (!hasItems || isPlacingOrder) {
+      return;
+    }
+
+    setCheckoutError("");
+    setOrderMessage("");
+    setIsPlacingOrder(true);
+
+    try {
+      const formData = new FormData(event.currentTarget);
+      const response = await fetch("/api/checkout/order", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          customer: {
+            first_name: formData.get("first_name"),
+            last_name: formData.get("last_name"),
+            email: formData.get("email"),
+            phone: formData.get("phone"),
+            address: formData.get("address"),
+            city: formData.get("city"),
+            state: formData.get("state"),
+            zip: formData.get("zip"),
+            notes: formData.get("notes"),
+          },
+          items,
+        }),
+      });
+
+      const data = (await response.json().catch(() => ({}))) as {
+        error?: string;
+        order?: CustomerOrder;
+      };
+
+      if (!response.ok) {
+        setCheckoutError(
+          data.error ??
+            "Unable to place your order right now. Please try again.",
+        );
+        return;
+      }
+
+      const recentOrder = data.order?.id
+        ? getRecentOrderSnapshot(data.order, subtotal, items)
+        : null;
+
+      clearCart();
+
+      if (customer && recentOrder) {
+        saveRecentOrder(recentOrder);
+        router.push(`/account?order=${encodeURIComponent(recentOrder.id)}#orders`);
+        return;
+      }
+
+      setOrderMessage(
+        data.order?.display_id
+          ? `Order #${data.order.display_id} was placed.`
+          : "Your order was placed.",
+      );
+    } catch {
+      setCheckoutError("Unable to reach checkout right now. Please try again.");
+    } finally {
+      setIsPlacingOrder(false);
+    }
+  }
 
   return (
     <main className="bayblaze-checkout-page min-h-screen bg-white text-[#585858]">
@@ -58,18 +137,7 @@ export default function CheckoutPageClient({
       </section>
 
       <section className="mx-auto grid w-full max-w-[1180px] gap-7 px-4 py-8 sm:px-5 sm:py-10 lg:grid-cols-[minmax(0,1fr)_360px]">
-        <form className="grid gap-8" action="/checkout" method="post">
-          <input
-            type="hidden"
-            name="cart_items"
-            value={JSON.stringify(items)}
-          />
-          <input
-            type="hidden"
-            name="cart_subtotal"
-            value={subtotal.toFixed(2)}
-          />
-
+        <form className="grid gap-8" onSubmit={handlePlaceOrder}>
           <CheckoutPanel title="Contact information">
             {customer ? (
               <p className="mb-5 border border-[#d9d9d9] bg-[var(--ast-global-color-4)] px-4 py-3 text-[16px] font-medium leading-[1.5] text-black">
@@ -93,35 +161,54 @@ export default function CheckoutPageClient({
                 label="First name"
                 name="first_name"
                 defaultValue={customer?.first_name ?? undefined}
+                required
               />
               <CheckoutField
                 label="Last name"
                 name="last_name"
                 defaultValue={customer?.last_name ?? undefined}
+                required
               />
               <CheckoutField
                 label="Email"
                 name="email"
                 type="email"
                 defaultValue={customer?.email}
+                required
               />
               <CheckoutField
                 label="Phone"
                 name="phone"
                 type="tel"
                 defaultValue={customer?.phone ?? undefined}
+                required
               />
             </div>
           </CheckoutPanel>
 
           <CheckoutPanel title="Delivery address">
             <div className="grid gap-5">
-              <CheckoutField label="Street address" name="address" />
+              <CheckoutField label="Street address" name="address" required />
 
               <div className="grid gap-5 sm:grid-cols-[minmax(0,1fr)_110px_110px]">
-                <CheckoutField label="City" name="city" defaultValue="Tampa" />
-                <CheckoutField label="State" name="state" defaultValue="FL" />
-                <CheckoutField label="ZIP" name="zip" inputMode="numeric" />
+                <CheckoutField
+                  label="City"
+                  name="city"
+                  defaultValue="Tampa"
+                  required
+                />
+                <CheckoutField
+                  label="State"
+                  name="state"
+                  defaultValue="FL"
+                  required
+                />
+                <CheckoutField
+                  label="ZIP"
+                  name="zip"
+                  inputMode="numeric"
+                  required
+                />
               </div>
 
               <label className="grid gap-2 text-[15px] font-semibold text-black sm:text-[16px]">
@@ -153,12 +240,24 @@ export default function CheckoutPageClient({
             </p>
           ) : null}
 
+          {checkoutError ? (
+            <p className="border border-red-200 bg-red-50 px-4 py-3 text-[16px] font-medium leading-[1.5] text-red-700">
+              {checkoutError}
+            </p>
+          ) : null}
+
+          {orderMessage ? (
+            <p className="border border-[#c8d8bd] bg-[#f5faf0] px-4 py-3 text-[16px] font-semibold leading-[1.5] text-[var(--ast-global-color-0)]">
+              {orderMessage}
+            </p>
+          ) : null}
+
           <button
             type="submit"
-            disabled={!hasItems}
+            disabled={!canPlaceOrder}
             className="bayblaze-hero-button h-12 w-full rounded-[3px] bg-[var(--ast-global-color-0)] text-white transition-colors hover:bg-black disabled:cursor-not-allowed disabled:bg-[#b9c8af] sm:w-[260px]"
           >
-            PLACE ORDER
+            {isPlacingOrder ? "PLACING ORDER..." : "PLACE ORDER"}
           </button>
         </form>
 
@@ -285,12 +384,14 @@ function CheckoutField({
   inputMode,
   label,
   name,
+  required = false,
   type = "text",
 }: {
   defaultValue?: string;
   inputMode?: "numeric";
   label: string;
   name: string;
+  required?: boolean;
   type?: string;
 }) {
   return (
@@ -301,6 +402,7 @@ function CheckoutField({
         defaultValue={defaultValue}
         inputMode={inputMode}
         name={name}
+        required={required}
         type={type}
       />
     </label>
@@ -315,6 +417,50 @@ function parsePrice(price?: string) {
   const number = Number(price.replace(/[^0-9.]/g, ""));
 
   return Number.isFinite(number) ? number : 0;
+}
+
+function getRecentOrderSnapshot(
+  order: CustomerOrder,
+  subtotal: number,
+  items: CartItem[],
+): CustomerOrder {
+  return {
+    ...order,
+    created_at: order.created_at ?? new Date().toISOString(),
+    currency_code: order.currency_code ?? "usd",
+    status: order.status ?? "pending",
+    total: typeof order.total === "number" ? order.total : subtotal,
+    items: order.items?.length
+      ? order.items
+      : items.map((item) => {
+          const unitPrice = parsePrice(item.price);
+
+          return {
+            id: item.id,
+            product_title: item.name,
+            quantity: item.quantity,
+            thumbnail: item.image,
+            total: unitPrice * item.quantity,
+            unit_price: unitPrice,
+            variant_title: item.flavor,
+          };
+        }),
+  };
+}
+
+function saveRecentOrder(order: CustomerOrder) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    window.sessionStorage.setItem(
+      RECENT_ORDER_STORAGE_KEY,
+      JSON.stringify(order),
+    );
+  } catch {
+    // The account page can still refresh orders directly from Medusa.
+  }
 }
 
 function formatMoney(amount: number) {

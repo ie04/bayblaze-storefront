@@ -8,11 +8,23 @@ export const metadata: Metadata = {
   description: "Shop Bayblaze vapes, cones, and smoking accessories.",
 };
 
-export default function Page() {
+type ShopPageProps = {
+  searchParams?: Promise<{
+    q?: string | string[];
+  }>;
+};
+
+export default async function Page({ searchParams }: ShopPageProps) {
+  const params = searchParams ? await searchParams : {};
+  const queryParam = params.q;
+  const searchQuery = Array.isArray(queryParam)
+    ? queryParam[0]
+    : queryParam;
+
   return (
     <main className="min-h-screen bg-white">
       <Header />
-      <ShopPageClient />
+      <ShopPageClient initialSearchQuery={searchQuery ?? ""} />
     </main>
   );
 }

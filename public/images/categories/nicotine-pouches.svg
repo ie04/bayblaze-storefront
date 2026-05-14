@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" role="img" aria-labelledby="title desc">
+  <title id="title">Minimal nicotine pouches placeholder</title>
+  <desc id="desc">A clean round pouch tin and soft pouch shapes on a neutral background.</desc>
+  <rect width="600" height="600" fill="#f3f1ea"/>
+  <circle cx="132" cy="128" r="76" fill="#e5efdf"/>
+  <circle cx="488" cy="482" r="90" fill="#efe6d7"/>
+  <circle cx="300" cy="288" r="142" fill="#ffffff" stroke="#2d6149" stroke-width="9"/>
+  <circle cx="300" cy="288" r="100" fill="#f7f6f2" stroke="#d9d2c5" stroke-width="7"/>
+  <path d="M234 286h132" stroke="#2d6149" stroke-width="12" stroke-linecap="round"/>
+  <path d="M260 326h80" stroke="#2d6149" stroke-width="8" stroke-linecap="round"/>
+  <g fill="#ffffff" stroke="#2d6149" stroke-linejoin="round" stroke-width="7">
+    <path d="M178 392c42-18 84-18 126 0 12 5 12 26 0 31-42 18-84 18-126 0-12-5-12-26 0-31z"/>
+    <path d="M314 410c36-16 72-16 108 0 11 5 11 24 0 29-36 16-72 16-108 0-11-5-11-24 0-29z"/>
+  </g>
+</svg>

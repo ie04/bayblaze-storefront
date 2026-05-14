@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" role="img" aria-labelledby="title desc">
+  <title id="title">Minimal pre-rolled cones placeholder</title>
+  <desc id="desc">Three simple pre-rolled cones arranged on a neutral background.</desc>
+  <rect width="600" height="600" fill="#f3f1ea"/>
+  <circle cx="470" cy="468" r="92" fill="#e5efdf"/>
+  <circle cx="122" cy="132" r="84" fill="#efe6d7"/>
+  <g fill="#ffffff" stroke="#2d6149" stroke-linejoin="round" stroke-width="9">
+    <path d="M198 178 318 444l-58 18-86-278z"/>
+    <path d="M302 142 360 448h-60l-22-304z"/>
+    <path d="M412 188 346 462l-58-18 100-262z"/>
+  </g>
+  <g stroke="#d9d2c5" stroke-linecap="round" stroke-width="8">
+    <path d="M204 228 280 214"/>
+    <path d="M294 206h72"/>
+    <path d="M374 226l-72-18"/>
+  </g>
+  <path d="M198 472h214" stroke="#d9d2c5" stroke-linecap="round" stroke-width="10"/>
+</svg>

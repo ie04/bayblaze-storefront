@@ -1,0 +1,262 @@
+.actions {
+  align-items: center;
+  display: flex;
+  gap: 13px;
+  justify-content: flex-end;
+  min-width: 0;
+}
+
+.fulfillment {
+  align-items: center;
+  background: rgba(250, 247, 242, 0.68);
+  border: 1px solid #e8e2d8;
+  border-radius: 999px;
+  color: var(--ast-global-color-1);
+  display: none;
+  font-family: var(--font-jost), Jost, Arial, sans-serif;
+  font-size: 0.92rem;
+  font-weight: 600;
+  gap: 0.48rem;
+  line-height: 1;
+  min-height: 40px;
+  padding: 0.48rem 0.92rem;
+  text-decoration: none;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    color 160ms ease,
+    transform 160ms ease;
+  white-space: nowrap;
+}
+
+.fulfillment:hover,
+.fulfillment:focus-visible {
+  background: rgba(255, 255, 255, 0.86);
+  border-color: var(--ast-global-color-1);
+  box-shadow: 0 5px 14px rgba(27, 58, 45, 0.07);
+  color: var(--ast-global-color-1);
+  transform: translateY(-1px);
+}
+
+.fulfillment:focus-visible,
+.searchTrigger:focus-visible,
+.searchOverlayClose:focus-visible,
+.searchSuggestion:focus-visible {
+  outline: 2px solid var(--ast-global-color-1);
+  outline-offset: 3px;
+}
+
+.fulfillmentIcon {
+  height: 21px;
+  width: 21px;
+}
+
+.searchTrigger {
+  align-items: center;
+  border-radius: 999px;
+  color: #000000;
+  display: flex;
+  height: 44px;
+  justify-content: center;
+  transition:
+    background-color 160ms ease,
+    color 160ms ease,
+    transform 160ms ease;
+  width: 44px;
+}
+
+.searchTrigger:hover {
+  background: rgba(250, 247, 242, 0.78);
+  color: var(--ast-global-color-1);
+  transform: translateY(-1px);
+}
+
+.searchIcon {
+  height: 26px;
+  width: 26px;
+}
+
+.searchOverlay {
+  align-items: flex-start;
+  display: flex;
+  inset: 0;
+  justify-content: center;
+  padding: clamp(1rem, 4vw, 3.75rem) 1rem;
+  position: fixed;
+  z-index: 120;
+}
+
+.searchBackdrop {
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(8px);
+  inset: 0;
+  position: absolute;
+}
+
+.searchPanel {
+  animation: search-panel-enter 220ms ease-out both;
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  border-radius: 20px;
+  box-shadow:
+    0 24px 80px rgba(0, 0, 0, 0.18),
+    0 0 0 1px rgba(0, 0, 0, 0.04);
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 5rem);
+  max-width: 860px;
+  overflow: hidden;
+  position: relative;
+  width: 100%;
+}
+
+.searchOverlayForm {
+  align-items: center;
+  border-bottom: 1px solid #e8e2d8;
+  display: flex;
+  gap: 0.75rem;
+  min-height: 74px;
+  padding: 1rem 1.25rem;
+}
+
+.searchOverlayIcon {
+  color: #6b7567;
+  flex: 0 0 auto;
+  height: 24px;
+  width: 24px;
+}
+
+.searchOverlayInput {
+  background: transparent;
+  border: 0;
+  color: #1f2f1b;
+  flex: 1;
+  font-family: var(--font-jost), Jost, Arial, sans-serif;
+  font-size: clamp(1rem, 2.2vw, 1.18rem);
+  font-weight: 500;
+  line-height: 1.3;
+  min-width: 0;
+  outline: none;
+  padding: 0;
+}
+
+.searchOverlayInput::placeholder {
+  color: #8a9187;
+}
+
+.searchOverlayClose {
+  align-items: center;
+  border-radius: 999px;
+  color: #6b7567;
+  display: flex;
+  flex: 0 0 auto;
+  font-size: 28px;
+  height: 40px;
+  justify-content: center;
+  line-height: 1;
+  transition:
+    background-color 160ms ease,
+    color 160ms ease;
+  width: 40px;
+}
+
+.searchOverlayClose:hover {
+  background: #f4f1ea;
+  color: var(--ast-global-color-1);
+}
+
+.searchSuggestions {
+  padding: 1rem 1.25rem 1.25rem;
+}
+
+.searchSuggestionsTitle {
+  color: #53614e;
+  font-family: var(--font-jost), Jost, Arial, sans-serif;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  margin: 0 0 0.75rem;
+  text-transform: uppercase;
+}
+
+.searchSuggestionList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.searchSuggestion {
+  background: #faf7f2;
+  border: 1px solid #e8e2d8;
+  border-radius: 999px;
+  color: #2d6149;
+  font-family: var(--font-jost), Jost, Arial, sans-serif;
+  font-size: 0.9rem;
+  font-weight: 600;
+  line-height: 1;
+  padding: 0.58rem 0.82rem;
+  text-decoration: none;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease;
+}
+
+.searchSuggestion:hover {
+  background: #ffffff;
+  border-color: var(--ast-global-color-1);
+  color: var(--ast-global-color-1);
+}
+
+@keyframes search-panel-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-12px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (min-width: 640px) {
+  .fulfillment {
+    display: inline-flex;
+  }
+}
+
+@media (min-width: 768px) {
+  .fulfillment {
+    font-size: 0.96rem;
+    min-height: 42px;
+    padding: 0.52rem 1rem;
+  }
+
+  .searchTrigger {
+    height: 46px;
+    width: 46px;
+  }
+}
+
+@media (max-width: 767px) {
+  .actions {
+    gap: 8px;
+  }
+
+  .searchOverlay {
+    padding: 0;
+  }
+
+  .searchPanel {
+    border-radius: 0;
+    min-height: 100vh;
+  }
+
+  .searchOverlayForm {
+    min-height: 68px;
+    padding: 0.85rem 1rem;
+  }
+}

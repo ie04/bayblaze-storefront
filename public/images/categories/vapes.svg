@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" role="img" aria-labelledby="title desc">
+  <title id="title">Minimal vape devices placeholder</title>
+  <desc id="desc">Three minimalist disposable vape devices on a warm neutral background.</desc>
+  <rect width="600" height="600" fill="#f3f1ea"/>
+  <circle cx="480" cy="118" r="78" fill="#e5efdf"/>
+  <circle cx="122" cy="498" r="92" fill="#efe6d7"/>
+  <path d="M145 420h310" stroke="#d9d2c5" stroke-width="10" stroke-linecap="round"/>
+  <g stroke="#2d6149" stroke-linecap="round" stroke-linejoin="round" stroke-width="9">
+    <rect x="172" y="158" width="84" height="264" rx="38" fill="#ffffff"/>
+    <rect x="258" y="126" width="84" height="296" rx="38" fill="#ffffff"/>
+    <rect x="344" y="182" width="84" height="240" rx="38" fill="#ffffff"/>
+  </g>
+  <rect x="194" y="194" width="40" height="156" rx="20" fill="#8ed1c6"/>
+  <rect x="280" y="170" width="40" height="170" rx="20" fill="#f28a49"/>
+  <rect x="366" y="218" width="40" height="132" rx="20" fill="#6eb6de"/>
+  <g fill="none" stroke="#2d6149" stroke-linecap="round" stroke-width="7">
+    <path d="M210 382h8"/>
+    <path d="M296 372h8"/>
+    <path d="M382 382h8"/>
+  </g>
+</svg>

@@ -67,7 +67,7 @@ export default function HeroSearch() {
 
   return (
     <form
-      action="/search"
+      action="/shop"
       className={styles.search}
       method="get"
       role="search"

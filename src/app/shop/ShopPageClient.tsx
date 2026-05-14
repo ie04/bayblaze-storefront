@@ -129,21 +129,41 @@ const sortOptions = [
 
 type SortValue = (typeof sortOptions)[number]["value"];
 
-export default function ShopPageClient() {
+export default function ShopPageClient({
+  initialSearchQuery = "",
+}: {
+  initialSearchQuery?: string;
+}) {
   const [activeCategory, setActiveCategory] = useState(categories[0]);
   const [sortBy, setSortBy] = useState<SortValue>("default");
   const [notice, setNotice] = useState("");
   const activeCategoryCopy = categoryCopy[activeCategory];
+  const searchQuery = initialSearchQuery.trim();
+  const normalizedSearchQuery = searchQuery.toLowerCase();
 
   const visibleProducts = useMemo(() => {
-    const filtered =
+    const categoryFiltered =
       activeCategory === "All Categories"
         ? products
         : products.filter((product) =>
             product.categories.includes(activeCategory),
           );
 
-    return [...filtered].sort((a, b) => {
+    const searchFiltered = normalizedSearchQuery
+      ? categoryFiltered.filter((product) => {
+          const searchableText = [
+            product.name,
+            product.description,
+            ...product.categories,
+          ]
+            .join(" ")
+            .toLowerCase();
+
+          return searchableText.includes(normalizedSearchQuery);
+        })
+      : categoryFiltered;
+
+    return [...searchFiltered].sort((a, b) => {
       if (sortBy === "price-asc") {
         return a.price - b.price;
       }
@@ -158,7 +178,7 @@ export default function ShopPageClient() {
 
       return products.indexOf(a) - products.indexOf(b);
     });
-  }, [activeCategory, sortBy]);
+  }, [activeCategory, normalizedSearchQuery, sortBy]);
 
   function handleQuickAdd(product: Product) {
     setNotice(`${product.name} added.`);
@@ -216,6 +236,7 @@ export default function ShopPageClient() {
             Showing {visibleProducts.length === products.length ? "all " : ""}
             {visibleProducts.length} result
             {visibleProducts.length === 1 ? "" : "s"}
+            {searchQuery ? ` for "${searchQuery}"` : ""}
           </p>
 
           <label className="flex w-full flex-col gap-2 text-[14px] font-semibold text-black sm:w-auto sm:min-w-[270px]">

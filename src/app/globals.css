@@ -379,12 +379,208 @@ body {
 .bayblaze-home-contact,
 .bayblaze-home-contact *,
 .bayblaze-home-footer,
-.bayblaze-home-footer * {
+.bayblaze-home-footer *,
+.bayblaze-info-strip,
+.bayblaze-info-strip *,
+.bayblaze-category-section,
+.bayblaze-category-section * {
   font-family: var(--font-jost), Jost, Arial, sans-serif;
 }
 
+.bayblaze-info-strip {
+  background: #ffffff;
+  border-bottom: 1px solid #e8e2d8;
+  color: #2f2f2f;
+  padding: 1.9rem 0;
+}
+
+.bayblaze-info-strip-grid {
+  display: grid;
+  gap: 1.25rem;
+  grid-template-columns: 1fr;
+}
+
+.bayblaze-info-strip-item {
+  align-items: flex-start;
+  display: flex;
+  gap: 0.8rem;
+}
+
+.bayblaze-info-strip-icon {
+  align-items: center;
+  background: #f0fdf4;
+  border-radius: 10px;
+  color: var(--ast-global-color-1);
+  display: flex;
+  flex: 0 0 auto;
+  height: 40px;
+  justify-content: center;
+  width: 40px;
+}
+
+.bayblaze-info-strip-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.14rem;
+  min-width: 0;
+}
+
+.bayblaze-info-strip-text strong {
+  color: #2d2d2d;
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1.28;
+}
+
+.bayblaze-info-strip-text span {
+  color: #707070;
+  font-size: 0.86rem;
+  font-weight: 500;
+  line-height: 1.45;
+}
+
+@media (min-width: 768px) {
+  .bayblaze-info-strip {
+    padding: 2.25rem 0;
+  }
+
+  .bayblaze-info-strip-grid {
+    gap: 2rem;
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.bayblaze-category-section {
+  background: #F7F6F2;
+  border-bottom: 1px solid #e8e2d8;
+  padding: 2.15rem 0 2.35rem;
+}
+
+.bayblaze-category-section-header {
+  align-items: baseline;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+}
+
+.bayblaze-category-section-title {
+  color: #2d2d2d;
+  font-family: var(--font-jost), Jost, Arial, sans-serif;
+  font-size: clamp(2rem, 4vw, 2.45rem);
+  font-weight: 700;
+  letter-spacing: 0;
+  line-height: 1.05;
+  margin: 0;
+}
+
+.bayblaze-category-section-link {
+  align-items: center;
+  color: var(--ast-global-color-1);
+  display: inline-flex;
+  flex: 0 0 auto;
+  font-size: 0.84rem;
+  font-weight: 700;
+  gap: 0.25rem;
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.bayblaze-category-section-link:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.bayblaze-category-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: 1fr;
+}
+
+.bayblaze-category-card {
+  background: #ffffff;
+  border: 1px solid #e8e2d8;
+  border-radius: 12px;
+  color: #2d2d2d;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  text-decoration: none;
+  transition:
+    border-color 180ms ease;
+}
+
+.bayblaze-category-card:hover,
+.bayblaze-category-card:focus-visible {
+  border-color: var(--ast-global-color-1);
+}
+
+.bayblaze-category-card:focus-visible {
+  outline: 2px solid var(--ast-global-color-1);
+  outline-offset: 3px;
+}
+
+.bayblaze-category-card-image {
+  aspect-ratio: 4 / 3;
+  background: #f3f1ea;
+  overflow: hidden;
+}
+
+.bayblaze-category-card-image img {
+  height: 100%;
+  object-fit: cover;
+  transition: transform 260ms ease;
+  width: 100%;
+}
+
+.bayblaze-category-card:hover .bayblaze-category-card-image img,
+.bayblaze-category-card:focus-visible .bayblaze-category-card-image img {
+  transform: scale(1.035);
+}
+
+.bayblaze-category-card-info {
+  padding: 0.78rem 0.86rem 0.95rem;
+}
+
+.bayblaze-category-card-name {
+  color: #2d2d2d;
+  font-size: 0.94rem;
+  font-weight: 700;
+  line-height: 1.25;
+  margin: 0 0 0.24rem;
+}
+
+.bayblaze-category-card-description {
+  color: #707070;
+  font-size: 0.78rem;
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+@media (min-width: 560px) {
+  .bayblaze-category-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 900px) {
+  .bayblaze-category-section {
+    padding: 2.45rem 0 2.75rem;
+  }
+
+  .bayblaze-category-grid {
+    gap: 1.25rem;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
 .bayblaze-home-about {
-  background-color: var(--ast-global-color-4);
+  background-color: transparent;
+  background-image: url("data:image/svg+xml,%3Csvg%20viewBox%3D%270%200%201440%2036%27%20preserveAspectRatio%3D%27none%27%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%3E%3Cpath%20fill%3D%27none%27%20stroke%3D%27%23000000%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27square%27%20stroke-linejoin%3D%27miter%27%20vector-effect%3D%27non-scaling-stroke%27%20d%3D%27M0%2027L36%2022L72%2030L108%2024L144%2031L180%2023L216%2029L252%2021L288%2028L324%2025L360%2032L396%2023L432%2028L468%2022L504%2031L540%2024L576%2029L612%2023L648%2032L684%2022L720%2027L756%2024L792%2031L828%2023L864%2029L900%2021L936%2030L972%2024L1008%2032L1044%2022L1080%2028L1116%2023L1152%2031L1188%2024L1224%2029L1260%2021L1296%2030L1332%2023L1368%2028L1440%2024%27/%3E%3C/svg%3E");
+  background-position: top center;
+  background-repeat: no-repeat;
+  background-size: 100% 36px;
   isolation: isolate;
   overflow: visible;
   position: relative;
@@ -397,88 +593,50 @@ body {
 }
 
 .bayblaze-home-about::before {
-  background-color: #ffffff;
+  background: #ffffff;
   clip-path: polygon(
-    0 9px,
-    2.5% 4px,
-    5% 12px,
-    7.5% 6px,
-    10% 13px,
-    12.5% 5px,
-    15% 11px,
-    17.5% 3px,
-    20% 10px,
-    22.5% 7px,
-    25% 14px,
-    27.5% 5px,
-    30% 10px,
-    32.5% 4px,
-    35% 13px,
-    37.5% 6px,
-    40% 11px,
-    42.5% 5px,
-    45% 14px,
-    47.5% 4px,
-    50% 9px,
-    52.5% 6px,
-    55% 13px,
-    57.5% 5px,
-    60% 11px,
-    62.5% 3px,
-    65% 12px,
-    67.5% 6px,
-    70% 14px,
-    72.5% 4px,
-    75% 10px,
-    77.5% 5px,
-    80% 13px,
-    82.5% 6px,
-    85% 11px,
-    87.5% 3px,
-    90% 12px,
-    92.5% 5px,
-    95% 10px,
-    100% 6px,
-    100% calc(100% - 6px),
-    95% calc(100% - 10px),
-    92.5% calc(100% - 5px),
-    90% calc(100% - 12px),
-    87.5% calc(100% - 3px),
-    85% calc(100% - 11px),
-    82.5% calc(100% - 6px),
-    80% calc(100% - 13px),
-    77.5% calc(100% - 5px),
-    75% calc(100% - 10px),
-    72.5% calc(100% - 4px),
-    70% calc(100% - 14px),
-    67.5% calc(100% - 6px),
-    65% calc(100% - 12px),
-    62.5% calc(100% - 3px),
-    60% calc(100% - 11px),
-    57.5% calc(100% - 5px),
-    55% calc(100% - 13px),
-    52.5% calc(100% - 6px),
-    50% calc(100% - 9px),
-    47.5% calc(100% - 4px),
-    45% calc(100% - 14px),
-    42.5% calc(100% - 5px),
-    40% calc(100% - 11px),
-    37.5% calc(100% - 6px),
-    35% calc(100% - 13px),
-    32.5% calc(100% - 4px),
-    30% calc(100% - 10px),
-    27.5% calc(100% - 5px),
-    25% calc(100% - 14px),
-    22.5% calc(100% - 7px),
-    20% calc(100% - 10px),
-    17.5% calc(100% - 3px),
-    15% calc(100% - 11px),
-    12.5% calc(100% - 5px),
-    10% calc(100% - 13px),
-    7.5% calc(100% - 6px),
-    5% calc(100% - 12px),
-    2.5% calc(100% - 4px),
-    0 calc(100% - 9px)
+    0 27px,
+    2.5% 22px,
+    5% 30px,
+    7.5% 24px,
+    10% 31px,
+    12.5% 23px,
+    15% 29px,
+    17.5% 21px,
+    20% 28px,
+    22.5% 25px,
+    25% 32px,
+    27.5% 23px,
+    30% 28px,
+    32.5% 22px,
+    35% 31px,
+    37.5% 24px,
+    40% 29px,
+    42.5% 21px,
+    45% 30px,
+    47.5% 24px,
+    50% 27px,
+    52.5% 24px,
+    55% 31px,
+    57.5% 23px,
+    60% 29px,
+    62.5% 24px,
+    65% 32px,
+    67.5% 23px,
+    70% 29px,
+    72.5% 21px,
+    75% 30px,
+    77.5% 24px,
+    80% 32px,
+    82.5% 22px,
+    85% 28px,
+    87.5% 24px,
+    90% 31px,
+    92.5% 23px,
+    95% 30px,
+    100% 24px,
+    100% 100%,
+    0 100%
   );
   content: "";
   inset: 0;
@@ -615,7 +773,7 @@ body {
 }
 
 .bayblaze-product-card-media {
-  background: #faf8f3;
+  background: #ffffff;
   min-height: 218px;
   position: relative;
 }
@@ -786,26 +944,6 @@ body {
 
 .bayblaze-product-carousel-arrow--next {
   right: 0.35rem;
-}
-
-.bayblaze-search-submit {
-  position: relative;
-}
-
-.bayblaze-search-submit::before {
-  border-bottom: 10px solid transparent;
-  border-right: 10px solid #000000;
-  border-top: 10px solid transparent;
-  content: "";
-  left: -10px;
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  transition: border-right-color 150ms ease;
-}
-
-.bayblaze-search-submit:hover::before {
-  border-right-color: var(--ast-global-color-0);
 }
 
 @media (max-width: 767px) {

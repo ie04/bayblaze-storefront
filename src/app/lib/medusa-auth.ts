@@ -8,6 +8,17 @@ export type Customer = {
   phone?: string | null;
 };
 
+export type CustomerOrderItem = {
+  id?: string | null;
+  title?: string | null;
+  product_title?: string | null;
+  variant_title?: string | null;
+  quantity?: number | null;
+  unit_price?: number | null;
+  total?: number | null;
+  thumbnail?: string | null;
+};
+
 export type CustomerOrder = {
   id: string;
   display_id?: number | string | null;
@@ -15,6 +26,7 @@ export type CustomerOrder = {
   total?: number | null;
   currency_code?: string | null;
   created_at?: string | null;
+  items?: CustomerOrderItem[];
 };
 
 type MedusaTokenResponse = {
@@ -147,7 +159,7 @@ export async function retrieveCustomer(token: string) {
 export async function retrieveCustomerOrders(token: string) {
   const params = new URLSearchParams({
     limit: "10",
-    fields: "id,display_id,status,total,currency_code,created_at",
+    fields: "id,display_id,status,total,currency_code,created_at,*items",
   });
   const data = await medusaRequest<MedusaOrdersResponse>(
     `/store/orders?${params.toString()}`,

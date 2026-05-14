@@ -35,6 +35,7 @@ type MedusaCalculatedPrice = {
 };
 
 type MedusaVariant = {
+  id: string;
   title: string;
   sku?: string | null;
   metadata?: Record<string, unknown> | null;
@@ -76,6 +77,7 @@ export type StorefrontProduct = {
   id: string;
   handle: string;
   name: string;
+  variantId: string;
   sku: string;
   brand: string;
   collectionTitle: string;
@@ -85,6 +87,13 @@ export type StorefrontProduct = {
   saleBadge?: string;
   images: { src: string; alt: string }[];
   flavors: string[];
+  variants: {
+    id: string;
+    title: string;
+    sku: string;
+    flavor?: string;
+    optionValues: string[];
+  }[];
   details: string[];
   specs: [string, string][];
 };
@@ -232,6 +241,28 @@ function getFlavorValues(product: MedusaProduct) {
   return [...new Set(values.flatMap((value) => splitOptionValue(value)))];
 }
 
+function getVariantFlavor(variant: MedusaVariant) {
+  const flavorOption = variant.options?.find(
+    (option) => option.option?.title.toLowerCase() === "flavor",
+  );
+
+  return flavorOption?.value;
+}
+
+function getStorefrontVariants(product: MedusaProduct) {
+  return (product.variants ?? []).map((variant) => {
+    const flavor = getVariantFlavor(variant);
+
+    return {
+      id: variant.id,
+      title: variant.title,
+      sku: variant.sku ?? "",
+      flavor,
+      optionValues: flavor ? splitOptionValue(flavor) : [],
+    };
+  });
+}
+
 function splitOptionValue(value: string) {
   return value
     .split(",")
@@ -269,6 +300,7 @@ function getMetadataSpecs(product: MedusaProduct) {
 
 function toStorefrontProduct(product: MedusaProduct): StorefrontProduct {
   const firstVariant = product.variants?.[0];
+  const variants = getStorefrontVariants(product);
   const price = firstVariant?.calculated_price;
   const knownCopy = knownProductCopy[product.handle];
   const metadataSpecs = getMetadataSpecs(product);
@@ -288,6 +320,7 @@ function toStorefrontProduct(product: MedusaProduct): StorefrontProduct {
     id: product.id,
     handle: product.handle,
     name: product.title,
+    variantId: firstVariant?.id ?? "",
     sku: firstVariant?.sku ?? "",
     brand: getBrand(product),
     collectionTitle: product.collection?.title ?? categories[0]?.name ?? "",
@@ -303,6 +336,7 @@ function toStorefrontProduct(product: MedusaProduct): StorefrontProduct {
           : `${product.title} product image ${index + 1}`,
     })),
     flavors: getFlavorValues(product),
+    variants,
     details: knownCopy?.details ?? [product.description ?? product.subtitle ?? ""],
     specs: metadataSpecs.length ? metadataSpecs : placeholderSpecs,
   };

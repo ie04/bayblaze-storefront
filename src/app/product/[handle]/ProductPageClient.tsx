@@ -30,6 +30,17 @@ export default function ProductPage({
 
   const currentImage = product.images[activeImage] ?? product.images[0];
   const primaryCategory = product.categories[0];
+  const selectedVariantId = useMemo(() => {
+    if (!flavor) {
+      return product.variantId;
+    }
+
+    return (
+      product.variants.find((variant) => {
+        return variant.optionValues.includes(flavor) || variant.flavor === flavor;
+      })?.id ?? product.variantId
+    );
+  }, [flavor, product.variantId, product.variants]);
 
   const selectedSummary = useMemo(() => {
     if (!flavor) {
@@ -51,13 +62,17 @@ export default function ProductPage({
       return;
     }
 
-    const cartItemId = [
-      product.sku || product.name,
-      flavor || "default",
-    ].join("::");
+    if (!selectedVariantId) {
+      setCartNotice("This product is not available for checkout yet.");
+      return;
+    }
+
+    const cartItemId = [selectedVariantId, flavor || "default"].join("::");
 
     addItem({
       id: cartItemId,
+      variantId: selectedVariantId,
+      productHandle: product.handle,
       name: product.name,
       flavor: flavor || undefined,
       image: product.images[0]?.src,

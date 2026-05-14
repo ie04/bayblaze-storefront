@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" role="img" aria-labelledby="title desc">
+  <title id="title">Minimal wraps and papers placeholder</title>
+  <desc id="desc">Layered rolling papers and a simple wrap shape on a neutral background.</desc>
+  <rect width="600" height="600" fill="#f3f1ea"/>
+  <circle cx="475" cy="134" r="82" fill="#e5efdf"/>
+  <circle cx="126" cy="474" r="86" fill="#efe6d7"/>
+  <g stroke="#2d6149" stroke-linejoin="round" stroke-width="8">
+    <rect x="174" y="178" width="238" height="166" rx="18" fill="#ffffff" transform="rotate(-7 293 261)"/>
+    <rect x="206" y="216" width="238" height="166" rx="18" fill="#fffaf0" transform="rotate(8 325 299)"/>
+  </g>
+  <path d="M168 396c86-54 178-64 276-31 19 7 23 31 7 42-85 59-181 70-287 31-18-7-22-31 4-42z" fill="#ffffff" stroke="#2d6149" stroke-linejoin="round" stroke-width="8"/>
+  <path d="M218 398c62-25 122-28 180-9" fill="none" stroke="#d9d2c5" stroke-linecap="round" stroke-width="8"/>
+  <path d="M238 262h118" stroke="#d9d2c5" stroke-linecap="round" stroke-width="8"/>
+  <path d="M232 298h162" stroke="#d9d2c5" stroke-linecap="round" stroke-width="8"/>
+</svg>

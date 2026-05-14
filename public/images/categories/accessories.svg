@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" role="img" aria-labelledby="title desc">
+  <title id="title">Minimal smoking accessories placeholder</title>
+  <desc id="desc">A grinder, tray, and small tool shapes on a neutral background.</desc>
+  <rect width="600" height="600" fill="#f3f1ea"/>
+  <circle cx="126" cy="138" r="82" fill="#e5efdf"/>
+  <circle cx="484" cy="470" r="92" fill="#efe6d7"/>
+  <rect x="148" y="294" width="304" height="136" rx="42" fill="#ffffff" stroke="#2d6149" stroke-width="9"/>
+  <circle cx="286" cy="260" r="78" fill="#ffffff" stroke="#2d6149" stroke-width="9"/>
+  <circle cx="286" cy="260" r="32" fill="#f7f6f2" stroke="#d9d2c5" stroke-width="7"/>
+  <g stroke="#2d6149" stroke-linecap="round" stroke-width="8">
+    <path d="M286 162v30"/>
+    <path d="M286 328v30"/>
+    <path d="M188 260h30"/>
+    <path d="M354 260h30"/>
+  </g>
+  <path d="M214 362h172" stroke="#d9d2c5" stroke-linecap="round" stroke-width="9"/>
+  <path d="M398 194l48-48" stroke="#2d6149" stroke-linecap="round" stroke-width="9"/>
+  <path d="M422 146l24 24" stroke="#2d6149" stroke-linecap="round" stroke-width="9"/>
+</svg>

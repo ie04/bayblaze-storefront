@@ -11,6 +11,7 @@ import {
   type Customer,
   type CustomerOrder,
 } from "@/app/lib/medusa-auth";
+import AccountOrdersSection from "./AccountOrdersSection";
 import LogoutButton from "./LogoutButton";
 
 export const metadata: Metadata = {
@@ -100,44 +101,7 @@ export default async function Page() {
                 </dl>
               </article>
 
-              <article className="border border-[#d0d0d0] bg-[var(--ast-global-color-4)] p-5 sm:p-6">
-                <h2 className="mb-4 text-[21px] font-semibold leading-tight text-black sm:mb-5 sm:text-[24px]">
-                  Orders
-                </h2>
-                {orders.length ? (
-                  <ul className="space-y-4">
-                    {orders.map((order) => (
-                      <li
-                        key={order.id}
-                        className="border border-[#e7e7e7] bg-[var(--ast-global-color-4)] p-4"
-                      >
-                        <p className="text-[16px] font-semibold leading-snug text-black">
-                          Order #{order.display_id ?? order.id}
-                        </p>
-                        <p className="mt-1 text-[15px] leading-[1.5] text-[#585858]">
-                          {formatOrderStatus(order.status)}
-                        </p>
-                        <p className="mt-1 text-[15px] leading-[1.5] text-[#585858]">
-                          {formatOrderDate(order.created_at)}
-                        </p>
-                        {typeof order.total === "number" &&
-                        order.currency_code ? (
-                          <p className="mt-2 text-[16px] font-semibold text-black">
-                            {formatOrderTotal(
-                              order.total,
-                              order.currency_code,
-                            )}
-                          </p>
-                        ) : null}
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="text-[16px] leading-[1.7] text-[#585858]">
-                    No orders yet.
-                  </p>
-                )}
-              </article>
+              <AccountOrdersSection initialOrders={orders} />
 
               <article className="border border-[#d0d0d0] bg-[var(--ast-global-color-4)] p-5 sm:p-6">
                 <h2 className="mb-4 text-[21px] font-semibold leading-tight text-black sm:mb-5 sm:text-[24px]">
@@ -153,32 +117,4 @@ export default async function Page() {
       </div>
     </main>
   );
-}
-
-function formatOrderStatus(status?: string | null) {
-  if (!status) {
-    return "Status unavailable";
-  }
-
-  return status
-    .split("_")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ");
-}
-
-function formatOrderDate(date?: string | null) {
-  if (!date) {
-    return "Date unavailable";
-  }
-
-  return new Intl.DateTimeFormat("en-US", {
-    dateStyle: "medium",
-  }).format(new Date(date));
-}
-
-function formatOrderTotal(total: number, currencyCode: string) {
-  return new Intl.NumberFormat("en-US", {
-    currency: currencyCode.toUpperCase(),
-    style: "currency",
-  }).format(total);
 }

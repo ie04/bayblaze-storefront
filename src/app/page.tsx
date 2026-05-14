@@ -4,21 +4,21 @@ import HomeContact from "@/app/home/HomeContact";
 import HomeExploreProducts from "@/app/home/HomeExploreProducts";
 import HomeFooter from "@/app/home/HomeFooter";
 import HomeHero from "@/app/home/HomeHero";
+import HomeInfoStrip from "@/app/home/HomeInfoStrip";
+import HomeShopByCategory from "@/app/home/HomeShopByCategory";
 import { getProductPreviewsByCategoryHandle } from "@/app/lib/medusa-products";
 
 export default async function Home() {
-  const [vapeProducts, accessoryProducts] = await Promise.all([
-    getProductPreviewsByCategoryHandle("vapes"),
-    getProductPreviewsByCategoryHandle("smoking-accessories"),
-  ]);
+  const vapeProducts = await getProductPreviewsByCategoryHandle("vapes");
 
   return (
     <main className="relative">
       <Header />
       <HomeHero />
+      <HomeInfoStrip />
+      <HomeShopByCategory />
       <HomeExploreProducts
         vapeProducts={vapeProducts}
-        accessoryProducts={accessoryProducts}
       />
       <HomeAbout />
       <HomeContact />
