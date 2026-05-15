@@ -416,7 +416,18 @@ function CheckoutField({
 }) {
   return (
     <label className="grid gap-2 text-[15px] font-semibold text-black sm:text-[16px]">
-      {label}
+      <span>
+        {label}
+        {required ? (
+          <>
+            <span className="text-red-700" aria-hidden="true">
+              {" "}
+              *
+            </span>
+            <span className="sr-only"> required</span>
+          </>
+        ) : null}
+      </span>
       <input
         className="h-[50px] w-full min-w-0 border border-[#d6d6d6] bg-white px-4 text-[16px] font-normal text-black outline-none transition focus:border-black sm:h-[52px] sm:text-[17px]"
         defaultValue={defaultValue}

@@ -39,6 +39,16 @@ type MedusaCart = {
   email?: string;
   region_id?: string;
   currency_code?: string;
+  shipping_address?: {
+    first_name?: string | null;
+    last_name?: string | null;
+    address_1?: string | null;
+    city?: string | null;
+    province?: string | null;
+    postal_code?: string | null;
+    country_code?: string | null;
+    phone?: string | null;
+  } | null;
   payment_collection?: {
     id: string;
   } | null;
@@ -112,6 +122,16 @@ export async function POST(request: Request) {
   const items = body.items as ValidCheckoutItem[];
   const cookieStore = await cookies();
   const customerToken = cookieStore.get(CUSTOMER_TOKEN_COOKIE)?.value;
+  const shippingAddress = {
+    first_name: customer.first_name.trim(),
+    last_name: customer.last_name.trim(),
+    address_1: customer.address.trim(),
+    city: customer.city.trim(),
+    province: customer.state.trim(),
+    postal_code: customer.zip.trim(),
+    country_code: "us",
+    phone: customer.phone.trim(),
+  };
 
   try {
     const { cart } = await medusaStoreRequest<{ cart: MedusaCart }>(
@@ -120,7 +140,8 @@ export async function POST(request: Request) {
         method: "POST",
         body: {
           region_id: defaultRegionId,
-          email: customer.email,
+          email: customer.email.trim(),
+          shipping_address: shippingAddress,
           metadata: {
             source: "bayblaze-storefront",
           },
@@ -159,17 +180,6 @@ export async function POST(request: Request) {
       );
     }
 
-    const address = {
-      first_name: customer.first_name,
-      last_name: customer.last_name,
-      address_1: customer.address,
-      city: customer.city,
-      province: customer.state,
-      postal_code: customer.zip,
-      country_code: "us",
-      phone: customer.phone,
-    };
-
     const { cart: addressedCart } = await medusaStoreRequest<{
       cart: MedusaCart;
     }>(
@@ -177,9 +187,8 @@ export async function POST(request: Request) {
       {
         method: "POST",
         body: {
-          email: customer.email,
-          shipping_address: address,
-          billing_address: address,
+          email: customer.email.trim(),
+          shipping_address: shippingAddress,
           metadata: {
             source: "bayblaze-storefront",
             payment_note: "Payment due on delivery",
@@ -196,6 +205,13 @@ export async function POST(request: Request) {
       },
       customerToken,
     );
+
+    if (!hasRequiredShippingAddress(addressedCart.shipping_address)) {
+      return jsonError(
+        "Medusa did not save the delivery address. Please review the address and try again.",
+        502,
+      );
+    }
 
     const shippingOption = await selectShippingOption(
       addressedCart.id,
@@ -300,6 +316,25 @@ function validateCheckout(body: CheckoutRequestBody) {
   }
 
   return "";
+}
+
+function hasRequiredShippingAddress(
+  address: MedusaCart["shipping_address"],
+) {
+  if (!address) {
+    return false;
+  }
+
+  return [
+    address.first_name,
+    address.last_name,
+    address.address_1,
+    address.city,
+    address.province,
+    address.postal_code,
+    address.country_code,
+    address.phone,
+  ].every((value) => typeof value === "string" && value.trim());
 }
 
 async function selectShippingOption(cartId: string, customerToken?: string) {
