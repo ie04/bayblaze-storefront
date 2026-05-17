@@ -115,7 +115,7 @@ export default function HomeShopByCategory() {
             Shop by Category
           </h2>
 
-          <Link href="/shop" className="bayblaze-category-section-link">
+          <Link href="/shop" className="bayblaze-section-shop-link">
             <span>View All</span>
             <ChevronRightIcon />
           </Link>

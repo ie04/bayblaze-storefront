@@ -466,24 +466,6 @@ body {
   margin: 0;
 }
 
-.bayblaze-category-section-link {
-  align-items: center;
-  color: var(--ast-global-color-1);
-  display: inline-flex;
-  flex: 0 0 auto;
-  font-size: 0.84rem;
-  font-weight: 700;
-  gap: 0.25rem;
-  line-height: 1;
-  text-decoration: none;
-  white-space: nowrap;
-}
-
-.bayblaze-category-section-link:hover {
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-
 .bayblaze-category-carousel {
   margin-inline: -4px;
   padding-top: 0.1rem;
