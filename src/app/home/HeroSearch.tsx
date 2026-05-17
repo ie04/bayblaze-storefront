@@ -16,6 +16,13 @@ const searchPrompts = [
   "Search for grinders...",
 ];
 
+const ribbonTaglines = [
+  "Tampa’s 2-Hour Headshop",
+  "Skip The Shop. We Pull Up.",
+  "Tap. Order. Blaze.",
+  "Popular Picks Delivered Today",
+];
+
 export default function HeroSearch() {
   const [query, setQuery] = useState("");
   const [isFocused, setIsFocused] = useState(false);
@@ -66,51 +73,75 @@ export default function HeroSearch() {
   }
 
   return (
-    <form
-      action="/shop"
-      className={styles.search}
-      method="get"
-      role="search"
-      onSubmit={handleSubmit}
-    >
-      <label className="sr-only" htmlFor="hero-product-search">
-        Search products
-      </label>
-
-      <button
-        type="submit"
-        className={styles.submit}
-        aria-label="Search"
+    <div className={styles.searchStack}>
+      <form
+        action="/shop"
+        className={styles.search}
+        method="get"
+        role="search"
+        onSubmit={handleSubmit}
       >
-        <SearchIcon />
-      </button>
+        <label className="sr-only" htmlFor="hero-product-search">
+          Search products
+        </label>
 
-      <div className={styles.field}>
-        <input
-          id="hero-product-search"
-          name="q"
-          type="search"
-          autoComplete="off"
-          className={styles.input}
-          value={query}
-          onBlur={() => setIsFocused(false)}
-          onChange={(event) => setQuery(event.currentTarget.value)}
-          onFocus={() => setIsFocused(true)}
-        />
-
-        <span
-          aria-hidden="true"
-          className={`${styles.placeholder} ${
-            query || isFocused
-              ? styles.placeholderHidden
-              : styles.placeholderVisible
-          }`}
+        <button
+          type="submit"
+          className={styles.submit}
+          aria-label="Search"
         >
-          {typedPrompt}
-          <span className={styles.caret} />
-        </span>
+          <SearchIcon />
+        </button>
+
+        <div className={styles.field}>
+          <input
+            id="hero-product-search"
+            name="q"
+            type="search"
+            autoComplete="off"
+            className={styles.input}
+            value={query}
+            onBlur={() => setIsFocused(false)}
+            onChange={(event) => setQuery(event.currentTarget.value)}
+            onFocus={() => setIsFocused(true)}
+          />
+
+          <span
+            aria-hidden="true"
+            className={`${styles.placeholder} ${
+              query || isFocused
+                ? styles.placeholderHidden
+                : styles.placeholderVisible
+            }`}
+          >
+            {typedPrompt}
+            <span className={styles.caret} />
+          </span>
+        </div>
+      </form>
+
+      <div
+        className={styles.ribbon}
+        aria-label={ribbonTaglines.join(" · ")}
+      >
+        <div className={styles.ribbonTrack}>
+          <RibbonGroup />
+          <RibbonGroup ariaHidden />
+        </div>
       </div>
-    </form>
+    </div>
+  );
+}
+
+function RibbonGroup({ ariaHidden = false }: { ariaHidden?: boolean }) {
+  return (
+    <div className={styles.ribbonGroup} aria-hidden={ariaHidden}>
+      {ribbonTaglines.map((tagline) => (
+        <span key={tagline} className={styles.ribbonItem}>
+          {tagline}
+        </span>
+      ))}
+    </div>
   );
 }
 
