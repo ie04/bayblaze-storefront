@@ -341,8 +341,11 @@ body {
 
 .bayblaze-auth-page {
   background:
-    radial-gradient(circle at top left, rgba(116, 168, 74, 0.13), transparent 34rem),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0) 18%, rgba(255, 255, 255, 0) 82%, rgba(255, 255, 255, 0.72)),
+    radial-gradient(circle at 50% 34%, rgba(255, 255, 255, 0.88), transparent 25rem),
+    radial-gradient(circle at top left, rgba(116, 168, 74, 0.14), transparent 34rem),
     linear-gradient(180deg, #ffffff 0%, #f7f6f2 100%);
+  position: relative;
 }
 
 .bayblaze-auth-section {
@@ -421,6 +424,80 @@ body {
   border: 1px solid #f0caca;
   border-radius: 8px;
   background: #fff5f3;
+}
+
+.bayblaze-login-card {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(250, 249, 245, 0.98)),
+    #ffffff;
+  border: 1px solid rgba(44, 84, 29, 0.22);
+  border-radius: 22px;
+  box-shadow:
+    0 24px 56px rgba(44, 84, 29, 0.2),
+    0 0 0 8px rgba(255, 255, 255, 0.54);
+  overflow: hidden;
+}
+
+.bayblaze-login-wire-field {
+  inset: -38px calc(50% - 50vw) -42px calc(50% - 50vw);
+  overflow: hidden;
+  pointer-events: none;
+  position: absolute;
+  z-index: 1;
+}
+
+.bayblaze-login-wires {
+  display: block;
+  height: 100%;
+  opacity: 0.96;
+  width: 100%;
+}
+
+.bayblaze-login-wire-bundle {
+  fill: none;
+  stroke-linecap: square;
+  stroke-linejoin: miter;
+  vector-effect: non-scaling-stroke;
+}
+
+.bayblaze-login-wire-outline {
+  stroke: rgba(15, 39, 15, 0.78);
+  stroke-width: 11px;
+}
+
+.bayblaze-login-wire-core {
+  stroke-width: 6px;
+}
+
+.bayblaze-login-wire-light {
+  stroke: #8fff4e;
+}
+
+.bayblaze-login-wire-main {
+  stroke: #43d128;
+}
+
+.bayblaze-login-wire-dark {
+  stroke: #1c8f1e;
+}
+
+.bayblaze-login-wire-node-outlines {
+  fill: rgba(15, 39, 15, 0.82);
+}
+
+.bayblaze-login-wire-nodes {
+  fill: #68e63a;
+}
+
+@media (max-width: 767px) {
+  .bayblaze-login-card {
+    border-radius: 18px;
+  }
+
+  .bayblaze-login-wire-field {
+    inset-block: -22px -28px;
+    opacity: 0.52;
+  }
 }
 
 .bayblaze-shop-title {

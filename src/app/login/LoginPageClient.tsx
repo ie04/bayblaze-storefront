@@ -22,6 +22,62 @@ const initialFormState: FormState = {
   lastName: "",
 };
 
+const loginWirePaths = [
+  {
+    accent: "light",
+    d: "M 560 236 H 392 V 204 H 344 V 176 H 282 V 144 H 210 V 112 H 126 V 86 H 0",
+  },
+  {
+    accent: "main",
+    d: "M 560 282 H 382 V 316 H 316 V 348 H 252 V 382 H 174 V 414 H 84 V 448 H 0",
+  },
+  {
+    accent: "dark",
+    d: "M 560 330 H 404 V 366 H 350 V 404 H 292 V 442 H 224 V 486 H 140 V 526 H 0",
+  },
+  {
+    accent: "light",
+    d: "M 560 190 H 410 V 158 H 368 V 126 H 304 V 92 H 232 V 58 H 144 V 28 H 0",
+  },
+  {
+    accent: "main",
+    d: "M 560 390 H 392 V 424 H 338 V 462 H 276 V 500 H 198 V 548 H 0",
+  },
+  {
+    accent: "light",
+    d: "M 880 238 H 1052 V 206 H 1100 V 178 H 1162 V 146 H 1230 V 112 H 1314 V 84 H 1440",
+  },
+  {
+    accent: "main",
+    d: "M 880 286 H 1060 V 320 H 1126 V 354 H 1190 V 388 H 1266 V 420 H 1354 V 456 H 1440",
+  },
+  {
+    accent: "dark",
+    d: "M 880 334 H 1038 V 370 H 1090 V 408 H 1152 V 446 H 1220 V 490 H 1302 V 532 H 1440",
+  },
+  {
+    accent: "light",
+    d: "M 880 192 H 1030 V 160 H 1074 V 128 H 1138 V 94 H 1210 V 60 H 1298 V 28 H 1440",
+  },
+  {
+    accent: "main",
+    d: "M 880 394 H 1048 V 428 H 1104 V 466 H 1166 V 506 H 1246 V 552 H 1440",
+  },
+];
+
+const loginWireNodes = [
+  [386, 198],
+  [338, 170],
+  [376, 310],
+  [310, 342],
+  [398, 360],
+  [1046, 200],
+  [1094, 172],
+  [1054, 314],
+  [1120, 348],
+  [1032, 364],
+];
+
 export default function LoginPageClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -127,13 +183,15 @@ export default function LoginPageClient() {
 
         <section
           aria-labelledby="bayblaze-auth-heading"
-          className="mx-auto flex min-h-[560px] w-full max-w-[560px] items-center py-4 sm:py-8"
+          className="relative isolate mx-auto flex min-h-[560px] w-full items-center justify-center overflow-visible py-4 sm:py-8"
         >
           <h1 id="bayblaze-auth-heading" className="sr-only">
             Bayblaze Account
           </h1>
 
-          <div className="bayblaze-soft-card bayblaze-soft-card--tint w-full p-5 shadow-[0_18px_42px_rgba(69,88,58,0.14)] sm:p-8">
+          <LoginWireBackdrop />
+
+          <div className="bayblaze-login-card relative z-10 w-full max-w-[560px] p-5 sm:p-8">
             {!isVerifyingRegistration ? (
               <div className="mb-6 grid grid-cols-2 gap-1 rounded-full border border-[#d8e2d2] bg-white p-1 sm:mb-7">
                 <button
@@ -323,6 +381,53 @@ export default function LoginPageClient() {
           </div>
         </section>
       </div>
+    </div>
+  );
+}
+
+function LoginWireBackdrop() {
+  return (
+    <div className="bayblaze-login-wire-field" aria-hidden="true">
+      <svg
+        className="bayblaze-login-wires"
+        preserveAspectRatio="none"
+        shapeRendering="crispEdges"
+        viewBox="0 0 1440 620"
+      >
+        <g className="bayblaze-login-wire-bundle bayblaze-login-wire-outline">
+          {loginWirePaths.map((wire) => (
+            <path key={`outline-${wire.d}`} d={wire.d} />
+          ))}
+        </g>
+
+        <g className="bayblaze-login-wire-bundle bayblaze-login-wire-core">
+          {loginWirePaths.map((wire) => (
+            <path
+              className={`bayblaze-login-wire-${wire.accent}`}
+              d={wire.d}
+              key={`core-${wire.d}`}
+            />
+          ))}
+        </g>
+
+        <g className="bayblaze-login-wire-node-outlines">
+          {loginWireNodes.map(([x, y]) => (
+            <rect
+              height="18"
+              key={`node-outline-${x}-${y}`}
+              width="18"
+              x={x - 3}
+              y={y - 3}
+            />
+          ))}
+        </g>
+
+        <g className="bayblaze-login-wire-nodes">
+          {loginWireNodes.map(([x, y]) => (
+            <rect height="12" key={`node-${x}-${y}`} width="12" x={x} y={y} />
+          ))}
+        </g>
+      </svg>
     </div>
   );
 }
