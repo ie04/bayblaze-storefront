@@ -81,7 +81,7 @@ export default function OrdersDashboard({
 
   return (
     <>
-      <section className="border-y-2 border-black bg-white py-7 sm:py-10">
+      <section className="bayblaze-auth-section px-4 py-7 sm:px-7 sm:py-10">
         <div className="mb-7 flex flex-col gap-4 sm:mb-9 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="mb-3 text-[13px] font-semibold uppercase tracking-[0.22em] text-[var(--ast-global-color-1)]">
@@ -92,7 +92,7 @@ export default function OrdersDashboard({
 
           <button
             type="button"
-            className="w-full border border-black bg-white px-5 py-3 text-[15px] font-semibold leading-none text-black transition-colors hover:bg-black hover:text-white disabled:cursor-wait disabled:opacity-60 sm:w-auto"
+            className="bayblaze-soft-button w-full px-5 py-3 text-[15px] font-semibold leading-none disabled:cursor-wait disabled:opacity-60 sm:w-auto"
             disabled={isRefreshing}
             onClick={() => {
               void refreshOrders();
@@ -103,7 +103,7 @@ export default function OrdersDashboard({
         </div>
 
         {error ? (
-          <p className="mb-5 border border-red-200 bg-red-50 px-4 py-3 text-[16px] font-medium leading-[1.5] text-red-700">
+          <p className="bayblaze-soft-alert mb-5 px-4 py-3 text-[16px] font-medium leading-[1.5] text-red-700">
             {error}
           </p>
         ) : null}
@@ -156,10 +156,10 @@ function OrderGroup({
 }) {
   return (
     <details
-      className="border border-[#d0d0d0] bg-[var(--ast-global-color-4)]"
+      className="bayblaze-soft-card bayblaze-soft-card--tint overflow-hidden"
       open
     >
-      <summary className="flex cursor-pointer list-none items-center justify-between border-b border-[#d0d0d0] px-5 py-4 text-[21px] font-semibold leading-tight text-black sm:text-[24px]">
+      <summary className="flex cursor-pointer list-none items-center justify-between border-b border-[#e8e2d8] px-5 py-4 text-[21px] font-semibold leading-tight text-black sm:text-[24px]">
         {title}
         <span className="text-[14px] font-semibold text-[var(--ast-global-color-1)]">
           {orders.length}
@@ -172,7 +172,7 @@ function OrderGroup({
             <li key={order.id}>
               <button
                 type="button"
-                className="w-full border border-[#e4ded4] bg-white p-4 text-left transition-colors hover:border-[var(--ast-global-color-1)] hover:bg-[#f7f6f2]"
+                className="w-full rounded-[8px] border border-[#e4ded4] bg-white p-4 text-left transition-colors hover:border-[var(--ast-global-color-1)] hover:bg-[#f7f6f2] hover:shadow-[0_10px_24px_rgba(69,88,58,0.08)]"
                 onClick={() => onOpenOrder(order)}
               >
                 <span className="flex items-start justify-between gap-4">
@@ -184,7 +184,7 @@ function OrderGroup({
                       {formatOrderDate(order.created_at)}
                     </span>
                   </span>
-                  <span className="border border-[#d8e2d2] bg-[#f5faf0] px-2.5 py-1 text-[12px] font-semibold uppercase tracking-[0.1em] text-[var(--ast-global-color-1)]">
+                  <span className="bayblaze-soft-chip px-2.5 py-1 text-[12px] font-semibold uppercase tracking-[0.1em]">
                     {formatOrderStatus(order.status)}
                   </span>
                 </span>

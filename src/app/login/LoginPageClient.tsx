@@ -109,7 +109,7 @@ export default function LoginPageClient() {
   }
 
   return (
-    <div className="bayblaze-auth-page bg-white pb-14 pt-[92px] sm:pb-20 sm:pt-[112px]">
+    <div className="bayblaze-auth-page pb-14 pt-[92px] sm:pb-20 sm:pt-[112px]">
       <div className="mx-auto w-full max-w-[1180px] px-4 sm:px-5">
         <nav
           aria-label="Breadcrumb"
@@ -125,7 +125,7 @@ export default function LoginPageClient() {
           <span>{mode === "login" ? "Login" : "Register"}</span>
         </nav>
 
-        <section className="grid gap-7 border-y-2 border-black py-7 sm:gap-10 sm:py-10 lg:grid-cols-[minmax(0,0.86fr)_minmax(420px,0.64fr)] lg:items-center">
+        <section className="bayblaze-auth-section grid gap-7 px-4 py-7 sm:gap-10 sm:px-7 sm:py-10 lg:grid-cols-[minmax(0,0.86fr)_minmax(420px,0.64fr)] lg:items-center">
           <div>
             <p className="mb-3 text-[13px] font-semibold uppercase tracking-[0.22em] text-[var(--ast-global-color-1)]">
               Bayblaze Account
@@ -146,16 +146,16 @@ export default function LoginPageClient() {
             </p>
           </div>
 
-          <div className="border border-[#cfcfcf] bg-[var(--ast-global-color-4)] p-4 shadow-[5px_5px_0_#000] sm:p-7 sm:shadow-[8px_8px_0_#000]">
+          <div className="bayblaze-soft-card bayblaze-soft-card--tint p-4 sm:p-7">
             {!isVerifyingRegistration ? (
-              <div className="mb-6 grid grid-cols-2 border border-black sm:mb-7">
+              <div className="mb-6 grid grid-cols-2 gap-1 rounded-full border border-[#d8e2d2] bg-white p-1 sm:mb-7">
                 <button
                   type="button"
                   aria-pressed={mode === "login"}
-                  className={`h-12 text-[15px] font-semibold transition-colors ${
+                  className={`h-12 rounded-full text-[15px] font-semibold transition-colors ${
                     mode === "login"
-                      ? "bg-black text-white"
-                      : "bg-white text-black hover:bg-[#f6f8f5]"
+                      ? "bg-[var(--ast-global-color-1)] text-white shadow-[0_8px_18px_rgba(44,84,29,0.16)]"
+                      : "text-black hover:bg-[#f6f8f5]"
                   }`}
                   onClick={() => {
                     setMode("login");
@@ -169,10 +169,10 @@ export default function LoginPageClient() {
                 <button
                   type="button"
                   aria-pressed={mode === "register"}
-                  className={`h-12 border-l border-black text-[15px] font-semibold transition-colors ${
+                  className={`h-12 rounded-full text-[15px] font-semibold transition-colors ${
                     mode === "register"
-                      ? "bg-black text-white"
-                      : "bg-white text-black hover:bg-[#f6f8f5]"
+                      ? "bg-[var(--ast-global-color-1)] text-white shadow-[0_8px_18px_rgba(44,84,29,0.16)]"
+                      : "text-black hover:bg-[#f6f8f5]"
                   }`}
                   onClick={() => {
                     setMode("register");
@@ -212,7 +212,7 @@ export default function LoginPageClient() {
                       maxLength={6}
                       pattern="[0-9]{6}"
                       value={form.code}
-                      className="mt-2 h-12 w-full border border-[#d6d6d6] bg-white px-4 text-center text-[18px] font-semibold tracking-[0.2em] text-black outline-none transition focus:border-black"
+                      className="bayblaze-soft-input mt-2 h-12 w-full px-4 text-center text-[18px] font-semibold tracking-[0.2em] text-black outline-none"
                       onChange={(event) =>
                         updateField(
                           "code",
@@ -245,7 +245,7 @@ export default function LoginPageClient() {
                           required
                           autoComplete="given-name"
                           value={form.firstName}
-                          className="mt-2 h-12 w-full border border-[#d6d6d6] bg-white px-4 text-[16px] font-normal text-black outline-none transition focus:border-black"
+                          className="bayblaze-soft-input mt-2 h-12 w-full px-4 text-[16px] font-normal text-black outline-none"
                           onChange={(event) =>
                             updateField("firstName", event.target.value)
                           }
@@ -258,7 +258,7 @@ export default function LoginPageClient() {
                           required
                           autoComplete="family-name"
                           value={form.lastName}
-                          className="mt-2 h-12 w-full border border-[#d6d6d6] bg-white px-4 text-[16px] font-normal text-black outline-none transition focus:border-black"
+                          className="bayblaze-soft-input mt-2 h-12 w-full px-4 text-[16px] font-normal text-black outline-none"
                           onChange={(event) =>
                             updateField("lastName", event.target.value)
                           }
@@ -274,7 +274,7 @@ export default function LoginPageClient() {
                       type="email"
                       autoComplete="email"
                       value={form.email}
-                      className="mt-2 h-12 w-full border border-[#d6d6d6] bg-white px-4 text-[16px] font-normal text-black outline-none transition focus:border-black"
+                      className="bayblaze-soft-input mt-2 h-12 w-full px-4 text-[16px] font-normal text-black outline-none"
                       onChange={(event) =>
                         updateField("email", event.target.value)
                       }
@@ -291,7 +291,7 @@ export default function LoginPageClient() {
                         mode === "login" ? "current-password" : "new-password"
                       }
                       value={form.password}
-                      className="mt-2 h-12 w-full border border-[#d6d6d6] bg-white px-4 text-[16px] font-normal text-black outline-none transition focus:border-black"
+                      className="bayblaze-soft-input mt-2 h-12 w-full px-4 text-[16px] font-normal text-black outline-none"
                       onChange={(event) =>
                         updateField("password", event.target.value)
                       }
@@ -318,7 +318,7 @@ export default function LoginPageClient() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="bayblaze-hero-button flex h-[50px] w-full items-center justify-center bg-[var(--ast-global-color-0)] px-5 text-center text-white transition-colors hover:bg-black disabled:cursor-not-allowed disabled:opacity-70 sm:h-[52px] sm:px-7"
+                className="bayblaze-hero-button bayblaze-soft-button bayblaze-soft-button--primary flex h-[50px] w-full items-center justify-center px-5 text-center disabled:cursor-not-allowed disabled:opacity-70 sm:h-[52px] sm:px-7"
               >
                 {isSubmitting
                   ? mode === "login"

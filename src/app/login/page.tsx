@@ -11,13 +11,13 @@ export const metadata: Metadata = {
 
 export default function Page() {
   return (
-    <main className="min-h-screen bg-white">
+    <main className="min-h-screen bg-[#f7f6f2]">
       <Header />
       <Suspense
         fallback={
-          <div className="bayblaze-auth-page bg-white pb-20 pt-[112px]">
+          <div className="bayblaze-auth-page pb-20 pt-[112px]">
             <div className="mx-auto w-full max-w-[1180px] px-5">
-              <div className="h-[560px] border border-[#eeeeee] bg-white" />
+              <div className="bayblaze-soft-card h-[560px]" />
             </div>
           </div>
         }

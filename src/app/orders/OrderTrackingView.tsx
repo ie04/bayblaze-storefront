@@ -25,13 +25,13 @@ export default function OrderTrackingView({
   return (
     <section
       className={[
-        "bg-white text-[#585858]",
+        "bayblaze-soft-card overflow-hidden text-[#585858]",
         mode === "modal"
-          ? "max-h-[calc(100vh-48px)] overflow-y-auto border-2 border-black shadow-[8px_8px_0_#000]"
-          : "border-y-2 border-black",
+          ? "max-h-[calc(100vh-48px)] overflow-y-auto"
+          : "",
       ].join(" ")}
     >
-      <header className="flex flex-col gap-5 border-b-2 border-black bg-[#f7f6f2] px-5 py-5 sm:flex-row sm:items-start sm:justify-between sm:px-7 sm:py-6">
+      <header className="flex flex-col gap-5 border-b border-[#e8e2d8] bg-[#f7f6f2] px-5 py-5 sm:flex-row sm:items-start sm:justify-between sm:px-7 sm:py-6">
         <div>
           <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[var(--ast-global-color-1)]">
             Order Tracking
@@ -45,13 +45,13 @@ export default function OrderTrackingView({
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          <span className="border border-[#d8e2d2] bg-white px-3 py-2 text-[12px] font-semibold uppercase tracking-[0.1em] text-[var(--ast-global-color-1)]">
+          <span className="bayblaze-soft-chip bg-white px-3 py-2 text-[12px] font-semibold uppercase tracking-[0.1em]">
             {isComplete ? "Complete" : "Pending"}
           </span>
           {onClose ? (
             <button
               type="button"
-              className="border border-black bg-white px-4 py-2 text-[12px] font-semibold uppercase tracking-[0.1em] text-black transition-colors hover:bg-black hover:text-white"
+              className="bayblaze-soft-button px-4 py-2 text-[12px] font-semibold uppercase tracking-[0.1em]"
               onClick={onClose}
             >
               Close
@@ -78,7 +78,7 @@ export default function OrderTrackingView({
 
 function OrderSummary({ order }: { order: CustomerOrder }) {
   return (
-    <section className="border border-[#ded8cf] bg-[#f7f6f2] p-5">
+    <section className="bayblaze-soft-card bayblaze-soft-card--tint p-5">
       <h2 className="text-[20px] font-semibold leading-tight text-black">
         Summary
       </h2>
@@ -117,7 +117,7 @@ function OrderProgress({ order }: { order: CustomerOrder }) {
   const activeIndex = steps.findIndex((step) => step.key === currentStep);
 
   return (
-    <section className="border border-[#ded8cf] bg-white p-5">
+    <section className="bayblaze-soft-card p-5">
       <h2 className="text-[20px] font-semibold leading-tight text-black">
         Delivery timeline
       </h2>
@@ -150,8 +150,8 @@ function OrderProgress({ order }: { order: CustomerOrder }) {
 
 function DriverMap({ order }: { order: CustomerOrder }) {
   return (
-    <section className="overflow-hidden border border-[#ded8cf] bg-[#eef2e9]">
-      <div className="flex items-center justify-between border-b border-[#d8d1c6] bg-white px-5 py-4">
+    <section className="bayblaze-soft-card overflow-hidden bg-[#eef2e9]">
+      <div className="flex items-center justify-between border-b border-[#e8e2d8] bg-white px-5 py-4">
         <h2 className="text-[20px] font-semibold leading-tight text-black">
           Driver map
         </h2>
@@ -163,7 +163,7 @@ function DriverMap({ order }: { order: CustomerOrder }) {
         <div className="absolute left-[12%] top-[65%] size-4 rounded-full bg-[var(--ast-global-color-1)] shadow-[0_0_0_8px_rgba(51,104,79,0.12)]" />
         <div className="absolute right-[16%] top-[24%] size-4 rounded-full bg-black shadow-[0_0_0_8px_rgba(0,0,0,0.1)]" />
         <div className="absolute left-[15%] right-[19%] top-[35%] h-[3px] origin-left -rotate-[17deg] bg-[var(--ast-global-color-1)]" />
-        <div className="absolute bottom-4 left-5 right-5 border border-[#d8d1c6] bg-white/90 px-4 py-3 text-[14px] font-medium leading-[1.4] text-black">
+        <div className="absolute bottom-4 left-5 right-5 rounded-[8px] border border-[#d8d1c6] bg-white/90 px-4 py-3 text-[14px] font-medium leading-[1.4] text-black">
           {formatDeliveryAddress(order)}
         </div>
       </div>
@@ -173,12 +173,12 @@ function DriverMap({ order }: { order: CustomerOrder }) {
 
 function DriverChat() {
   return (
-    <section className="border border-[#ded8cf] bg-white p-5">
+    <section className="bayblaze-soft-card p-5">
       <h2 className="text-[20px] font-semibold leading-tight text-black">
         Driver chat
       </h2>
       <div className="mt-4 grid gap-3">
-        <div className="max-w-[85%] border border-[#ded8cf] bg-[#f7f6f2] px-4 py-3 text-[14px] leading-[1.45]">
+        <div className="max-w-[85%] rounded-[8px] border border-[#ded8cf] bg-[#f7f6f2] px-4 py-3 text-[14px] leading-[1.45]">
           Driver assignment pending.
         </div>
         <label className="sr-only" htmlFor="driver-chat-message">
@@ -187,14 +187,14 @@ function DriverChat() {
         <div className="flex gap-2">
           <input
             id="driver-chat-message"
-            className="h-11 min-w-0 flex-1 border border-[#d8d1c6] bg-[#f7f6f2] px-3 text-[14px] outline-none"
+            className="bayblaze-soft-input h-11 min-w-0 flex-1 px-3 text-[14px] outline-none"
             disabled
             placeholder="Message driver"
             type="text"
           />
           <button
             type="button"
-            className="border border-[#d8d1c6] px-3 text-[12px] font-semibold uppercase tracking-[0.1em] text-[#777]"
+            className="bayblaze-soft-button px-3 text-[12px] font-semibold uppercase tracking-[0.1em] text-[#777]"
             disabled
           >
             Send
@@ -207,7 +207,7 @@ function DriverChat() {
 
 function OrderItems({ order }: { order: CustomerOrder }) {
   return (
-    <section className="border border-[#ded8cf] bg-white p-5">
+    <section className="bayblaze-soft-card p-5">
       <h2 className="text-[20px] font-semibold leading-tight text-black">
         Items
       </h2>
@@ -243,15 +243,15 @@ function OrderItemRow({
         : null;
 
   return (
-    <li className="flex gap-3 border border-[#eeeeee] bg-[#f7f6f2] p-3">
+    <li className="flex gap-3 rounded-[8px] border border-[#eeeeee] bg-[#f7f6f2] p-3">
       {item.thumbnail ? (
         <img
           src={item.thumbnail}
           alt={getOrderItemTitle(item)}
-          className="size-14 shrink-0 border border-[#e3ded5] bg-white object-contain p-1"
+          className="size-14 shrink-0 rounded-[8px] border border-[#e3ded5] bg-white object-contain p-1"
         />
       ) : (
-        <div className="flex size-14 shrink-0 items-center justify-center border border-[#e3ded5] bg-white text-[10px] font-semibold uppercase tracking-[0.08em] text-[#8a8a8a]">
+        <div className="flex size-14 shrink-0 items-center justify-center rounded-[8px] border border-[#e3ded5] bg-white text-[10px] font-semibold uppercase tracking-[0.08em] text-[#8a8a8a]">
           Item
         </div>
       )}

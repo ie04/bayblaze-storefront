@@ -44,9 +44,9 @@ export default async function Page() {
     customer.email;
 
   return (
-    <main className="min-h-screen bg-white">
+    <main className="min-h-screen bg-[#f7f6f2]">
       <Header />
-      <div className="bayblaze-auth-page bg-white pb-14 pt-[92px] sm:pb-20 sm:pt-[112px]">
+      <div className="bayblaze-auth-page pb-14 pt-[92px] sm:pb-20 sm:pt-[112px]">
         <div className="mx-auto w-full max-w-[1180px] px-4 sm:px-5">
           <nav
             aria-label="Breadcrumb"
@@ -62,7 +62,7 @@ export default async function Page() {
             <span>Account</span>
           </nav>
 
-          <section className="border-y-2 border-black py-7 sm:py-10">
+          <section className="bayblaze-auth-section px-4 py-7 sm:px-7 sm:py-10">
             <div className="mb-7 flex flex-col gap-5 sm:mb-10 sm:flex-row sm:items-end sm:justify-between">
               <div>
                 <p className="mb-3 text-[13px] font-semibold uppercase tracking-[0.22em] text-[var(--ast-global-color-1)]">
@@ -77,7 +77,7 @@ export default async function Page() {
             </div>
 
             <div className="grid gap-6 lg:grid-cols-3">
-              <article className="border border-[#d0d0d0] bg-[var(--ast-global-color-4)] p-5 shadow-[5px_5px_0_#000] sm:p-6 sm:shadow-[6px_6px_0_#000]">
+              <article className="bayblaze-soft-card bayblaze-soft-card--tint p-5 sm:p-6">
                 <h2 className="mb-4 text-[21px] font-semibold leading-tight text-black sm:mb-5 sm:text-[24px]">
                   Profile
                 </h2>
@@ -103,7 +103,7 @@ export default async function Page() {
 
               <AccountOrdersSection initialOrders={orders} />
 
-              <article className="border border-[#d0d0d0] bg-[var(--ast-global-color-4)] p-5 sm:p-6">
+              <article className="bayblaze-soft-card bayblaze-soft-card--tint p-5 sm:p-6">
                 <h2 className="mb-4 text-[21px] font-semibold leading-tight text-black sm:mb-5 sm:text-[24px]">
                   Delivery
                 </h2>

@@ -33,9 +33,9 @@ export default async function OrdersPage() {
   const orders = await retrieveCustomerOrders(token).catch(() => []);
 
   return (
-    <main className="min-h-screen bg-white">
+    <main className="min-h-screen bg-[#f7f6f2]">
       <Header />
-      <div className="bayblaze-auth-page bg-white pb-14 pt-[92px] sm:pb-20 sm:pt-[112px]">
+      <div className="bayblaze-auth-page pb-14 pt-[92px] sm:pb-20 sm:pt-[112px]">
         <div className="mx-auto w-full max-w-[1180px] px-4 sm:px-5">
           <nav
             aria-label="Breadcrumb"

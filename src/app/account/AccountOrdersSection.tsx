@@ -100,7 +100,7 @@ export default function AccountOrdersSection({
   return (
     <article
       id="orders"
-      className="scroll-mt-[112px] border border-[#d0d0d0] bg-[var(--ast-global-color-4)] p-5 sm:p-6"
+      className="bayblaze-soft-card bayblaze-soft-card--tint scroll-mt-[112px] p-5 sm:p-6"
     >
       <div className="mb-4 flex items-start justify-between gap-4 sm:mb-5">
         <div>
@@ -116,7 +116,7 @@ export default function AccountOrdersSection({
 
         <button
           type="button"
-          className="shrink-0 border border-[#cfc7bb] bg-white px-3 py-2 text-[12px] font-semibold uppercase tracking-[0.1em] text-[var(--ast-global-color-1)] transition-colors hover:border-[var(--ast-global-color-1)] hover:text-black disabled:cursor-wait disabled:opacity-60"
+          className="bayblaze-soft-button shrink-0 px-3 py-2 text-[12px] font-semibold uppercase tracking-[0.1em] disabled:cursor-wait disabled:opacity-60"
           disabled={isRefreshing}
           onClick={() => {
             void refreshOrders();
@@ -127,7 +127,7 @@ export default function AccountOrdersSection({
       </div>
 
       {error ? (
-        <p className="mb-4 border border-red-200 bg-red-50 px-3 py-2 text-[14px] font-medium leading-[1.45] text-red-700">
+        <p className="bayblaze-soft-alert mb-4 px-3 py-2 text-[14px] font-medium leading-[1.45] text-red-700">
           {error}
         </p>
       ) : null}
@@ -144,7 +144,7 @@ export default function AccountOrdersSection({
               <li
                 key={order.id}
                 className={[
-                  "border bg-white transition-colors",
+                  "rounded-[8px] border bg-white transition-colors",
                   isHighlighted
                     ? "border-[var(--ast-global-color-1)]"
                     : "border-[#e7e7e7]",
@@ -154,7 +154,7 @@ export default function AccountOrdersSection({
                   type="button"
                   aria-controls={panelId}
                   aria-expanded={isOpen}
-                  className="w-full px-4 py-4 text-left transition-colors hover:bg-[#f7f6f2]"
+                  className="w-full rounded-[8px] px-4 py-4 text-left transition-colors hover:bg-[#f7f6f2]"
                   onClick={() => {
                     setOpenOrderId(isOpen ? "" : order.id);
                   }}
@@ -170,7 +170,7 @@ export default function AccountOrdersSection({
                     </span>
 
                     <span className="flex shrink-0 flex-col items-end gap-2">
-                      <span className="border border-[#d8e2d2] bg-[#f5faf0] px-2.5 py-1 text-[12px] font-semibold uppercase tracking-[0.1em] text-[var(--ast-global-color-1)]">
+                      <span className="bayblaze-soft-chip px-2.5 py-1 text-[12px] font-semibold uppercase tracking-[0.1em]">
                         {formatOrderStatus(order.status)}
                       </span>
                       {isHighlighted ? (
@@ -250,15 +250,15 @@ function OrderItemRow({
         : null;
 
   return (
-    <li className="flex gap-3 border border-[#eeeeee] bg-[#f7f6f2] p-3">
+    <li className="flex gap-3 rounded-[8px] border border-[#eeeeee] bg-[#f7f6f2] p-3">
       {thumbnail ? (
         <img
           src={thumbnail}
           alt={getOrderItemTitle(item)}
-          className="size-14 shrink-0 border border-[#e3ded5] bg-white object-contain p-1"
+          className="size-14 shrink-0 rounded-[8px] border border-[#e3ded5] bg-white object-contain p-1"
         />
       ) : (
-        <div className="flex size-14 shrink-0 items-center justify-center border border-[#e3ded5] bg-white text-[10px] font-semibold uppercase tracking-[0.08em] text-[#8a8a8a]">
+        <div className="flex size-14 shrink-0 items-center justify-center rounded-[8px] border border-[#e3ded5] bg-white text-[10px] font-semibold uppercase tracking-[0.08em] text-[#8a8a8a]">
           Item
         </div>
       )}
