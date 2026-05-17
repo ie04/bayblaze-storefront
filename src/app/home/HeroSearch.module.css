@@ -127,7 +127,7 @@
   overflow: hidden;
   padding: 0.62rem 0;
   position: absolute;
-  top: 156.5px;
+  top: 139.5px;
   transform: translateY(-50%);
   width: 100vw;
 }
@@ -225,6 +225,6 @@
 
 @media (min-width: 640px) {
   .ribbon {
-    top: calc(16vh + 61.5px);
+    top: calc(16vh + 41.5px);
   }
 }
