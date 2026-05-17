@@ -123,11 +123,12 @@
   color: #24361f;
   font-family: var(--font-jost), Jost, Arial, sans-serif;
   margin-inline: calc(50% - 50vw);
-  margin-top: 14px;
   max-width: none;
   overflow: hidden;
   padding: 0.62rem 0;
-  position: relative;
+  position: absolute;
+  top: 156.5px;
+  transform: translateY(-50%);
   width: 100vw;
 }
 
@@ -219,5 +220,11 @@
   .ribbonItem {
     font-size: 0.68rem;
     letter-spacing: 0.055em;
+  }
+}
+
+@media (min-width: 640px) {
+  .ribbon {
+    top: calc(16vh + 61.5px);
   }
 }

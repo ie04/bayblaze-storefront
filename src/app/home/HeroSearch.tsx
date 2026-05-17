@@ -121,16 +121,20 @@ export default function HeroSearch() {
           </span>
         </div>
       </form>
+    </div>
+  );
+}
 
-      <div
-        className={styles.ribbon}
-        aria-label={ribbonTaglines.join(" · ")}
-      >
-        <div className={styles.ribbonTrack} aria-hidden="true">
-          {Array.from({ length: ribbonRepeatCount }).map((_, index) => (
-            <RibbonGroup key={index} />
-          ))}
-        </div>
+export function HeroRibbon() {
+  return (
+    <div
+      className={styles.ribbon}
+      aria-label={ribbonTaglines.join(" · ")}
+    >
+      <div className={styles.ribbonTrack} aria-hidden="true">
+        {Array.from({ length: ribbonRepeatCount }).map((_, index) => (
+          <RibbonGroup key={index} />
+        ))}
       </div>
     </div>
   );

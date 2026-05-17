@@ -1,4 +1,4 @@
-import HeroSearch from "@/app/home/HeroSearch";
+import HeroSearch, { HeroRibbon } from "@/app/home/HeroSearch";
 
 export default function HomeHero() {
   return (
@@ -14,6 +14,8 @@ export default function HomeHero() {
       />
 
       <div className="relative z-20 mx-auto flex min-h-[720px] w-full max-w-[1150px] flex-col items-center px-4 text-center sm:min-h-screen sm:px-5">
+        <HeroRibbon />
+
         <div className="h-[245px] shrink-0 sm:h-[calc(32vh+43px)]" />
 
         <h1 className="bayblaze-hero-title">
