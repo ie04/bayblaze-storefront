@@ -23,6 +23,8 @@ const ribbonTaglines = [
   "Popular Picks Delivered Today",
 ];
 
+const ribbonRepeatCount = 6;
+
 export default function HeroSearch() {
   const [query, setQuery] = useState("");
   const [isFocused, setIsFocused] = useState(false);
@@ -124,18 +126,19 @@ export default function HeroSearch() {
         className={styles.ribbon}
         aria-label={ribbonTaglines.join(" · ")}
       >
-        <div className={styles.ribbonTrack}>
-          <RibbonGroup />
-          <RibbonGroup ariaHidden />
+        <div className={styles.ribbonTrack} aria-hidden="true">
+          {Array.from({ length: ribbonRepeatCount }).map((_, index) => (
+            <RibbonGroup key={index} />
+          ))}
         </div>
       </div>
     </div>
   );
 }
 
-function RibbonGroup({ ariaHidden = false }: { ariaHidden?: boolean }) {
+function RibbonGroup() {
   return (
-    <div className={styles.ribbonGroup} aria-hidden={ariaHidden}>
+    <div className={styles.ribbonGroup}>
       {ribbonTaglines.map((tagline) => (
         <span key={tagline} className={styles.ribbonItem}>
           {tagline}
