@@ -170,21 +170,13 @@ body {
 }
 
 .bayblaze-product-rail-title {
-  color: #2b2b2b;
-  font-size: clamp(2.15rem, 4vw, 3.15rem);
+  color: #2d2d2d;
+  font-size: clamp(2rem, 4vw, 2.45rem);
   font-style: normal;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0;
-  line-height: 1;
+  line-height: 1.05;
   margin: 0;
-}
-
-.bayblaze-product-rail-subtitle {
-  color: #53614e;
-  font-size: 1rem;
-  font-weight: 500;
-  line-height: 1.35;
-  margin: 0.35rem 0 0;
 }
 
 .bayblaze-section-shop-link {
@@ -492,10 +484,22 @@ body {
   text-underline-offset: 3px;
 }
 
-.bayblaze-category-grid {
-  display: grid;
-  gap: 1rem;
-  grid-template-columns: 1fr;
+.bayblaze-category-carousel {
+  margin-inline: -4px;
+  padding-top: 0.1rem;
+}
+
+.bayblaze-category-carousel .swiper {
+  cursor: grab;
+  overflow: visible;
+}
+
+.bayblaze-category-carousel .swiper-wrapper {
+  align-items: stretch;
+}
+
+.bayblaze-category-carousel .swiper:active {
+  cursor: grabbing;
 }
 
 .bayblaze-category-card {
@@ -505,6 +509,7 @@ body {
   color: #2d2d2d;
   display: flex;
   flex-direction: column;
+  height: 100%;
   overflow: hidden;
   text-decoration: none;
   transition:
@@ -558,20 +563,9 @@ body {
   line-height: 1.35;
 }
 
-@media (min-width: 560px) {
-  .bayblaze-category-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
 @media (min-width: 900px) {
   .bayblaze-category-section {
     padding: 2.45rem 0 2.75rem;
-  }
-
-  .bayblaze-category-grid {
-    gap: 1.25rem;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
@@ -964,15 +958,6 @@ body {
 
   .bayblaze-product-rail-header {
     align-items: flex-start;
-  }
-
-  .bayblaze-product-rail-title {
-    font-size: clamp(2rem, 9vw, 2.45rem);
-  }
-
-  .bayblaze-product-rail-subtitle {
-    font-size: 0.94rem;
-    max-width: 15rem;
   }
 
   .bayblaze-product-wedge {

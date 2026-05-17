@@ -16,7 +16,6 @@ export default function HomeExploreProducts({
   const productGroups = [
     {
       title: "Best Sellers",
-      description: "Fast Local Delivery on Top Selling Vape Brands",
       href: "/product-category/vapes",
       products: vapeProducts,
     },
@@ -30,7 +29,6 @@ export default function HomeExploreProducts({
             <ProductPreview
               key={group.title}
               title={group.title}
-              description={group.description}
               href={group.href}
               products={group.products}
             />
@@ -43,12 +41,10 @@ export default function HomeExploreProducts({
 
 function ProductPreview({
   title,
-  description,
   href,
   products,
 }: {
   title: string;
-  description: string;
   href: string;
   products: ProductPreviewItem[];
 }) {
@@ -57,7 +53,6 @@ function ProductPreview({
       <div className="bayblaze-product-rail-header">
         <div className="min-w-0">
           <h3 className="bayblaze-product-rail-title">{title}</h3>
-          <p className="bayblaze-product-rail-subtitle">{description}</p>
         </div>
 
         <a href={href} className="bayblaze-section-shop-link">
