@@ -125,28 +125,15 @@ export default function LoginPageClient() {
           <span>{mode === "login" ? "Login" : "Register"}</span>
         </nav>
 
-        <section className="bayblaze-auth-section grid gap-7 px-4 py-7 sm:gap-10 sm:px-7 sm:py-10 lg:grid-cols-[minmax(0,0.86fr)_minmax(420px,0.64fr)] lg:items-center">
-          <div>
-            <p className="mb-3 text-[13px] font-semibold uppercase tracking-[0.22em] text-[var(--ast-global-color-1)]">
-              Bayblaze Account
-            </p>
-            <h1 className="bayblaze-auth-title text-black">
-              {mode === "login"
-                ? "Welcome back."
-                : isVerifyingRegistration
-                  ? "Check your email."
-                  : "Create your account."}
-            </h1>
-            <p className="mt-4 max-w-[560px] text-[16px] leading-[1.65] text-[#585858] sm:mt-5 sm:text-[18px] sm:leading-[1.75]">
-              {mode === "login"
-                ? "Sign in to manage your Bayblaze details and keep checkout moving."
-                : isVerifyingRegistration
-                  ? "Enter the 6-digit code we sent before creating your account."
-                  : "Register once, then use your account for future Bayblaze orders."}
-            </p>
-          </div>
+        <section
+          aria-labelledby="bayblaze-auth-heading"
+          className="mx-auto flex min-h-[560px] w-full max-w-[560px] items-center py-4 sm:py-8"
+        >
+          <h1 id="bayblaze-auth-heading" className="sr-only">
+            Bayblaze Account
+          </h1>
 
-          <div className="bayblaze-soft-card bayblaze-soft-card--tint p-4 sm:p-7">
+          <div className="bayblaze-soft-card bayblaze-soft-card--tint w-full p-5 shadow-[0_18px_42px_rgba(69,88,58,0.14)] sm:p-8">
             {!isVerifyingRegistration ? (
               <div className="mb-6 grid grid-cols-2 gap-1 rounded-full border border-[#d8e2d2] bg-white p-1 sm:mb-7">
                 <button
