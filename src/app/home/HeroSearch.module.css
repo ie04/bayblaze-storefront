@@ -201,11 +201,11 @@
 
 @keyframes hero-ribbon-scroll {
   from {
-    transform: translateX(0);
+    transform: translateX(calc(-100% / 6));
   }
 
   to {
-    transform: translateX(calc(-100% / 6));
+    transform: translateX(0);
   }
 }
 
