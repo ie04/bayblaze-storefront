@@ -55,3 +55,15 @@ display and data-shaping rules inside page components.
   `src/app/layout.tsx` as a server component and wrap children through the
   provider boundary there. Add future global client contexts to `Providers`
   rather than sprinkling providers through individual routes.
+- Homepage carousel configuration lives in `src/app/domain/home-carousels.ts`.
+  Use `HomeCarouselDefinition<TItem>` for common carousel facts such as id,
+  title, destination href, link label, items, empty text, arrow labels, slide
+  width class, and Swiper class. Define concrete homepage carousels as domain
+  objects there, such as `shopByCategoryCarousel` and
+  `getBestSellersCarousel(products)`, rather than hard-coding these properties
+  in individual homepage components.
+- Homepage carousel behavior and visual shell live in
+  `src/app/home/HomeCarousel.tsx`. Best Sellers and Shop by Category should use
+  this shared component and only provide their item renderer card. Do not
+  reimplement Swiper lifecycle state, arrow looping, header layout, link
+  rendering, slide spacing, or readiness opacity separately for each carousel.

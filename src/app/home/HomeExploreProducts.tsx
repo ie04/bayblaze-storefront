@@ -1,199 +1,27 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import type { Swiper as SwiperType } from "swiper";
-import { Swiper, SwiperSlide } from "swiper/react";
-
-import "swiper/css";
-
+import { getBestSellersCarousel } from "@/app/domain/home-carousels";
 import type { ProductPreviewItem } from "@/app/lib/medusa-products";
+import HomeCarousel from "./HomeCarousel";
 
 export default function HomeExploreProducts({
   vapeProducts,
 }: {
   vapeProducts: ProductPreviewItem[];
 }) {
-  const productGroups = [
-    {
-      title: "Best Sellers",
-      href: "/product-category/vapes",
-      products: vapeProducts,
-    },
-  ];
+  const carousel = getBestSellersCarousel(vapeProducts);
 
   return (
     <section className="bayblaze-products-section bg-[#F7F6F2]">
       <div className="mx-auto flex w-full max-w-[1240px] flex-col px-4 py-12 sm:px-5 sm:py-16">
         <div className="divide-y divide-[#a5b29d]">
-          {productGroups.map((group) => (
-            <ProductPreview
-              key={group.title}
-              title={group.title}
-              href={group.href}
-              products={group.products}
-            />
-          ))}
+          <HomeCarousel
+            definition={carousel}
+            renderItem={(product) => <ProductSlide product={product} />}
+          />
         </div>
       </div>
     </section>
-  );
-}
-
-function ProductPreview({
-  title,
-  href,
-  products,
-}: {
-  title: string;
-  href: string;
-  products: ProductPreviewItem[];
-}) {
-  return (
-    <article className="bayblaze-product-rail pb-8 pt-6 sm:pb-10 sm:pt-8">
-      <div className="bayblaze-product-rail-header">
-        <div className="min-w-0">
-          <h3 className="bayblaze-product-rail-title">{title}</h3>
-        </div>
-
-        <a href={href} className="bayblaze-section-shop-link">
-          <span>Shop All</span>
-          <ChevronRightIcon />
-        </a>
-      </div>
-
-      <div className="bayblaze-product-showcase">
-        <div className="bayblaze-product-carousel-layer min-w-0">
-          {products.length ? (
-            <ProductCarousel products={products} />
-          ) : (
-            <div className="flex min-h-[220px] w-full items-center justify-center border border-dashed border-[#aab6a4] bg-white px-5 text-center text-[18px] font-medium leading-[1.45] text-[#585858]">
-              Products will appear here once the catalog is connected.
-            </div>
-          )}
-        </div>
-      </div>
-    </article>
-  );
-}
-
-function ProductCarousel({ products }: { products: ProductPreviewItem[] }) {
-  const swiperRef = useRef<SwiperType | null>(null);
-  const readyFrameRef = useRef<number | null>(null);
-  const [isCarouselReady, setIsCarouselReady] = useState(false);
-
-  function handlePreviousClick() {
-    const swiper = swiperRef.current;
-
-    if (!swiper || swiper.destroyed) {
-      return;
-    }
-
-    if (swiper.activeIndex <= 0) {
-      swiper.slideTo(products.length - 1);
-      return;
-    }
-
-    swiper.slidePrev();
-  }
-
-  function handleNextClick() {
-    const swiper = swiperRef.current;
-
-    if (!swiper || swiper.destroyed) {
-      return;
-    }
-
-    if (swiper.activeIndex >= products.length - 1) {
-      swiper.slideTo(0);
-      return;
-    }
-
-    swiper.slideNext();
-  }
-
-  function handleSwiperReady(swiper: SwiperType) {
-    swiperRef.current = swiper;
-
-    if (readyFrameRef.current !== null) {
-      cancelAnimationFrame(readyFrameRef.current);
-    }
-
-    readyFrameRef.current = requestAnimationFrame(() => {
-      if (swiper.destroyed || swiperRef.current !== swiper) {
-        return;
-      }
-
-      setIsCarouselReady(true);
-      readyFrameRef.current = null;
-    });
-  }
-
-  useEffect(() => {
-    return () => {
-      if (readyFrameRef.current !== null) {
-        cancelAnimationFrame(readyFrameRef.current);
-      }
-    };
-  }, []);
-
-  return (
-    <div className="bayblaze-product-carousel w-full pb-6 pt-2">
-      <div className="bayblaze-product-carousel-window">
-        <Swiper
-          grabCursor
-          observer
-          observeParents
-          resizeObserver
-          slidesPerView="auto"
-          spaceBetween={16}
-          speed={400}
-          watchSlidesProgress
-          onSwiper={handleSwiperReady}
-          breakpoints={{
-            640: {
-              spaceBetween: 20,
-            },
-            1024: {
-              spaceBetween: 24,
-            },
-          }}
-          className={`bayblaze-product-swiper w-full transition-opacity duration-200 ${
-            isCarouselReady ? "opacity-100" : "opacity-0"
-          }`}
-        >
-          {products.map((product, index) => (
-            <SwiperSlide
-              key={`${product.href}-${index}`}
-              className="!h-auto !w-[220px] max-w-[78vw] sm:!w-[230px] lg:!w-[244px]"
-            >
-              <ProductSlide product={product} />
-            </SwiperSlide>
-          ))}
-        </Swiper>
-
-        {products.length > 1 ? (
-          <button
-            type="button"
-            className="bayblaze-product-carousel-arrow bayblaze-product-carousel-arrow--prev"
-            aria-label="Previous product"
-            onClick={handlePreviousClick}
-          >
-            <ChevronLeftIcon />
-          </button>
-        ) : null}
-
-        {products.length > 1 ? (
-          <button
-            type="button"
-            className="bayblaze-product-carousel-arrow bayblaze-product-carousel-arrow--next"
-            aria-label="Next product"
-            onClick={handleNextClick}
-          >
-            <ChevronRightIcon />
-          </button>
-        ) : null}
-      </div>
-    </div>
   );
 }
 
@@ -265,40 +93,6 @@ function HeartIcon() {
       viewBox="0 0 24 24"
     >
       <path d="M19.5 12.6 12 20l-7.5-7.4a5 5 0 0 1 7.1-7.1l.4.4.4-.4a5 5 0 0 1 7.1 7.1Z" />
-    </svg>
-  );
-}
-
-function ChevronLeftIcon() {
-  return (
-    <svg
-      aria-hidden="true"
-      className="size-6"
-      fill="none"
-      stroke="currentColor"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="2.5"
-      viewBox="0 0 24 24"
-    >
-      <path d="m15 18-6-6 6-6" />
-    </svg>
-  );
-}
-
-function ChevronRightIcon() {
-  return (
-    <svg
-      aria-hidden="true"
-      className="size-6"
-      fill="none"
-      stroke="currentColor"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="2.5"
-      viewBox="0 0 24 24"
-    >
-      <path d="m9 6 6 6-6 6" />
     </svg>
   );
 }
