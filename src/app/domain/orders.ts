@@ -1,6 +1,30 @@
 import type { CustomerOrder, CustomerOrderItem } from "@/app/lib/medusa-auth";
 
-export function getOrderReference(order: CustomerOrder) {
+export const RECENT_ORDER_STORAGE_KEY = "bayblaze-recent-order";
+
+export type OrderGroups = {
+  completedOrders: CustomerOrder[];
+  pendingOrders: CustomerOrder[];
+};
+
+export type OrdersResponse = {
+  orders?: CustomerOrder[];
+  error?: string;
+};
+
+export function isCustomerOrder(value: unknown): value is CustomerOrder {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  return typeof (value as { id?: unknown }).id === "string";
+}
+
+export function getOrderReference(order?: CustomerOrder | null) {
+  if (!order) {
+    return "";
+  }
+
   if (order.custom_display_id) {
     return order.custom_display_id;
   }
@@ -10,6 +34,12 @@ export function getOrderReference(order: CustomerOrder) {
   }
 
   return order.id.slice(-8).toUpperCase();
+}
+
+export function getOrderTrackingHref(order?: CustomerOrder | null) {
+  const reference = getOrderReference(order);
+
+  return reference ? `/orders/${encodeURIComponent(reference)}` : "";
 }
 
 export function formatOrderNumber(order: CustomerOrder) {
@@ -66,6 +96,18 @@ export function getVariantLabel(item: CustomerOrderItem) {
   return item.variant_title;
 }
 
+export function getOrderItemTotal(item: CustomerOrderItem) {
+  if (typeof item.total === "number") {
+    return item.total;
+  }
+
+  if (typeof item.unit_price !== "number" || typeof item.quantity !== "number") {
+    return null;
+  }
+
+  return item.unit_price * item.quantity;
+}
+
 export function getOrderTimestamp(order: CustomerOrder) {
   if (!order.created_at) {
     return 0;
@@ -78,6 +120,36 @@ export function getOrderTimestamp(order: CustomerOrder) {
 
 export function isCompletedOrder(order: CustomerOrder) {
   return ["archived", "canceled", "completed"].includes(order.status ?? "");
+}
+
+export function sortOrdersByNewest(orders: CustomerOrder[]) {
+  return [...orders].sort((firstOrder, secondOrder) => {
+    return getOrderTimestamp(secondOrder) - getOrderTimestamp(firstOrder);
+  });
+}
+
+export function groupOrdersByLifecycle(orders: CustomerOrder[]): OrderGroups {
+  const sortedOrders = sortOrdersByNewest(orders);
+
+  return {
+    completedOrders: sortedOrders.filter(isCompletedOrder),
+    pendingOrders: sortedOrders.filter((order) => !isCompletedOrder(order)),
+  };
+}
+
+export function mergeOrderLists(
+  priorityOrders: CustomerOrder[],
+  fallbackOrders: CustomerOrder[],
+) {
+  const mergedOrders = new Map<string, CustomerOrder>();
+
+  for (const order of [...priorityOrders, ...fallbackOrders]) {
+    if (order.id && !mergedOrders.has(order.id)) {
+      mergedOrders.set(order.id, order);
+    }
+  }
+
+  return sortOrdersByNewest([...mergedOrders.values()]);
 }
 
 export function getOrderRecipient(order: CustomerOrder) {

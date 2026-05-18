@@ -7,9 +7,12 @@ import { useRouter } from "next/navigation";
 
 import Header from "@/app/components/layout/Header";
 import { useCart, type CartItem } from "@/app/components/cart/CartContext";
+import {
+  RECENT_ORDER_STORAGE_KEY,
+  getOrderReference,
+  getOrderTrackingHref,
+} from "@/app/domain/orders";
 import type { Customer, CustomerOrder } from "@/app/lib/medusa-auth";
-
-const RECENT_ORDER_STORAGE_KEY = "bayblaze-recent-order";
 
 export default function CheckoutPageClient({
   customer,
@@ -98,11 +101,7 @@ export default function CheckoutPageClient({
           : "Your order was placed.",
       );
       setOrderTrackingHref(
-        recentOrder
-          ? `/orders/${encodeURIComponent(
-              String(recentOrder.custom_display_id ?? recentOrder.id),
-            )}`
-          : "",
+        recentOrder ? getOrderTrackingHref(recentOrder) : "",
       );
     } catch {
       setCheckoutError("Unable to reach checkout right now. Please try again.");
@@ -492,10 +491,6 @@ function saveRecentOrder(order: CustomerOrder) {
   } catch {
     // The account page can still refresh orders directly from Medusa.
   }
-}
-
-function getOrderReference(order?: CustomerOrder) {
-  return order?.custom_display_id ?? order?.display_id;
 }
 
 function formatMoney(amount: number) {

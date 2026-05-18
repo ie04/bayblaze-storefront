@@ -1,6 +1,4 @@
-import { cookies } from "next/headers";
-
-import { CUSTOMER_TOKEN_COOKIE } from "@/app/lib/medusa-auth";
+import { getCustomerToken } from "@/app/lib/customer-session";
 
 type CheckoutItem = {
   id?: string;
@@ -120,8 +118,7 @@ export async function POST(request: Request) {
 
   const customer = body.customer as Required<CheckoutCustomer>;
   const items = body.items as ValidCheckoutItem[];
-  const cookieStore = await cookies();
-  const customerToken = cookieStore.get(CUSTOMER_TOKEN_COOKIE)?.value;
+  const customerToken = await getCustomerToken();
   const shippingAddress = {
     first_name: customer.first_name.trim(),
     last_name: customer.last_name.trim(),

@@ -1,13 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 
 import Header from "@/app/components/layout/Header";
-import {
-  CUSTOMER_TOKEN_COOKIE,
-  retrieveOrderByReference,
-} from "@/app/lib/medusa-auth";
+import { getCustomerToken } from "@/app/lib/customer-session";
+import { retrieveOrderByReference } from "@/app/lib/medusa-auth";
 import OrderTrackingView from "../OrderTrackingView";
 
 export const metadata: Metadata = {
@@ -21,8 +18,7 @@ export default async function OrderDetailPage({
   params: Promise<{ orderId: string }>;
 }) {
   const { orderId } = await params;
-  const cookieStore = await cookies();
-  const token = cookieStore.get(CUSTOMER_TOKEN_COOKIE)?.value;
+  const token = await getCustomerToken();
   const order = await retrieveOrderByReference(orderId, token).catch(() => null);
 
   if (!order) {

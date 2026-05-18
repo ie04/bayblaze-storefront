@@ -6,15 +6,22 @@ import type {
   CustomerOrder,
   CustomerOrderItem,
 } from "@/app/lib/medusa-auth";
+import {
+  RECENT_ORDER_STORAGE_KEY,
+  type OrdersResponse,
+  formatOrderDate,
+  formatOrderNumber,
+  formatOrderStatus,
+  formatOrderTotal,
+  getOrderItemTitle,
+  getOrderItemTotal,
+  getVariantLabel,
+  isCustomerOrder,
+  mergeOrderLists,
+} from "@/app/domain/orders";
 
-const RECENT_ORDER_STORAGE_KEY = "bayblaze-recent-order";
 const medusaBackendUrl =
   process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL?.replace(/\/$/, "") ?? "";
-
-type OrdersResponse = {
-  orders?: CustomerOrder[];
-  error?: string;
-};
 
 export default function AccountOrdersSection({
   initialOrders,
@@ -242,12 +249,7 @@ function OrderItemRow({
   item: CustomerOrderItem;
 }) {
   const thumbnail = normalizeOrderThumbnail(item.thumbnail);
-  const itemTotal =
-    typeof item.total === "number"
-      ? item.total
-      : typeof item.unit_price === "number" && typeof item.quantity === "number"
-        ? item.unit_price * item.quantity
-        : null;
+  const itemTotal = getOrderItemTotal(item);
 
   return (
     <li className="flex gap-3 rounded-[8px] border border-[#eeeeee] bg-[#f7f6f2] p-3">
@@ -332,98 +334,6 @@ function clearStoredRecentOrderIfSynced(fetchedOrders: CustomerOrder[]) {
   }
 }
 
-function mergeOrderLists(
-  priorityOrders: CustomerOrder[],
-  fallbackOrders: CustomerOrder[],
-) {
-  const mergedOrders = new Map<string, CustomerOrder>();
-
-  for (const order of [...priorityOrders, ...fallbackOrders]) {
-    if (order.id && !mergedOrders.has(order.id)) {
-      mergedOrders.set(order.id, order);
-    }
-  }
-
-  return [...mergedOrders.values()].sort((firstOrder, secondOrder) => {
-    return getOrderTimestamp(secondOrder) - getOrderTimestamp(firstOrder);
-  });
-}
-
-function getOrderTimestamp(order: CustomerOrder) {
-  if (!order.created_at) {
-    return 0;
-  }
-
-  const timestamp = Date.parse(order.created_at);
-
-  return Number.isFinite(timestamp) ? timestamp : 0;
-}
-
-function isCustomerOrder(value: unknown): value is CustomerOrder {
-  if (!value || typeof value !== "object") {
-    return false;
-  }
-
-  return typeof (value as { id?: unknown }).id === "string";
-}
-
-function formatOrderNumber(order: CustomerOrder) {
-  if (order.custom_display_id) {
-    return `#${order.custom_display_id}`;
-  }
-
-  if (order.display_id !== null && order.display_id !== undefined) {
-    return `#${order.display_id}`;
-  }
-
-  return `#${order.id.slice(-8).toUpperCase()}`;
-}
-
-function formatOrderStatus(status?: string | null) {
-  if (!status) {
-    return "Pending";
-  }
-
-  return status
-    .split("_")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ");
-}
-
-function formatOrderDate(date?: string | null) {
-  if (!date) {
-    return "Just now";
-  }
-
-  const parsedDate = new Date(date);
-
-  if (Number.isNaN(parsedDate.getTime())) {
-    return "Date unavailable";
-  }
-
-  return new Intl.DateTimeFormat("en-US", {
-    dateStyle: "medium",
-  }).format(parsedDate);
-}
-
-function formatOrderTotal(total: number, currencyCode: string) {
-  return new Intl.NumberFormat("en-US", {
-    currency: currencyCode.toUpperCase(),
-    style: "currency",
-  }).format(total);
-}
-
-function getOrderItemTitle(item: CustomerOrderItem) {
-  return item.title ?? item.product_title ?? "Product";
-}
-
-function getVariantLabel(item: CustomerOrderItem) {
-  if (!item.variant_title || item.variant_title === "Default Variant") {
-    return "";
-  }
-
-  return item.variant_title;
-}
 
 function normalizeOrderThumbnail(thumbnail?: string | null) {
   if (!thumbnail) {

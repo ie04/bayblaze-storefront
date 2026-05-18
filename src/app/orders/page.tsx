@@ -1,11 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 import Header from "@/app/components/layout/Header";
+import { getCustomerToken } from "@/app/lib/customer-session";
 import {
-  CUSTOMER_TOKEN_COOKIE,
   retrieveCustomer,
   retrieveCustomerOrders,
 } from "@/app/lib/medusa-auth";
@@ -17,8 +16,7 @@ export const metadata: Metadata = {
 };
 
 export default async function OrdersPage() {
-  const cookieStore = await cookies();
-  const token = cookieStore.get(CUSTOMER_TOKEN_COOKIE)?.value;
+  const token = await getCustomerToken();
 
   if (!token) {
     redirect("/login?redirect=/orders");

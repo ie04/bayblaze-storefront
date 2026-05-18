@@ -1,13 +1,8 @@
-import { cookies } from "next/headers";
-
-import {
-  CUSTOMER_TOKEN_COOKIE,
-  retrieveCustomerOrders,
-} from "@/app/lib/medusa-auth";
+import { getCustomerToken } from "@/app/lib/customer-session";
+import { retrieveCustomerOrders } from "@/app/lib/medusa-auth";
 
 export async function GET() {
-  const cookieStore = await cookies();
-  const token = cookieStore.get(CUSTOMER_TOKEN_COOKIE)?.value;
+  const token = await getCustomerToken();
 
   if (!token) {
     return Response.json({ error: "Not authenticated." }, { status: 401 });

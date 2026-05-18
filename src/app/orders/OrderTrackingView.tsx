@@ -5,11 +5,12 @@ import {
   formatOrderNumber,
   formatOrderStatus,
   formatOrderTotal,
+  getOrderItemTotal,
   getOrderItemTitle,
   getOrderRecipient,
   getVariantLabel,
   isCompletedOrder,
-} from "./order-utils";
+} from "@/app/domain/orders";
 
 export default function OrderTrackingView({
   mode = "page",
@@ -235,12 +236,7 @@ function OrderItemRow({
   currencyCode?: string | null;
   item: CustomerOrderItem;
 }) {
-  const itemTotal =
-    typeof item.total === "number"
-      ? item.total
-      : typeof item.unit_price === "number" && typeof item.quantity === "number"
-        ? item.unit_price * item.quantity
-        : null;
+  const itemTotal = getOrderItemTotal(item);
 
   return (
     <li className="flex gap-3 rounded-[8px] border border-[#eeeeee] bg-[#f7f6f2] p-3">

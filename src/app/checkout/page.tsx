@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import { cookies } from "next/headers";
 
-import { CUSTOMER_TOKEN_COOKIE, retrieveCustomer } from "@/app/lib/medusa-auth";
+import { getCustomerToken } from "@/app/lib/customer-session";
+import { retrieveCustomer } from "@/app/lib/medusa-auth";
 import CheckoutPageClient from "./CheckoutPageClient";
 
 export const metadata: Metadata = {
@@ -10,8 +10,7 @@ export const metadata: Metadata = {
 };
 
 export default async function CheckoutPage() {
-  const cookieStore = await cookies();
-  const token = cookieStore.get(CUSTOMER_TOKEN_COOKIE)?.value;
+  const token = await getCustomerToken();
   const customer = token
     ? await retrieveCustomer(token).catch(() => undefined)
     : undefined;

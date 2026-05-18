@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Jost } from "next/font/google";
-import { CartProvider } from "@/app/components/cart/CartContext";
-import PwaInstallPrompt from "@/app/components/pwa/PwaInstallPrompt";
+import Providers from "@/app/providers";
 import "./globals.css";
 
 const jost = Jost({
@@ -40,8 +39,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${jost.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col" suppressHydrationWarning>
-        <CartProvider>{children}</CartProvider>
-        <PwaInstallPrompt />
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

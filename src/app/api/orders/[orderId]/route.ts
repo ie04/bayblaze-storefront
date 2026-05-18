@@ -1,17 +1,12 @@
-import { cookies } from "next/headers";
-
-import {
-  CUSTOMER_TOKEN_COOKIE,
-  retrieveOrderByReference,
-} from "@/app/lib/medusa-auth";
+import { getCustomerToken } from "@/app/lib/customer-session";
+import { retrieveOrderByReference } from "@/app/lib/medusa-auth";
 
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ orderId: string }> },
 ) {
   const { orderId } = await params;
-  const cookieStore = await cookies();
-  const token = cookieStore.get(CUSTOMER_TOKEN_COOKIE)?.value;
+  const token = await getCustomerToken();
 
   try {
     const order = await retrieveOrderByReference(orderId, token);

@@ -9,14 +9,9 @@ import {
   formatOrderNumber,
   formatOrderStatus,
   formatOrderTotal,
-  getOrderTimestamp,
-  isCompletedOrder,
-} from "./order-utils";
-
-type OrdersResponse = {
-  orders?: CustomerOrder[];
-  error?: string;
-};
+  groupOrdersByLifecycle,
+  type OrdersResponse,
+} from "@/app/domain/orders";
 
 export default function OrdersDashboard({
   initialOrders,
@@ -28,16 +23,10 @@ export default function OrdersDashboard({
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState("");
 
-  const { completedOrders, pendingOrders } = useMemo(() => {
-    const sortedOrders = [...orders].sort((firstOrder, secondOrder) => {
-      return getOrderTimestamp(secondOrder) - getOrderTimestamp(firstOrder);
-    });
-
-    return {
-      completedOrders: sortedOrders.filter(isCompletedOrder),
-      pendingOrders: sortedOrders.filter((order) => !isCompletedOrder(order)),
-    };
-  }, [orders]);
+  const { completedOrders, pendingOrders } = useMemo(
+    () => groupOrdersByLifecycle(orders),
+    [orders],
+  );
 
   async function refreshOrders() {
     setIsRefreshing(true);
