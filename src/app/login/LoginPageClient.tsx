@@ -22,61 +22,201 @@ const initialFormState: FormState = {
   lastName: "",
 };
 
-const loginWirePaths = [
-  {
-    accent: "light",
-    d: "M 560 236 H 392 V 204 H 344 V 176 H 282 V 144 H 210 V 112 H 126 V 86 H 0",
-  },
-  {
-    accent: "main",
-    d: "M 560 282 H 382 V 316 H 316 V 348 H 252 V 382 H 174 V 414 H 84 V 448 H 0",
-  },
-  {
-    accent: "dark",
-    d: "M 560 330 H 404 V 366 H 350 V 404 H 292 V 442 H 224 V 486 H 140 V 526 H 0",
-  },
-  {
-    accent: "light",
-    d: "M 560 190 H 410 V 158 H 368 V 126 H 304 V 92 H 232 V 58 H 144 V 28 H 0",
-  },
-  {
-    accent: "main",
-    d: "M 560 390 H 392 V 424 H 338 V 462 H 276 V 500 H 198 V 548 H 0",
-  },
-  {
-    accent: "light",
-    d: "M 880 238 H 1052 V 206 H 1100 V 178 H 1162 V 146 H 1230 V 112 H 1314 V 84 H 1440",
-  },
-  {
-    accent: "main",
-    d: "M 880 286 H 1060 V 320 H 1126 V 354 H 1190 V 388 H 1266 V 420 H 1354 V 456 H 1440",
-  },
-  {
-    accent: "dark",
-    d: "M 880 334 H 1038 V 370 H 1090 V 408 H 1152 V 446 H 1220 V 490 H 1302 V 532 H 1440",
-  },
-  {
-    accent: "light",
-    d: "M 880 192 H 1030 V 160 H 1074 V 128 H 1138 V 94 H 1210 V 60 H 1298 V 28 H 1440",
-  },
-  {
-    accent: "main",
-    d: "M 880 394 H 1048 V 428 H 1104 V 466 H 1166 V 506 H 1246 V 552 H 1440",
-  },
+type WirePoint = [number, number];
+
+type WireSegment = {
+  key: string;
+  length: number;
+  orientation: "horizontal" | "vertical";
+  x: number;
+  y: number;
+};
+
+const loginWireWalks: WirePoint[][] = [
+  [
+    [560, 168],
+    [504, 168],
+    [504, 132],
+    [438, 132],
+    [438, 96],
+    [360, 96],
+    [360, 58],
+    [260, 58],
+    [260, 30],
+    [138, 30],
+    [138, 0],
+    [0, 0],
+  ],
+  [
+    [560, 222],
+    [488, 222],
+    [488, 184],
+    [414, 184],
+    [414, 146],
+    [326, 146],
+    [326, 110],
+    [232, 110],
+    [232, 74],
+    [112, 74],
+    [112, 38],
+    [0, 38],
+  ],
+  [
+    [560, 278],
+    [474, 278],
+    [474, 316],
+    [402, 316],
+    [402, 354],
+    [316, 354],
+    [316, 390],
+    [222, 390],
+    [222, 428],
+    [116, 428],
+    [116, 466],
+    [0, 466],
+  ],
+  [
+    [560, 338],
+    [492, 338],
+    [492, 376],
+    [424, 376],
+    [424, 414],
+    [344, 414],
+    [344, 452],
+    [250, 452],
+    [250, 490],
+    [142, 490],
+    [142, 530],
+    [0, 530],
+  ],
+  [
+    [560, 400],
+    [514, 400],
+    [514, 444],
+    [440, 444],
+    [440, 486],
+    [346, 486],
+    [346, 530],
+    [234, 530],
+    [234, 572],
+    [0, 572],
+  ],
+  [
+    [520, 462],
+    [458, 462],
+    [458, 504],
+    [382, 504],
+    [382, 548],
+    [282, 548],
+    [282, 592],
+    [164, 592],
+    [164, 620],
+    [0, 620],
+  ],
+  [
+    [880, 168],
+    [936, 168],
+    [936, 130],
+    [1006, 130],
+    [1006, 94],
+    [1088, 94],
+    [1088, 58],
+    [1190, 58],
+    [1190, 28],
+    [1312, 28],
+    [1312, 0],
+    [1440, 0],
+  ],
+  [
+    [880, 224],
+    [948, 224],
+    [948, 186],
+    [1022, 186],
+    [1022, 148],
+    [1110, 148],
+    [1110, 112],
+    [1204, 112],
+    [1204, 76],
+    [1326, 76],
+    [1326, 38],
+    [1440, 38],
+  ],
+  [
+    [880, 280],
+    [968, 280],
+    [968, 320],
+    [1042, 320],
+    [1042, 356],
+    [1128, 356],
+    [1128, 394],
+    [1224, 394],
+    [1224, 432],
+    [1330, 432],
+    [1330, 468],
+    [1440, 468],
+  ],
+  [
+    [880, 338],
+    [950, 338],
+    [950, 376],
+    [1020, 376],
+    [1020, 416],
+    [1104, 416],
+    [1104, 454],
+    [1198, 454],
+    [1198, 494],
+    [1306, 494],
+    [1306, 534],
+    [1440, 534],
+  ],
+  [
+    [880, 400],
+    [926, 400],
+    [926, 444],
+    [1004, 444],
+    [1004, 486],
+    [1098, 486],
+    [1098, 530],
+    [1210, 530],
+    [1210, 572],
+    [1440, 572],
+  ],
+  [
+    [920, 462],
+    [984, 462],
+    [984, 506],
+    [1064, 506],
+    [1064, 548],
+    [1166, 548],
+    [1166, 592],
+    [1284, 592],
+    [1284, 620],
+    [1440, 620],
+  ],
 ];
 
-const loginWireNodes = [
-  [386, 198],
-  [338, 170],
-  [376, 310],
-  [310, 342],
-  [398, 360],
-  [1046, 200],
-  [1094, 172],
-  [1054, 314],
-  [1120, 348],
-  [1032, 364],
-];
+const loginWireSegments = loginWireWalks.flatMap((walk, walkIndex) =>
+  walk.slice(1).flatMap((point, pointIndex) => {
+    const [startX, startY] = walk[pointIndex];
+    const [endX, endY] = point;
+    const isVertical = startX === endX;
+    const length = Math.abs(isVertical ? endY - startY : endX - startX);
+
+    if (length === 0) {
+      return [];
+    }
+
+    return [
+      {
+        key: `${walkIndex}-${pointIndex}`,
+        length,
+        orientation: isVertical ? "vertical" : "horizontal",
+        x: Math.min(startX, endX),
+        y: Math.min(startY, endY),
+      } satisfies WireSegment,
+    ];
+  }),
+);
 
 export default function LoginPageClient() {
   const router = useRouter();
@@ -388,46 +528,23 @@ export default function LoginPageClient() {
 function LoginWireBackdrop() {
   return (
     <div className="bayblaze-login-wire-field" aria-hidden="true">
-      <svg
-        className="bayblaze-login-wires"
-        preserveAspectRatio="none"
-        shapeRendering="crispEdges"
-        viewBox="0 0 1440 620"
-      >
-        <g className="bayblaze-login-wire-bundle bayblaze-login-wire-outline">
-          {loginWirePaths.map((wire) => (
-            <path key={`outline-${wire.d}`} d={wire.d} />
-          ))}
-        </g>
-
-        <g className="bayblaze-login-wire-bundle bayblaze-login-wire-core">
-          {loginWirePaths.map((wire) => (
-            <path
-              className={`bayblaze-login-wire-${wire.accent}`}
-              d={wire.d}
-              key={`core-${wire.d}`}
-            />
-          ))}
-        </g>
-
-        <g className="bayblaze-login-wire-node-outlines">
-          {loginWireNodes.map(([x, y]) => (
-            <rect
-              height="18"
-              key={`node-outline-${x}-${y}`}
-              width="18"
-              x={x - 3}
-              y={y - 3}
-            />
-          ))}
-        </g>
-
-        <g className="bayblaze-login-wire-nodes">
-          {loginWireNodes.map(([x, y]) => (
-            <rect height="12" key={`node-${x}-${y}`} width="12" x={x} y={y} />
-          ))}
-        </g>
-      </svg>
+      <div className="bayblaze-login-wire-map">
+        {loginWireSegments.map((segment) => (
+          <span
+            className={`bayblaze-login-wire-segment ${
+              segment.orientation === "vertical"
+                ? "bayblaze-login-wire-segment--vertical"
+                : ""
+            }`}
+            key={segment.key}
+            style={{
+              left: `${segment.x}px`,
+              top: `${segment.y}px`,
+              width: `${segment.length}px`,
+            }}
+          />
+        ))}
+      </div>
     </div>
   );
 }

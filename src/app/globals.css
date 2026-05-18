@@ -451,6 +451,7 @@ body {
 }
 
 .bayblaze-login-wire-field {
+  image-rendering: pixelated;
   inset: -38px calc(50% - 50vw) -42px calc(50% - 50vw);
   overflow: hidden;
   pointer-events: none;
@@ -458,47 +459,29 @@ body {
   z-index: 1;
 }
 
-.bayblaze-login-wires {
-  display: block;
-  height: 100%;
+.bayblaze-login-wire-map {
+  height: 620px;
+  left: 50%;
   opacity: 0.96;
-  width: 100%;
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 1440px;
 }
 
-.bayblaze-login-wire-bundle {
-  fill: none;
-  stroke-linecap: square;
-  stroke-linejoin: miter;
-  vector-effect: non-scaling-stroke;
+.bayblaze-login-wire-segment {
+  background-image: url("/images/login/green-wire-alpha-crop.png");
+  background-repeat: repeat-x;
+  background-size: auto 22px;
+  display: block;
+  height: 22px;
+  image-rendering: pixelated;
+  position: absolute;
 }
 
-.bayblaze-login-wire-outline {
-  stroke: rgba(15, 39, 15, 0.78);
-  stroke-width: 11px;
-}
-
-.bayblaze-login-wire-core {
-  stroke-width: 6px;
-}
-
-.bayblaze-login-wire-light {
-  stroke: #8fff4e;
-}
-
-.bayblaze-login-wire-main {
-  stroke: #43d128;
-}
-
-.bayblaze-login-wire-dark {
-  stroke: #1c8f1e;
-}
-
-.bayblaze-login-wire-node-outlines {
-  fill: rgba(15, 39, 15, 0.82);
-}
-
-.bayblaze-login-wire-nodes {
-  fill: #68e63a;
+.bayblaze-login-wire-segment--vertical {
+  transform: rotate(90deg);
+  transform-origin: left top;
 }
 
 @media (max-width: 767px) {
@@ -508,7 +491,11 @@ body {
 
   .bayblaze-login-wire-field {
     inset-block: -22px -28px;
-    opacity: 0.52;
+    opacity: 0.62;
+  }
+
+  .bayblaze-login-wire-map {
+    transform: translate(-50%, -50%) scale(0.72);
   }
 }
 
