@@ -9,6 +9,31 @@ This version has breaking changes — APIs, conventions, and file structure may 
 When code changes are complete, ask the user if they want to commit and push the
 changes. Offer a suitable commit message/name with that prompt.
 
+When infrastructure, deployment, environment variables, service topology,
+runner setup, or cross-repo integration details change, update the relevant
+`AGENTS.md` files in the same work session so future Codex/LLM sessions inherit
+the current operating model.
+
+### IsoChronos Integration
+
+IsoChronos lives in the sibling repository `bayblaze-isochronos`. Treat it as
+BayBlaze's backend-only delivery intelligence service and not as a frontend app.
+
+- The storefront should consume delivery intelligence from IsoChronos through
+  backend/API boundaries rather than calling Google Maps APIs directly from
+  browser code.
+- Never expose Google Maps API keys or paid Google Maps request logic in
+  storefront client components.
+- Address autocomplete, geocoding, routing, live ETA, order partitioning, and
+  Google Maps usage guardrails belong in IsoChronos or a backend that delegates
+  to IsoChronos.
+- Storefront live delivery UI should prefer IsoChronos ETA snapshots and
+  interpolation-friendly data instead of triggering frequent paid route
+  refreshes.
+- Keep order and delivery UI display rules in the storefront domain layer, but
+  keep delivery intelligence, coordinates, cache behavior, and Google Maps cost
+  controls out of page components.
+
 ### Storefront Domain Model
 
 The storefront should model business concepts explicitly instead of duplicating
