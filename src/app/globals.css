@@ -195,6 +195,11 @@ body {
   overflow: visible;
 }
 
+.bayblaze-product-carousel-window .bayblaze-home-carousel-swiper {
+  overflow: visible;
+  padding-block: 0.4rem 0.9rem;
+}
+
 .bayblaze-home-carousel-swiper .swiper-wrapper {
   align-items: stretch;
 }
@@ -834,7 +839,7 @@ body {
 .bayblaze-product-carousel-window {
   position: relative;
   overflow: hidden;
-  padding-block: 0.85rem 1.75rem;
+  padding-block: 0.5rem 1rem;
 }
 
 .bayblaze-product-card {
@@ -1116,7 +1121,11 @@ body {
 
   .bayblaze-product-carousel-window {
     margin-inline: -4px;
-    padding-block: 0.75rem 1.5rem;
+    padding-block: 0.35rem 0.6rem;
+  }
+
+  .bayblaze-product-carousel-window .bayblaze-home-carousel-swiper {
+    padding-block: 0.35rem 0.85rem;
   }
 
   .bayblaze-product-card-media {
