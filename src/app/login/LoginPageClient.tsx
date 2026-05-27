@@ -22,201 +22,14 @@ const initialFormState: FormState = {
   lastName: "",
 };
 
-type WirePoint = [number, number];
+const loginWireAngles = [5, 10, 15, 21, 28, 36, 45];
 
-type WireSegment = {
-  key: string;
-  length: number;
-  orientation: "horizontal" | "vertical";
-  x: number;
-  y: number;
-};
-
-const loginWireWalks: WirePoint[][] = [
-  [
-    [560, 168],
-    [504, 168],
-    [504, 132],
-    [438, 132],
-    [438, 96],
-    [360, 96],
-    [360, 58],
-    [260, 58],
-    [260, 30],
-    [138, 30],
-    [138, 0],
-    [0, 0],
-  ],
-  [
-    [560, 222],
-    [488, 222],
-    [488, 184],
-    [414, 184],
-    [414, 146],
-    [326, 146],
-    [326, 110],
-    [232, 110],
-    [232, 74],
-    [112, 74],
-    [112, 38],
-    [0, 38],
-  ],
-  [
-    [560, 278],
-    [474, 278],
-    [474, 316],
-    [402, 316],
-    [402, 354],
-    [316, 354],
-    [316, 390],
-    [222, 390],
-    [222, 428],
-    [116, 428],
-    [116, 466],
-    [0, 466],
-  ],
-  [
-    [560, 338],
-    [492, 338],
-    [492, 376],
-    [424, 376],
-    [424, 414],
-    [344, 414],
-    [344, 452],
-    [250, 452],
-    [250, 490],
-    [142, 490],
-    [142, 530],
-    [0, 530],
-  ],
-  [
-    [560, 400],
-    [514, 400],
-    [514, 444],
-    [440, 444],
-    [440, 486],
-    [346, 486],
-    [346, 530],
-    [234, 530],
-    [234, 572],
-    [0, 572],
-  ],
-  [
-    [520, 462],
-    [458, 462],
-    [458, 504],
-    [382, 504],
-    [382, 548],
-    [282, 548],
-    [282, 592],
-    [164, 592],
-    [164, 620],
-    [0, 620],
-  ],
-  [
-    [880, 168],
-    [936, 168],
-    [936, 130],
-    [1006, 130],
-    [1006, 94],
-    [1088, 94],
-    [1088, 58],
-    [1190, 58],
-    [1190, 28],
-    [1312, 28],
-    [1312, 0],
-    [1440, 0],
-  ],
-  [
-    [880, 224],
-    [948, 224],
-    [948, 186],
-    [1022, 186],
-    [1022, 148],
-    [1110, 148],
-    [1110, 112],
-    [1204, 112],
-    [1204, 76],
-    [1326, 76],
-    [1326, 38],
-    [1440, 38],
-  ],
-  [
-    [880, 280],
-    [968, 280],
-    [968, 320],
-    [1042, 320],
-    [1042, 356],
-    [1128, 356],
-    [1128, 394],
-    [1224, 394],
-    [1224, 432],
-    [1330, 432],
-    [1330, 468],
-    [1440, 468],
-  ],
-  [
-    [880, 338],
-    [950, 338],
-    [950, 376],
-    [1020, 376],
-    [1020, 416],
-    [1104, 416],
-    [1104, 454],
-    [1198, 454],
-    [1198, 494],
-    [1306, 494],
-    [1306, 534],
-    [1440, 534],
-  ],
-  [
-    [880, 400],
-    [926, 400],
-    [926, 444],
-    [1004, 444],
-    [1004, 486],
-    [1098, 486],
-    [1098, 530],
-    [1210, 530],
-    [1210, 572],
-    [1440, 572],
-  ],
-  [
-    [920, 462],
-    [984, 462],
-    [984, 506],
-    [1064, 506],
-    [1064, 548],
-    [1166, 548],
-    [1166, 592],
-    [1284, 592],
-    [1284, 620],
-    [1440, 620],
-  ],
-];
-
-const loginWireSegments = loginWireWalks.flatMap((walk, walkIndex) =>
-  walk.slice(1).flatMap((point, pointIndex) => {
-    const [startX, startY] = walk[pointIndex];
-    const [endX, endY] = point;
-    const isVertical = startX === endX;
-    const length = Math.abs(isVertical ? endY - startY : endX - startX);
-
-    if (length === 0) {
-      return [];
-    }
-
-    return [
-      {
-        key: `${walkIndex}-${pointIndex}`,
-        length,
-        orientation: isVertical ? "vertical" : "horizontal",
-        x: Math.min(startX, endX),
-        y: Math.min(startY, endY),
-      } satisfies WireSegment,
-    ];
-  }),
-);
+const loginWireCorners = [
+  "top-left",
+  "top-right",
+  "bottom-left",
+  "bottom-right",
+] as const;
 
 export default function LoginPageClient() {
   const router = useRouter();
@@ -529,20 +342,22 @@ function LoginWireBackdrop() {
   return (
     <div className="bayblaze-login-wire-field" aria-hidden="true">
       <div className="bayblaze-login-wire-map">
-        {loginWireSegments.map((segment) => (
-          <span
-            className={`bayblaze-login-wire-segment ${
-              segment.orientation === "vertical"
-                ? "bayblaze-login-wire-segment--vertical"
-                : ""
-            }`}
-            key={segment.key}
-            style={{
-              left: `${segment.x}px`,
-              top: `${segment.y}px`,
-              width: `${segment.length}px`,
-            }}
-          />
+        {loginWireCorners.map((corner) => (
+          <div
+            className={`bayblaze-login-wire-corner bayblaze-login-wire-corner--${corner}`}
+            key={corner}
+          >
+            {loginWireAngles.map((angle, index) => (
+              <span
+                className="bayblaze-login-wire-segment"
+                key={`${corner}-${angle}`}
+                style={{
+                  transform: `rotate(${angle}deg)`,
+                  width: `${720 - index * 28}px`,
+                }}
+              />
+            ))}
+          </div>
         ))}
       </div>
     </div>
