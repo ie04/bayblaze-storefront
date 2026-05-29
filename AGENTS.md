@@ -76,6 +76,14 @@ display and data-shaping rules inside page components.
   `src/app/lib/customer-session.ts` via `getCustomerToken()`. Server pages and
   route handlers that only need the current customer token should use this
   helper instead of importing `cookies()` and `CUSTOMER_TOKEN_COOKIE` directly.
+- Customer Google OAuth starts at
+  `src/app/api/auth/oauth/google/start/route.ts` and returns through
+  `src/app/api/auth/oauth/google/callback/route.ts`. The callback exchanges the
+  Google query params with Medusa, creates a Medusa customer on first OAuth
+  login when needed, refreshes the Medusa JWT so it includes the customer actor,
+  and sets the same `CUSTOMER_TOKEN_COOKIE` used by email/password auth. Keep
+  OAuth provider secrets and callback URL configuration in the Medusa backend;
+  the storefront should only initiate and complete the server-side flow.
 - App-level client providers belong in `src/app/providers.tsx`. Keep
   `src/app/layout.tsx` as a server component and wrap children through the
   provider boundary there. Add future global client contexts to `Providers`

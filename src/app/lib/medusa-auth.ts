@@ -71,6 +71,11 @@ type MedusaOrderResponse = {
   order: CustomerOrder;
 };
 
+type MedusaOAuthResponse = {
+  location?: string;
+  token?: string;
+};
+
 type RequestOptions = RequestInit & {
   token?: string;
   usePublishableKey?: boolean;
@@ -177,6 +182,127 @@ export async function authenticateCustomer(email: string, password: string) {
   }
 
   return data.token;
+}
+
+function decodeJwtPayload(token: string) {
+  const payload = token.split(".")[1];
+
+  if (!payload) {
+    throw new Error("Medusa returned an invalid authentication token.");
+  }
+
+  const normalizedPayload = payload.replace(/-/g, "+").replace(/_/g, "/");
+  const paddedPayload = normalizedPayload.padEnd(
+    Math.ceil(normalizedPayload.length / 4) * 4,
+    "=",
+  );
+
+  return JSON.parse(Buffer.from(paddedPayload, "base64").toString("utf8")) as {
+    actor_id?: string;
+    user_metadata?: {
+      email?: string;
+      family_name?: string;
+      given_name?: string;
+      name?: string;
+    };
+  };
+}
+
+function getOAuthCustomerNameParts(metadata: {
+  family_name?: string;
+  given_name?: string;
+  name?: string;
+}) {
+  const givenName = metadata.given_name?.trim();
+  const familyName = metadata.family_name?.trim();
+
+  if (givenName || familyName) {
+    return {
+      firstName: givenName || "Bayblaze",
+      lastName: familyName || "Customer",
+    };
+  }
+
+  const [firstName, ...rest] = metadata.name?.trim().split(/\s+/) ?? [];
+
+  return {
+    firstName: firstName || "Bayblaze",
+    lastName: rest.join(" ") || "Customer",
+  };
+}
+
+export async function getCustomerOAuthRedirect(provider: "google", callbackUrl: string) {
+  const data = await medusaRequest<MedusaOAuthResponse>(
+    `/auth/customer/${provider}`,
+    {
+      method: "POST",
+      body: JSON.stringify({ callback_url: callbackUrl }),
+    },
+  );
+
+  if (!data.location) {
+    throw new Error("Medusa did not return an OAuth redirect URL.");
+  }
+
+  return data.location;
+}
+
+export async function completeCustomerOAuth(
+  provider: "google",
+  searchParams: URLSearchParams,
+) {
+  const callbackParams = new URLSearchParams(searchParams);
+  const callback = await medusaRequest<MedusaOAuthResponse>(
+    `/auth/customer/${provider}/callback?${callbackParams.toString()}`,
+    {
+      method: "GET",
+    },
+  );
+  let token = callback.token;
+
+  if (!token) {
+    throw new Error("Medusa did not return an OAuth token.");
+  }
+
+  const decodedToken = decodeJwtPayload(token);
+
+  if (!decodedToken.actor_id) {
+    const metadata = decodedToken.user_metadata ?? {};
+    const email = metadata.email?.trim();
+
+    if (!email) {
+      throw new Error("Google did not return a verified email address.");
+    }
+
+    const { firstName, lastName } = getOAuthCustomerNameParts(metadata);
+
+    await medusaRequest<MedusaCustomerResponse>("/store/customers", {
+      method: "POST",
+      token,
+      usePublishableKey: true,
+      body: JSON.stringify({
+        email,
+        first_name: firstName,
+        last_name: lastName,
+      }),
+    });
+
+    const refreshed = await medusaRequest<MedusaOAuthResponse>(
+      "/auth/token/refresh",
+      {
+        method: "POST",
+        token,
+      },
+    );
+
+    if (!refreshed.token) {
+      throw new Error("Medusa did not refresh the OAuth token.");
+    }
+
+    token = refreshed.token;
+  }
+
+  return token;
 }
 
 export async function registerCustomer(input: {

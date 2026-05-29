@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="420" height="240" viewBox="0 0 420 240">
+  <defs>
+    <pattern id="flames" width="84" height="96" patternUnits="userSpaceOnUse" patternTransform="rotate(-12 42 48)">
+      <rect width="84" height="96" fill="#f8efe1"/>
+      <g transform="translate(29 17)" fill="#2f744d" shape-rendering="crispEdges">
+        <path d="M12 0h4v4h4v8h4v8h4v16h-4v12h-4v8h-4v4H8v-4H4v-8H0V36h-4V20h4v-8h4V4h4z"/>
+        <path fill="#f8efe1" d="M12 20h4v8h4v12h-4v8h-4v4H8v-4H4v-8H0v-8h4v-8h4v-4z"/>
+        <path d="M8 30h4v8h4v8h-4v4H8v-4H4v-8h4z"/>
+      </g>
+      <g transform="translate(73 70)" fill="#2f744d" shape-rendering="crispEdges">
+        <path d="M12 0h4v4h4v8h4v8h4v16h-4v12h-4v8h-4v4H8v-4H4v-8H0V36h-4V20h4v-8h4V4h4z"/>
+        <path fill="#f8efe1" d="M12 20h4v8h4v12h-4v8h-4v4H8v-4H4v-8H0v-8h4v-8h4v-4z"/>
+        <path d="M8 30h4v8h4v8h-4v4H8v-4H4v-8h4z"/>
+      </g>
+    </pattern>
+  </defs>
+  <rect width="420" height="240" fill="url(#flames)"/>
+</svg>
