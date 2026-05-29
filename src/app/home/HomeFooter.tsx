@@ -14,7 +14,7 @@ export default function HomeFooter() {
 
         <nav
           aria-label="Legal"
-          className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-[13px] font-medium leading-[1.2] text-[#585858] md:absolute md:left-5 md:text-[14px]"
+          className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-center text-[13px] font-medium leading-[1.2] text-[#585858] md:absolute md:left-5 md:text-left md:text-[14px]"
         >
           <Link
             href="/privacy-policy"
@@ -28,16 +28,9 @@ export default function HomeFooter() {
           >
             Terms &amp; Conditions
           </Link>
+          <span>Copyright &copy; 2026 BAYBLAZE LLC. All rights reserved.</span>
         </nav>
-
-        <p className="absolute bottom-2 right-5 hidden text-right text-[14px] leading-[1.2] text-[#585858] md:block">
-          Copyright &copy; 2026 BAYBLAZE LLC. All rights reserved.
-        </p>
       </div>
-
-      <p className="px-5 pb-2 text-center text-[14px] leading-[1.2] text-[#585858] md:hidden">
-        Copyright &copy; 2026 BAYBLAZE LLC. All rights reserved.
-      </p>
     </footer>
   );
 }
