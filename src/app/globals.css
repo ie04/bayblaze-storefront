@@ -767,9 +767,9 @@ body {
 
 .bayblaze-home-contact-bg {
   background-image: url("/images/contactus-bg.jpg");
-  background-position: center 24px;
+  background-position: center;
   background-repeat: no-repeat;
-  background-size: 100% auto;
+  background-size: cover;
   bottom: 0;
   left: 0;
   pointer-events: none;
@@ -788,6 +788,11 @@ body {
 @media (min-width: 48rem) {
   .bayblaze-home-contact {
     padding-top: calc(160px + 18px);
+  }
+
+  .bayblaze-home-contact-bg {
+    background-position: center 24px;
+    background-size: 100% auto;
   }
 }
 

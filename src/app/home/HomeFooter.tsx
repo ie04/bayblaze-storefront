@@ -28,8 +28,11 @@ export default function HomeFooter() {
           >
             Terms &amp; Conditions
           </Link>
-          <span>Copyright &copy; 2026 BAYBLAZE LLC. All rights reserved.</span>
         </nav>
+
+        <p className="m-0 text-center text-[13px] font-medium leading-[1.2] text-[#585858] md:absolute md:right-5 md:text-right md:text-[14px]">
+          Copyright &copy; 2026 BAYBLAZE LLC. All rights reserved.
+        </p>
       </div>
     </footer>
   );
