@@ -368,9 +368,9 @@ body {
 .bayblaze-login-page {
   background-color: #f8efe1;
   background-image: url("/images/login/bayblaze-login-background.png");
-  background-position: center;
-  background-repeat: no-repeat;
-  background-size: cover;
+  background-position: center top;
+  background-repeat: repeat-y;
+  background-size: min(1200px, 100vw) auto;
 }
 
 .bayblaze-auth-section {
