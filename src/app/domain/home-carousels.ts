@@ -17,6 +17,7 @@ export type HomeCarouselDefinition<TItem> = {
 export type HomeCarouselBehavior = {
   loop: boolean;
   centeredSlidesOnMobile: boolean;
+  minimumLoopItems: number;
   mobileSpaceBetween: number;
   desktopSpaceBetween: number;
 };
@@ -24,6 +25,7 @@ export type HomeCarouselBehavior = {
 const infiniteCenteredMobileCarousel: HomeCarouselBehavior = {
   loop: true,
   centeredSlidesOnMobile: true,
+  minimumLoopItems: 8,
   mobileSpaceBetween: 16,
   desktopSpaceBetween: 24,
 };

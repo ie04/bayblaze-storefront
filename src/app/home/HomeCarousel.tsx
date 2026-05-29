@@ -23,6 +23,19 @@ export default function HomeCarousel<TItem>({
   const [isCarouselReady, setIsCarouselReady] = useState(false);
   const hasMultipleItems = definition.items.length > 1;
   const shouldLoop = definition.behavior.loop && hasMultipleItems;
+  const carouselItems =
+    shouldLoop && definition.items.length < definition.behavior.minimumLoopItems
+      ? Array.from(
+          { length: definition.behavior.minimumLoopItems },
+          (_, index) => ({
+            item: definition.items[index % definition.items.length],
+            sourceIndex: index % definition.items.length,
+          }),
+        )
+      : definition.items.map((item, index) => ({
+          item,
+          sourceIndex: index,
+        }));
 
   function handlePreviousClick() {
     const swiper = swiperRef.current;
@@ -116,7 +129,7 @@ export default function HomeCarousel<TItem>({
                 grabCursor
                 centeredSlides={definition.behavior.centeredSlidesOnMobile}
                 loop={shouldLoop}
-                loopAdditionalSlides={2}
+                loopAdditionalSlides={Math.min(2, carouselItems.length)}
                 observer
                 observeParents
                 resizeObserver
@@ -136,9 +149,9 @@ export default function HomeCarousel<TItem>({
                   isCarouselReady ? "opacity-100" : "opacity-0"
                 }`}
               >
-                {definition.items.map((item, index) => (
+                {carouselItems.map(({ item, sourceIndex }, index) => (
                   <SwiperSlide
-                    key={`${definition.id}-${index}`}
+                    key={`${definition.id}-${sourceIndex}-${index}`}
                     className={definition.slideClassName}
                   >
                     {renderItem(item)}
