@@ -22,11 +22,17 @@ export default function HomeCarousel<TItem>({
   const readyFrameRef = useRef<number | null>(null);
   const [isCarouselReady, setIsCarouselReady] = useState(false);
   const hasMultipleItems = definition.items.length > 1;
+  const shouldLoop = definition.behavior.loop && hasMultipleItems;
 
   function handlePreviousClick() {
     const swiper = swiperRef.current;
 
     if (!swiper || swiper.destroyed) {
+      return;
+    }
+
+    if (shouldLoop) {
+      swiper.slidePrev();
       return;
     }
 
@@ -42,6 +48,11 @@ export default function HomeCarousel<TItem>({
     const swiper = swiperRef.current;
 
     if (!swiper || swiper.destroyed) {
+      return;
+    }
+
+    if (shouldLoop) {
+      swiper.slideNext();
       return;
     }
 
@@ -103,20 +114,22 @@ export default function HomeCarousel<TItem>({
             <>
               <Swiper
                 grabCursor
+                centeredSlides={definition.behavior.centeredSlidesOnMobile}
+                loop={shouldLoop}
+                loopAdditionalSlides={2}
                 observer
                 observeParents
                 resizeObserver
                 slidesPerView="auto"
-                spaceBetween={16}
-                speed={400}
+                slideToClickedSlide={definition.behavior.centeredSlidesOnMobile}
+                spaceBetween={definition.behavior.mobileSpaceBetween}
+                speed={500}
                 watchSlidesProgress
                 onSwiper={handleSwiperReady}
                 breakpoints={{
-                  640: {
-                    spaceBetween: 20,
-                  },
-                  1024: {
-                    spaceBetween: 24,
+                  768: {
+                    centeredSlides: false,
+                    spaceBetween: definition.behavior.desktopSpaceBetween,
                   },
                 }}
                 className={`${definition.swiperClassName} bayblaze-home-carousel-swiper w-full transition-opacity duration-200 ${

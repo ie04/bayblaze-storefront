@@ -9,8 +9,23 @@ export type HomeCarouselDefinition<TItem> = {
   emptyText?: string;
   previousLabel: string;
   nextLabel: string;
+  behavior: HomeCarouselBehavior;
   slideClassName: string;
   swiperClassName: string;
+};
+
+export type HomeCarouselBehavior = {
+  loop: boolean;
+  centeredSlidesOnMobile: boolean;
+  mobileSpaceBetween: number;
+  desktopSpaceBetween: number;
+};
+
+const infiniteCenteredMobileCarousel: HomeCarouselBehavior = {
+  loop: true,
+  centeredSlidesOnMobile: true,
+  mobileSpaceBetween: 16,
+  desktopSpaceBetween: 24,
 };
 
 export type HomeCategoryItem = {
@@ -71,6 +86,7 @@ export function getBestSellersCarousel(
     emptyText: "Products will appear here once the catalog is connected.",
     previousLabel: "Previous product",
     nextLabel: "Next product",
+    behavior: infiniteCenteredMobileCarousel,
     slideClassName: "!h-auto !w-[220px] max-w-[78vw] sm:!w-[230px] lg:!w-[244px]",
     swiperClassName: "bayblaze-product-swiper",
   };
@@ -84,6 +100,7 @@ export const shopByCategoryCarousel: HomeCarouselDefinition<HomeCategoryItem> = 
   items: homeCategories,
   previousLabel: "Previous category",
   nextLabel: "Next category",
+  behavior: infiniteCenteredMobileCarousel,
   slideClassName: "!h-auto !w-[236px] max-w-[78vw] sm:!w-[258px] lg:!w-[276px]",
   swiperClassName: "bayblaze-category-swiper",
 };
