@@ -35,7 +35,7 @@ export default function HomeAbout() {
 
             <div className="flex items-center justify-center border border-[#d0d0d0] bg-[var(--ast-global-color-4)] p-4 sm:p-6">
               <Image
-                src="https://bayblaze.net/wp-content/uploads/2026/03/bayblazelogo_transparent.png"
+                src="/icons/bayblaze-logo-source.png"
                 alt="Bayblaze flame logo"
                 width={1024}
                 height={1024}

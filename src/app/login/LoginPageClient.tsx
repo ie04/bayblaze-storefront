@@ -112,7 +112,7 @@ export default function LoginPageClient() {
   }
 
   return (
-    <div className="bayblaze-auth-page pb-14 pt-[92px] sm:pb-20 sm:pt-[112px]">
+    <div className="bayblaze-auth-page bayblaze-login-page min-h-screen pb-14 pt-[92px] sm:pb-20 sm:pt-[112px]">
       <div className="mx-auto w-full max-w-[1180px] px-4 sm:px-5">
         <nav
           aria-label="Breadcrumb"
@@ -130,7 +130,7 @@ export default function LoginPageClient() {
 
         <section
           aria-labelledby="bayblaze-auth-heading"
-          className="bayblaze-login-pattern-field relative isolate mx-auto flex min-h-[560px] w-full items-center justify-center overflow-hidden py-4 sm:py-8"
+          className="bayblaze-login-pattern-field relative isolate mx-auto flex min-h-[560px] w-full items-center justify-center py-4 sm:py-8"
         >
           <h1 id="bayblaze-auth-heading" className="sr-only">
             Bayblaze Account
