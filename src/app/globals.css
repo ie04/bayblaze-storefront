@@ -366,11 +366,21 @@ body {
 }
 
 .bayblaze-login-page {
+  background: #f3eadf;
+  isolation: isolate;
+}
+
+.bayblaze-login-page::before {
   background-color: #f3eadf;
   background-image: url("/images/login/bayblaze-login-background.png");
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;
+  content: "";
+  inset: 0;
+  pointer-events: none;
+  position: fixed;
+  z-index: -1;
 }
 
 .bayblaze-auth-section {
