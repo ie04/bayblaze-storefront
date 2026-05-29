@@ -190,6 +190,10 @@ body {
   position: relative;
 }
 
+.bayblaze-home-carousel-footer {
+  display: none;
+}
+
 .bayblaze-home-carousel-swiper {
   cursor: grab;
   overflow: visible;
@@ -1058,7 +1062,24 @@ body {
   }
 
   .bayblaze-home-carousel-header {
-    align-items: flex-start;
+    align-items: center;
+    justify-content: center;
+    padding-bottom: 0.7rem;
+    text-align: center;
+  }
+
+  .bayblaze-home-carousel-title {
+    width: 100%;
+  }
+
+  .bayblaze-section-shop-link--header {
+    display: none;
+  }
+
+  .bayblaze-home-carousel-footer {
+    display: flex;
+    justify-content: flex-end;
+    padding-top: 0.35rem;
   }
 
   .bayblaze-product-wedge {

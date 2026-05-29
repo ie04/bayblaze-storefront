@@ -88,7 +88,10 @@ export default function HomeCarousel<TItem>({
           {definition.title}
         </h2>
 
-        <Link href={definition.href} className="bayblaze-section-shop-link">
+        <Link
+          href={definition.href}
+          className="bayblaze-section-shop-link bayblaze-section-shop-link--header"
+        >
           <span>{definition.linkLabel}</span>
           <ChevronRightIcon />
         </Link>
@@ -158,6 +161,16 @@ export default function HomeCarousel<TItem>({
             </div>
           )}
         </div>
+      </div>
+
+      <div className="bayblaze-home-carousel-footer">
+        <Link
+          href={definition.href}
+          className="bayblaze-section-shop-link bayblaze-section-shop-link--footer"
+        >
+          <span>{definition.linkLabel}</span>
+          <ChevronRightIcon />
+        </Link>
       </div>
     </article>
   );
