@@ -377,10 +377,17 @@ body {
   background-repeat: no-repeat;
   background-size: cover;
   content: "";
-  inset: 0;
+  inset-block: 68px 0;
+  inset-inline: 0;
   pointer-events: none;
   position: fixed;
   z-index: -1;
+}
+
+@media (min-width: 768px) {
+  .bayblaze-login-page::before {
+    inset-block-start: 80px;
+  }
 }
 
 .bayblaze-auth-section {

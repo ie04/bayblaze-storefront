@@ -16,7 +16,6 @@ type HeaderProps = {
   searchAction?: string;
   checkoutHref?: string;
   accountHref?: string;
-  className?: string;
 };
 
 type DrawerItem = {
@@ -32,7 +31,6 @@ export default function Header({
   searchAction = "/shop",
   checkoutHref = "/checkout",
   accountHref = "/account",
-  className = "",
 }: HeaderProps) {
   const [isSearchOverlayOpen, setIsSearchOverlayOpen] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -82,14 +80,7 @@ export default function Header({
   }, [isSearchOverlayOpen]);
 
   return (
-    <header
-      className={[
-        "absolute inset-x-0 top-0 z-50 bg-transparent text-black",
-        className,
-      ]
-        .filter(Boolean)
-        .join(" ")}
-    >
+    <header className="absolute inset-x-0 top-0 z-50 bg-transparent text-black">
       <div className="flex h-[68px] items-center justify-between gap-3 pl-[var(--bayblaze-header-x)] pr-[var(--bayblaze-header-x)] md:h-[80px] md:gap-4 md:pr-[29px]">
         <Link
           href="/"
