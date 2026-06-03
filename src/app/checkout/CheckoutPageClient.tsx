@@ -284,7 +284,7 @@ export default function CheckoutPageClient({
             </div>
           </CheckoutPanel>
 
-          <CheckoutPanel title="Delivery Timing">
+          <CheckoutPanel title="Delivery Type">
             <div className="grid gap-5">
               <p className="text-[16px] font-medium leading-[1.55] text-black sm:text-[17px]">
                 {DELIVERY_SCHEDULING_RULE}
@@ -315,10 +315,11 @@ export default function CheckoutPageClient({
                       type="radio"
                       value="now"
                     />
-                    Under 1 Hour
+                    BayBlaze Express
                   </span>
                   <span className="text-[15px] font-medium leading-[1.45] text-[#585858]">
-                    Available from 10 AM until 11 PM.
+                    Order will come to you in under an hour. Available from 10
+                    AM until 11 PM.
                   </span>
                 </label>
 
