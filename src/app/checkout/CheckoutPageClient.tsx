@@ -12,6 +12,7 @@ import {
   formatDateTimeLocalInStoreTimeZone,
   formatScheduledDelivery,
   getDeliveryScheduleRequirement,
+  isBayBlazeExpressUnavailable,
   type DeliveryTimingMode,
 } from "@/app/domain/delivery-scheduling";
 import {
@@ -32,6 +33,7 @@ export default function CheckoutPageClient({
   const [orderMessage, setOrderMessage] = useState("");
   const [orderTrackingHref, setOrderTrackingHref] = useState("");
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
+  const [checkoutOpenedAt, setCheckoutOpenedAt] = useState<Date | null>(null);
   const [currentTime, setCurrentTime] = useState<Date | null>(null);
   const [deliveryMode, setDeliveryMode] =
     useState<DeliveryTimingMode>("now");
@@ -45,8 +47,10 @@ export default function CheckoutPageClient({
   const scheduleRequirement = useMemo(() => {
     return currentTime ? getDeliveryScheduleRequirement(currentTime) : null;
   }, [currentTime]);
-  const isScheduleRequired =
-    scheduleRequirement?.isScheduleRequired ?? false;
+  const isCheckoutClockReady = Boolean(currentTime && checkoutOpenedAt);
+  const isExpressUnavailable = currentTime && checkoutOpenedAt
+    ? isBayBlazeExpressUnavailable(currentTime, checkoutOpenedAt)
+    : true;
   const scheduledMinimumInput = scheduleRequirement
     ? formatDateTimeLocalInStoreTimeZone(
         scheduleRequirement.earliestScheduledAt,
@@ -55,7 +59,7 @@ export default function CheckoutPageClient({
   const scheduledMinimumLabel = scheduleRequirement
     ? formatScheduledDelivery(scheduleRequirement.earliestScheduledAt)
     : "";
-  const activeDeliveryMode: DeliveryTimingMode = isScheduleRequired
+  const activeDeliveryMode: DeliveryTimingMode = isCheckoutClockReady && isExpressUnavailable
     ? "scheduled"
     : deliveryMode;
   const needsScheduledTime = activeDeliveryMode === "scheduled";
@@ -67,16 +71,22 @@ export default function CheckoutPageClient({
   const hasItems = items.length > 0;
   const canPlaceOrder =
     hasItems &&
+    isCheckoutClockReady &&
     !isPlacingOrder &&
-    (!isScheduleRequired || activeDeliveryMode === "scheduled") &&
+    (!isExpressUnavailable || activeDeliveryMode === "scheduled") &&
     (!needsScheduledTime || Boolean(scheduledInputValue));
 
   useEffect(() => {
+    const openedAt = new Date();
+
     function refreshCurrentTime() {
       setCurrentTime(new Date());
     }
 
-    const hydrationTimer = window.setTimeout(refreshCurrentTime, 0);
+    const hydrationTimer = window.setTimeout(() => {
+      setCheckoutOpenedAt(openedAt);
+      setCurrentTime(openedAt);
+    }, 0);
     const timer = window.setInterval(refreshCurrentTime, 60_000);
 
     return () => {
@@ -117,6 +127,7 @@ export default function CheckoutPageClient({
             notes: formData.get("notes"),
           },
           delivery: {
+            checkout_opened_at: checkoutOpenedAt?.toISOString(),
             mode: activeDeliveryMode,
             scheduled_at:
               activeDeliveryMode === "scheduled"
@@ -293,7 +304,7 @@ export default function CheckoutPageClient({
               <div
                 className="grid gap-3 sm:grid-cols-2"
                 role="radiogroup"
-                aria-label="Delivery timing"
+                aria-label="Delivery type"
               >
                 <label
                   className={[
@@ -301,7 +312,7 @@ export default function CheckoutPageClient({
                     activeDeliveryMode === "now"
                       ? "border-black"
                       : "border-[#d6d6d6]",
-                    isScheduleRequired
+                    isExpressUnavailable
                       ? "cursor-not-allowed opacity-60"
                       : "hover:border-black",
                   ].join(" ")}
@@ -309,7 +320,7 @@ export default function CheckoutPageClient({
                   <span className="flex items-center gap-3 text-[17px] font-semibold">
                     <input
                       checked={activeDeliveryMode === "now"}
-                      disabled={isScheduleRequired}
+                      disabled={isExpressUnavailable}
                       name="delivery_mode"
                       onChange={() => setDeliveryMode("now")}
                       type="radio"
@@ -347,7 +358,7 @@ export default function CheckoutPageClient({
                 </label>
               </div>
 
-              {isScheduleRequired ? (
+              {isCheckoutClockReady && isExpressUnavailable ? (
                 <p className="border border-[#d7d1c6] bg-white px-4 py-3 text-[15px] font-semibold leading-[1.5] text-black">
                   Ordering is in scheduling mode right now. Choose any delivery
                   time from {scheduledMinimumLabel} onward during delivery

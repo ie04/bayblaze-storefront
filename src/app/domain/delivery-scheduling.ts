@@ -2,6 +2,7 @@ export type DeliveryTimingMode = "now" | "scheduled";
 
 export type DeliveryTimingInput = {
   mode?: unknown;
+  checkout_opened_at?: unknown;
   scheduled_at?: unknown;
 };
 
@@ -26,6 +27,7 @@ export type DeliveryTimingValidation =
 export const STORE_TIME_ZONE = "America/New_York";
 export const DELIVERY_SCHEDULING_RULE =
   "Orders placed after 11 PM must be scheduled for 10AM the next day or later.";
+export const EXPRESS_CHECKOUT_GRACE_MS = 60 * 60 * 1000;
 
 type StoreDateTimeParts = {
   year: number;
@@ -65,18 +67,19 @@ export function validateDeliveryTiming(
 ): DeliveryTimingValidation {
   const mode = delivery?.mode;
   const requirement = getDeliveryScheduleRequirement(now);
+  const checkoutOpenedAt = parseCheckoutOpenedAt(delivery?.checkout_opened_at);
 
   if (mode !== "now" && mode !== "scheduled") {
     return {
       error:
-        "Choose Under 1 Hour or Schedule Delivery before placing your order.",
+        "Choose BayBlaze Express or Schedule Delivery before placing your order.",
     };
   }
 
-  if (requirement.isScheduleRequired && mode === "now") {
+  if (isBayBlazeExpressUnavailable(now, checkoutOpenedAt) && mode === "now") {
     return {
       error:
-        "Orders placed between 11 PM and 10 AM must be scheduled for 10:00 AM or later.",
+        "BayBlaze Express is unavailable between 11 PM and 10 AM. Please schedule your delivery.",
     };
   }
 
@@ -108,6 +111,39 @@ export function validateDeliveryTiming(
     mode,
     scheduledAt,
   };
+}
+
+export function isBayBlazeExpressUnavailable(
+  now = new Date(),
+  checkoutOpenedAt?: Date | null,
+) {
+  if (!getDeliveryScheduleRequirement(now).isScheduleRequired) {
+    return false;
+  }
+
+  if (!checkoutOpenedAt) {
+    return true;
+  }
+
+  const checkoutOpenedDuringExpress =
+    !getDeliveryScheduleRequirement(checkoutOpenedAt).isScheduleRequired;
+  const elapsedMs = now.getTime() - checkoutOpenedAt.getTime();
+
+  return (
+    !checkoutOpenedDuringExpress ||
+    elapsedMs < 0 ||
+    elapsedMs > EXPRESS_CHECKOUT_GRACE_MS
+  );
+}
+
+function parseCheckoutOpenedAt(value: unknown) {
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const date = new Date(value);
+
+  return Number.isNaN(date.getTime()) ? null : date;
 }
 
 function isWithinDeliveryHours(date: Date) {

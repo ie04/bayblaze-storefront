@@ -35,6 +35,7 @@ type CheckoutCustomer = {
 type CheckoutRequestBody = {
   customer?: CheckoutCustomer;
   delivery?: {
+    checkout_opened_at?: unknown;
     mode?: unknown;
     scheduled_at?: unknown;
   };
