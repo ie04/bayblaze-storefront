@@ -1,4 +1,9 @@
 import { getCustomerToken } from "@/app/lib/customer-session";
+import {
+  formatScheduledDelivery,
+  type ValidDeliveryTiming,
+  validateDeliveryTiming,
+} from "@/app/domain/delivery-scheduling";
 
 type CheckoutItem = {
   id?: string;
@@ -29,6 +34,10 @@ type CheckoutCustomer = {
 
 type CheckoutRequestBody = {
   customer?: CheckoutCustomer;
+  delivery?: {
+    mode?: unknown;
+    scheduled_at?: unknown;
+  };
   items?: CheckoutItem[];
 };
 
@@ -57,6 +66,7 @@ type MedusaOrder = {
   display_id?: number;
   custom_display_id?: string;
   email?: string;
+  metadata?: Record<string, unknown> | null;
 };
 
 type MedusaShippingOption = {
@@ -116,9 +126,16 @@ export async function POST(request: Request) {
     return jsonError(validationError, 400);
   }
 
+  const deliveryTiming = validateDeliveryTiming(body.delivery);
+
+  if ("error" in deliveryTiming) {
+    return jsonError(deliveryTiming.error, 400);
+  }
+
   const customer = body.customer as Required<CheckoutCustomer>;
   const items = body.items as ValidCheckoutItem[];
   const customerToken = await getCustomerToken();
+  const deliveryMetadata = getDeliveryMetadata(deliveryTiming);
   const shippingAddress = {
     first_name: customer.first_name.trim(),
     last_name: customer.last_name.trim(),
@@ -140,6 +157,7 @@ export async function POST(request: Request) {
           email: customer.email.trim(),
           shipping_address: shippingAddress,
           metadata: {
+            ...deliveryMetadata,
             source: "bayblaze-storefront",
           },
         },
@@ -187,6 +205,7 @@ export async function POST(request: Request) {
           email: customer.email.trim(),
           shipping_address: shippingAddress,
           metadata: {
+            ...deliveryMetadata,
             source: "bayblaze-storefront",
             payment_note: "Payment due on delivery",
             checkout_notes: customer.notes,
@@ -262,12 +281,34 @@ export async function POST(request: Request) {
     }
 
     return Response.json({
-      order: completedCart.order,
+      order: {
+        ...completedCart.order,
+        metadata: {
+          ...completedCart.order.metadata,
+          ...deliveryMetadata,
+        },
+      },
       message: "Order placed.",
     });
   } catch (error) {
     return jsonError(getErrorMessage(error), 502);
   }
+}
+
+function getDeliveryMetadata(deliveryTiming: ValidDeliveryTiming) {
+  if (deliveryTiming.mode === "now") {
+    return {
+      delivery_mode: "order_now",
+    };
+  }
+
+  return {
+    delivery_mode: "scheduled",
+    scheduled_delivery_at: deliveryTiming.scheduledAt.toISOString(),
+    scheduled_delivery_display: formatScheduledDelivery(
+      deliveryTiming.scheduledAt,
+    ),
+  };
 }
 
 function validateCheckout(body: CheckoutRequestBody) {

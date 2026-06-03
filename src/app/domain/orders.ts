@@ -57,6 +57,12 @@ export function formatOrderStatus(status?: string | null) {
     .join(" ");
 }
 
+export function getScheduledDeliveryDisplay(order: CustomerOrder) {
+  const display = order.metadata?.scheduled_delivery_display;
+
+  return typeof display === "string" && display.trim() ? display : "";
+}
+
 export function formatOrderDate(date?: string | null) {
   if (!date) {
     return "Just now";

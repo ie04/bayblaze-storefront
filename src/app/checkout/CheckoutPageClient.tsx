@@ -1,12 +1,19 @@
 "use client";
 
 import type { FormEvent, ReactNode } from "react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import Header from "@/app/components/layout/Header";
 import { useCart, type CartItem } from "@/app/components/cart/CartContext";
+import {
+  DELIVERY_SCHEDULING_RULE,
+  formatDateTimeLocalInStoreTimeZone,
+  formatScheduledDelivery,
+  getDeliveryScheduleRequirement,
+  type DeliveryTimingMode,
+} from "@/app/domain/delivery-scheduling";
 import {
   RECENT_ORDER_STORAGE_KEY,
   getOrderReference,
@@ -25,15 +32,58 @@ export default function CheckoutPageClient({
   const [orderMessage, setOrderMessage] = useState("");
   const [orderTrackingHref, setOrderTrackingHref] = useState("");
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
+  const [currentTime, setCurrentTime] = useState<Date | null>(null);
+  const [deliveryMode, setDeliveryMode] =
+    useState<DeliveryTimingMode>("now");
+  const [scheduledAt, setScheduledAt] = useState("");
 
   const subtotal = useMemo(() => {
     return items.reduce((total, item) => {
       return total + parsePrice(item.price) * item.quantity;
     }, 0);
   }, [items]);
+  const scheduleRequirement = useMemo(() => {
+    return currentTime ? getDeliveryScheduleRequirement(currentTime) : null;
+  }, [currentTime]);
+  const isScheduleRequired =
+    scheduleRequirement?.isScheduleRequired ?? false;
+  const scheduledMinimumInput = scheduleRequirement
+    ? formatDateTimeLocalInStoreTimeZone(
+        scheduleRequirement.earliestScheduledAt,
+      )
+    : "";
+  const scheduledMinimumLabel = scheduleRequirement
+    ? formatScheduledDelivery(scheduleRequirement.earliestScheduledAt)
+    : "";
+  const activeDeliveryMode: DeliveryTimingMode = isScheduleRequired
+    ? "scheduled"
+    : deliveryMode;
+  const needsScheduledTime = activeDeliveryMode === "scheduled";
+  const scheduledInputValue =
+    needsScheduledTime && scheduledMinimumInput
+      ? getUsableScheduledAt(scheduledAt, scheduledMinimumInput)
+      : scheduledAt;
 
   const hasItems = items.length > 0;
-  const canPlaceOrder = hasItems && !isPlacingOrder;
+  const canPlaceOrder =
+    hasItems &&
+    !isPlacingOrder &&
+    (!isScheduleRequired || activeDeliveryMode === "scheduled") &&
+    (!needsScheduledTime || Boolean(scheduledInputValue));
+
+  useEffect(() => {
+    function refreshCurrentTime() {
+      setCurrentTime(new Date());
+    }
+
+    const hydrationTimer = window.setTimeout(refreshCurrentTime, 0);
+    const timer = window.setInterval(refreshCurrentTime, 60_000);
+
+    return () => {
+      window.clearTimeout(hydrationTimer);
+      window.clearInterval(timer);
+    };
+  }, []);
 
   async function handlePlaceOrder(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -65,6 +115,13 @@ export default function CheckoutPageClient({
             state: formData.get("state"),
             zip: formData.get("zip"),
             notes: formData.get("notes"),
+          },
+          delivery: {
+            mode: activeDeliveryMode,
+            scheduled_at:
+              activeDeliveryMode === "scheduled"
+                ? scheduledInputValue
+                : undefined,
           },
           items,
         }),
@@ -227,6 +284,100 @@ export default function CheckoutPageClient({
                   placeholder="Gate code, drop-off notes, or product preferences"
                 />
               </label>
+            </div>
+          </CheckoutPanel>
+
+          <CheckoutPanel title="Delivery timing">
+            <div className="grid gap-5">
+              <p className="text-[16px] font-medium leading-[1.55] text-black sm:text-[17px]">
+                {DELIVERY_SCHEDULING_RULE} Scheduling is optional before 11 PM
+                and required from 11 PM until 10 AM.
+              </p>
+
+              <div
+                className="grid gap-3 sm:grid-cols-2"
+                role="radiogroup"
+                aria-label="Delivery timing"
+              >
+                <label
+                  className={[
+                    "grid cursor-pointer gap-2 border bg-white p-4 text-black transition",
+                    activeDeliveryMode === "now"
+                      ? "border-black"
+                      : "border-[#d6d6d6]",
+                    isScheduleRequired
+                      ? "cursor-not-allowed opacity-60"
+                      : "hover:border-black",
+                  ].join(" ")}
+                >
+                  <span className="flex items-center gap-3 text-[17px] font-semibold">
+                    <input
+                      checked={activeDeliveryMode === "now"}
+                      disabled={isScheduleRequired}
+                      name="delivery_mode"
+                      onChange={() => setDeliveryMode("now")}
+                      type="radio"
+                      value="now"
+                    />
+                    Order Now
+                  </span>
+                  <span className="text-[15px] font-medium leading-[1.45] text-[#585858]">
+                    Available from 10 AM until 11 PM.
+                  </span>
+                </label>
+
+                <label
+                  className={[
+                    "grid cursor-pointer gap-2 border bg-white p-4 text-black transition hover:border-black",
+                    activeDeliveryMode === "scheduled"
+                      ? "border-black"
+                      : "border-[#d6d6d6]",
+                  ].join(" ")}
+                >
+                  <span className="flex items-center gap-3 text-[17px] font-semibold">
+                    <input
+                      checked={activeDeliveryMode === "scheduled"}
+                      name="delivery_mode"
+                      onChange={() => setDeliveryMode("scheduled")}
+                      type="radio"
+                      value="scheduled"
+                    />
+                    Schedule Delivery
+                  </span>
+                  <span className="text-[15px] font-medium leading-[1.45] text-[#585858]">
+                    Choose a delivery time that works for you.
+                  </span>
+                </label>
+              </div>
+
+              {isScheduleRequired ? (
+                <p className="border border-[#d7d1c6] bg-white px-4 py-3 text-[15px] font-semibold leading-[1.5] text-black">
+                  Ordering is in scheduling mode right now. Choose any delivery
+                  time from {scheduledMinimumLabel} onward during delivery
+                  hours.
+                </p>
+              ) : null}
+
+              {needsScheduledTime ? (
+                <label className="grid gap-2 text-[15px] font-semibold text-black sm:text-[16px]">
+                  Scheduled delivery time
+                  <input
+                    className="h-[50px] w-full min-w-0 border border-[#d6d6d6] bg-white px-4 text-[16px] font-normal text-black outline-none transition focus:border-black sm:h-[52px] sm:text-[17px]"
+                    min={scheduledMinimumInput}
+                    name="scheduled_at"
+                    onChange={(event) => setScheduledAt(event.target.value)}
+                    required
+                    type="datetime-local"
+                    value={scheduledInputValue}
+                  />
+                  {scheduledMinimumLabel ? (
+                    <span className="text-[14px] font-medium leading-[1.45] text-[#585858]">
+                      Earliest available: {scheduledMinimumLabel}. Scheduled
+                      delivery hours are 10 AM to 11 PM.
+                    </span>
+                  ) : null}
+                </label>
+              ) : null}
             </div>
           </CheckoutPanel>
 
@@ -447,6 +598,14 @@ function parsePrice(price?: string) {
   const number = Number(price.replace(/[^0-9.]/g, ""));
 
   return Number.isFinite(number) ? number : 0;
+}
+
+function getUsableScheduledAt(scheduledAt: string, minimumScheduledAt: string) {
+  if (!scheduledAt || scheduledAt < minimumScheduledAt) {
+    return minimumScheduledAt;
+  }
+
+  return scheduledAt;
 }
 
 function getRecentOrderSnapshot(

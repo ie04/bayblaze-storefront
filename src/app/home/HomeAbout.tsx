@@ -1,5 +1,7 @@
 import Image from "next/image";
 
+import { DELIVERY_SCHEDULING_RULE } from "@/app/domain/delivery-scheduling";
+
 export default function HomeAbout() {
   return (
     <section
@@ -15,15 +17,19 @@ export default function HomeAbout() {
                 <p>
                   We are BAYBLAZE, a mobile smoke shop based in Tampa. Blazing
                   fast delivery is the name of our game, so if you&apos;re
-                  local we guarantee your order will be delivered within an hour
-                  of placing it, 24 hours a day 7 days a week. No more having to
-                  hitch rides off friends or waiting until the smoke shops open,
-                  we got you covered!
+                  local we work to get daytime and evening vape orders to your
+                  door fast. No more having to hitch rides off friends or
+                  waiting until the smoke shops open, we got you covered!
                 </p>
                 <p>
-                  We offer a wide selection of products, including popular vape
-                  brands, THC-A, Delta-8, CBD, and more. You&apos;ll only have
-                  to pay when your order arrives.
+                  We focus on popular vape brands, flavor-forward disposables,
+                  ZYNs, wraps, cones, lighters, and everyday smoke-shop
+                  essentials. You&apos;ll only have to pay when your order
+                  arrives.
+                </p>
+                <p>
+                  {DELIVERY_SCHEDULING_RULE} Scheduling is optional before 11
+                  PM and required from 11 PM until 10 AM.
                 </p>
                 <p>
                   Disclaimer: You must be 21 or older to order. Please have your

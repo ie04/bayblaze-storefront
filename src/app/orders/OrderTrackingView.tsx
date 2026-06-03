@@ -8,6 +8,7 @@ import {
   getOrderItemTotal,
   getOrderItemTitle,
   getOrderRecipient,
+  getScheduledDeliveryDisplay,
   getVariantLabel,
   isCompletedOrder,
 } from "@/app/domain/orders";
@@ -78,6 +79,8 @@ export default function OrderTrackingView({
 }
 
 function OrderSummary({ order }: { order: CustomerOrder }) {
+  const scheduledDelivery = getScheduledDeliveryDisplay(order);
+
   return (
     <section className="bayblaze-soft-card bayblaze-soft-card--tint p-5">
       <h2 className="text-[20px] font-semibold leading-tight text-black">
@@ -92,6 +95,12 @@ function OrderSummary({ order }: { order: CustomerOrder }) {
           <dt className="font-semibold text-black">Delivery address</dt>
           <dd>{formatDeliveryAddress(order)}</dd>
         </div>
+        {scheduledDelivery ? (
+          <div>
+            <dt className="font-semibold text-black">Scheduled delivery</dt>
+            <dd>{scheduledDelivery}</dd>
+          </div>
+        ) : null}
         <div>
           <dt className="font-semibold text-black">Payment</dt>
           <dd>Cash, Cash App, or Zelle on delivery</dd>

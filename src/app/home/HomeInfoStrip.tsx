@@ -1,3 +1,5 @@
+import { DELIVERY_SCHEDULING_RULE } from "@/app/domain/delivery-scheduling";
+
 const infoItems = [
   {
     title: "Tampa Bay Smoke Shop",
@@ -8,13 +10,12 @@ const infoItems = [
   {
     title: "Blazing Fast Delivery",
     description:
-      "Local orders are delivered across Tampa Bay within an hour, 24/7.",
+      "Fast local delivery is available from 10 AM until 11 PM across Tampa Bay.",
     icon: TruckIcon,
   },
   {
-    title: "Order in Minutes",
-    description:
-      "Browse, check out, and pay when your order arrives. Just have your 21+ ID ready.",
+    title: "Late-Night Scheduling",
+    description: DELIVERY_SCHEDULING_RULE,
     icon: LightningIcon,
   },
 ];

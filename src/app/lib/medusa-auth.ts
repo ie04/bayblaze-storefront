@@ -49,6 +49,7 @@ export type CustomerOrder = {
   total?: number | null;
   currency_code?: string | null;
   created_at?: string | null;
+  metadata?: Record<string, unknown> | null;
   shipping_address?: CustomerOrderAddress | null;
   billing_address?: CustomerOrderAddress | null;
   shipping_methods?: CustomerOrderShippingMethod[];
@@ -95,6 +96,7 @@ const orderFields = [
   "total",
   "currency_code",
   "created_at",
+  "metadata",
   "*items",
   "*shipping_address",
   "*billing_address",
