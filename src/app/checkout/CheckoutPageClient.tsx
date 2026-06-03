@@ -290,8 +290,7 @@ export default function CheckoutPageClient({
           <CheckoutPanel title="Delivery timing">
             <div className="grid gap-5">
               <p className="text-[16px] font-medium leading-[1.55] text-black sm:text-[17px]">
-                {DELIVERY_SCHEDULING_RULE} Scheduling is optional before 11 PM
-                and required from 11 PM until 10 AM.
+                {DELIVERY_SCHEDULING_RULE}
               </p>
 
               <div
@@ -319,7 +318,7 @@ export default function CheckoutPageClient({
                       type="radio"
                       value="now"
                     />
-                    Order Now
+                    Under 1 Hour
                   </span>
                   <span className="text-[15px] font-medium leading-[1.45] text-[#585858]">
                     Available from 10 AM until 11 PM.

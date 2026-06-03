@@ -28,8 +28,7 @@ export default function HomeAbout() {
                   arrives.
                 </p>
                 <p>
-                  {DELIVERY_SCHEDULING_RULE} Scheduling is optional before 11
-                  PM and required from 11 PM until 10 AM.
+                  {DELIVERY_SCHEDULING_RULE}
                 </p>
                 <p>
                   Disclaimer: You must be 21 or older to order. Please have your

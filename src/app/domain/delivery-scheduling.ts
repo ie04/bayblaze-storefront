@@ -25,7 +25,7 @@ export type DeliveryTimingValidation =
 
 export const STORE_TIME_ZONE = "America/New_York";
 export const DELIVERY_SCHEDULING_RULE =
-  "Orders placed after 11 PM are scheduled for the next day after 10 AM.";
+  "Orders placed after 11 PM must be scheduled for 10AM the next day or later.";
 
 type StoreDateTimeParts = {
   year: number;
@@ -68,7 +68,8 @@ export function validateDeliveryTiming(
 
   if (mode !== "now" && mode !== "scheduled") {
     return {
-      error: "Choose Order Now or Schedule Delivery before placing your order.",
+      error:
+        "Choose Under 1 Hour or Schedule Delivery before placing your order.",
     };
   }
 
