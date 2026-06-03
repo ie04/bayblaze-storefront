@@ -4,6 +4,7 @@ import {
   type ValidDeliveryTiming,
   validateDeliveryTiming,
 } from "@/app/domain/delivery-scheduling";
+import { verifyCheckoutAgeVerification } from "@/app/lib/age-verification-token";
 
 type CheckoutItem = {
   id?: string;
@@ -33,6 +34,9 @@ type CheckoutCustomer = {
 };
 
 type CheckoutRequestBody = {
+  age_verification?: {
+    token?: unknown;
+  };
   customer?: CheckoutCustomer;
   delivery?: {
     checkout_opened_at?: unknown;
@@ -135,8 +139,21 @@ export async function POST(request: Request) {
 
   const customer = body.customer as Required<CheckoutCustomer>;
   const items = body.items as ValidCheckoutItem[];
+  const ageVerification = verifyCheckoutAgeVerification(
+    body.age_verification,
+    customer,
+  );
+
+  if (ageVerification.error) {
+    return jsonError(ageVerification.error, 403);
+  }
+
   const customerToken = await getCustomerToken();
   const deliveryMetadata = getDeliveryMetadata(deliveryTiming);
+  const orderMetadata = {
+    ...ageVerification.metadata,
+    ...deliveryMetadata,
+  };
   const shippingAddress = {
     first_name: customer.first_name.trim(),
     last_name: customer.last_name.trim(),
@@ -158,7 +175,7 @@ export async function POST(request: Request) {
           email: customer.email.trim(),
           shipping_address: shippingAddress,
           metadata: {
-            ...deliveryMetadata,
+            ...orderMetadata,
             source: "bayblaze-storefront",
           },
         },
@@ -206,7 +223,7 @@ export async function POST(request: Request) {
           email: customer.email.trim(),
           shipping_address: shippingAddress,
           metadata: {
-            ...deliveryMetadata,
+            ...orderMetadata,
             source: "bayblaze-storefront",
             payment_note: "Payment due on delivery",
             checkout_notes: customer.notes,
@@ -286,7 +303,7 @@ export async function POST(request: Request) {
         ...completedCart.order,
         metadata: {
           ...completedCart.order.metadata,
-          ...deliveryMetadata,
+          ...orderMetadata,
         },
       },
       message: "Order placed.",

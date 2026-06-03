@@ -20,7 +20,44 @@ import {
   getOrderReference,
   getOrderTrackingHref,
 } from "@/app/domain/orders";
+import {
+  AGECHECKER_POPUP_SCRIPT_URL,
+  AGECHECKER_SUPPORT_EMAIL,
+  type AgeVerificationCustomer,
+} from "@/app/domain/age-verification";
 import type { Customer, CustomerOrder } from "@/app/lib/medusa-auth";
+
+declare global {
+  interface Window {
+    AgeCheckerAPI?: {
+      show: () => void;
+    };
+    AgeCheckerConfig?: AgeCheckerConfig;
+  }
+}
+
+type AgeCheckerConfig = {
+  data: Record<string, string>;
+  defer_submit: boolean;
+  key: string;
+  mode: "manual";
+  name: string;
+  onclosed?: (done?: () => void) => void;
+  onready?: () => void;
+  onstatuschanged?: (verification: AgeCheckerVerification) => void;
+};
+
+type AgeCheckerVerification = {
+  status?: string;
+  uuid?: string;
+};
+
+type CheckoutCustomerPayload = AgeVerificationCustomer & {
+  notes: string;
+};
+
+const ageCheckerPublicKey =
+  process.env.NEXT_PUBLIC_AGECHECKER_KEY?.trim() ?? "";
 
 export default function CheckoutPageClient({
   customer,
@@ -33,6 +70,8 @@ export default function CheckoutPageClient({
   const [orderMessage, setOrderMessage] = useState("");
   const [orderTrackingHref, setOrderTrackingHref] = useState("");
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
+  const [isAgeVerifying, setIsAgeVerifying] = useState(false);
+  const [ageVerificationMessage, setAgeVerificationMessage] = useState("");
   const [checkoutOpenedAt, setCheckoutOpenedAt] = useState<Date | null>(null);
   const [currentTime, setCurrentTime] = useState<Date | null>(null);
   const [deliveryMode, setDeliveryMode] =
@@ -73,8 +112,10 @@ export default function CheckoutPageClient({
     hasItems &&
     isCheckoutClockReady &&
     !isPlacingOrder &&
+    !isAgeVerifying &&
     (!isExpressUnavailable || activeDeliveryMode === "scheduled") &&
     (!needsScheduledTime || Boolean(scheduledInputValue));
+  const isAgeCheckerEnabled = Boolean(ageCheckerPublicKey);
 
   useEffect(() => {
     const openedAt = new Date();
@@ -105,27 +146,34 @@ export default function CheckoutPageClient({
     setCheckoutError("");
     setOrderMessage("");
     setOrderTrackingHref("");
+    setAgeVerificationMessage("");
     setIsPlacingOrder(true);
 
     try {
       const formData = new FormData(event.currentTarget);
+      const checkoutCustomer = getCheckoutCustomerFromFormData(formData);
+      const ageVerification = await verifyAgeIfNeeded({
+        customer: checkoutCustomer,
+        key: ageCheckerPublicKey,
+        setIsAgeVerifying,
+        setMessage: setAgeVerificationMessage,
+      });
+
+      if (ageVerification.error) {
+        setCheckoutError(ageVerification.error);
+        return;
+      }
+
       const response = await fetch("/api/checkout/order", {
         method: "POST",
         headers: {
           "content-type": "application/json",
         },
         body: JSON.stringify({
-          customer: {
-            first_name: formData.get("first_name"),
-            last_name: formData.get("last_name"),
-            email: formData.get("email"),
-            phone: formData.get("phone"),
-            address: formData.get("address"),
-            city: formData.get("city"),
-            state: formData.get("state"),
-            zip: formData.get("zip"),
-            notes: formData.get("notes"),
-          },
+          age_verification: ageVerification.token
+            ? { token: ageVerification.token }
+            : undefined,
+          customer: checkoutCustomer,
           delivery: {
             checkout_opened_at: checkoutOpenedAt?.toISOString(),
             mode: activeDeliveryMode,
@@ -389,6 +437,24 @@ export default function CheckoutPageClient({
             </div>
           </CheckoutPanel>
 
+          {isAgeCheckerEnabled ? (
+            <CheckoutPanel title="Age Verification">
+              <div className="border border-[#e7e7e7] bg-white p-5">
+                <p className="text-[17px] font-medium leading-[1.6] text-black">
+                  BayBlaze verifies that every customer is 21+ with
+                  AgeChecker.Net before the order is created. If instant
+                  verification needs help, AgeChecker.Net may ask for a photo
+                  ID inside its secure popup.
+                </p>
+                {ageVerificationMessage ? (
+                  <p className="mt-3 text-[15px] font-semibold leading-[1.5] text-[#585858]">
+                    {ageVerificationMessage}
+                  </p>
+                ) : null}
+              </div>
+            </CheckoutPanel>
+          ) : null}
+
           <CheckoutPanel title="Payment">
             <div className="border border-[#e7e7e7] bg-[var(--ast-global-color-4)] p-5">
               <p className="text-[18px] font-semibold leading-[1.5] text-black">
@@ -435,7 +501,11 @@ export default function CheckoutPageClient({
             disabled={!canPlaceOrder}
             className="bayblaze-hero-button h-12 w-full rounded-[3px] bg-[var(--ast-global-color-0)] text-white transition-colors hover:bg-black disabled:cursor-not-allowed disabled:bg-[#b9c8af] sm:w-[260px]"
           >
-            {isPlacingOrder ? "PLACING ORDER..." : "PLACE ORDER"}
+            {isAgeVerifying
+              ? "VERIFYING AGE..."
+              : isPlacingOrder
+                ? "PLACING ORDER..."
+                : "PLACE ORDER"}
           </button>
         </form>
 
@@ -538,6 +608,181 @@ export default function CheckoutPageClient({
       </section>
     </main>
   );
+}
+
+async function verifyAgeIfNeeded({
+  customer,
+  key,
+  setIsAgeVerifying,
+  setMessage,
+}: {
+  customer: CheckoutCustomerPayload;
+  key: string;
+  setIsAgeVerifying: (isVerifying: boolean) => void;
+  setMessage: (message: string) => void;
+}): Promise<{ error?: string; token?: string }> {
+  if (!key) {
+    return {};
+  }
+
+  setIsAgeVerifying(true);
+  setMessage("Opening age verification...");
+
+  try {
+    const uuid = await runAgeCheckerPopup(customer, key);
+
+    setMessage("Confirming age verification...");
+
+    const response = await fetch("/api/age-verification", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        customer,
+        uuid,
+      }),
+    });
+    const data = (await response.json().catch(() => ({}))) as {
+      error?: string;
+      token?: string;
+    };
+
+    if (!response.ok || !data.token) {
+      return {
+        error:
+          data.error ??
+          "Age verification could not be confirmed. Please try again.",
+      };
+    }
+
+    setMessage("Age verified.");
+
+    return { token: data.token };
+  } catch (error) {
+    return {
+      error:
+        error instanceof Error
+          ? error.message
+          : "Age verification could not be completed.",
+    };
+  } finally {
+    setIsAgeVerifying(false);
+  }
+}
+
+function runAgeCheckerPopup(
+  customer: CheckoutCustomerPayload,
+  key: string,
+): Promise<string> {
+  return new Promise((resolve, reject) => {
+    if (typeof window === "undefined") {
+      reject(new Error("Age verification is unavailable right now."));
+      return;
+    }
+
+    let acceptedUuid = "";
+    let settled = false;
+
+    function finish(error?: Error, uuid?: string) {
+      if (settled) {
+        return;
+      }
+
+      settled = true;
+
+      if (error) {
+        reject(error);
+        return;
+      }
+
+      resolve(uuid ?? acceptedUuid);
+    }
+
+    document
+      .querySelectorAll<HTMLScriptElement>(
+        'script[data-bayblaze-agechecker="true"]',
+      )
+      .forEach((script) => script.remove());
+
+    window.AgeCheckerAPI = undefined;
+    window.AgeCheckerConfig = {
+      data: {
+        address: String(customer.address ?? ""),
+        city: String(customer.city ?? ""),
+        country: "US",
+        first_name: String(customer.first_name ?? ""),
+        last_name: String(customer.last_name ?? ""),
+        state: String(customer.state ?? ""),
+        zip: String(customer.zip ?? ""),
+      },
+      defer_submit: true,
+      key,
+      mode: "manual",
+      name: "BayBlaze",
+      onclosed: (done) => {
+        done?.();
+
+        if (!acceptedUuid) {
+          finish(
+            new Error(
+              `Complete age verification before checkout can continue. Contact ${AGECHECKER_SUPPORT_EMAIL} if you need help.`,
+            ),
+          );
+        }
+      },
+      onready: () => {
+        window.AgeCheckerAPI?.show();
+      },
+      onstatuschanged: (verification) => {
+        if (
+          verification.status === "accepted" &&
+          typeof verification.uuid === "string" &&
+          verification.uuid.length === 32
+        ) {
+          acceptedUuid = verification.uuid;
+          finish(undefined, verification.uuid);
+        }
+      },
+    };
+
+    const script = document.createElement("script");
+    script.async = true;
+    script.crossOrigin = "anonymous";
+    script.dataset.bayblazeAgechecker = "true";
+    script.onerror = () => {
+      finish(
+        new Error(
+          `Age verification could not load. Contact ${AGECHECKER_SUPPORT_EMAIL} if you need help.`,
+        ),
+      );
+    };
+    script.src = AGECHECKER_POPUP_SCRIPT_URL;
+
+    document.head.appendChild(script);
+  });
+}
+
+function getCheckoutCustomerFromFormData(
+  formData: FormData,
+): CheckoutCustomerPayload {
+  return {
+    address: getFormDataString(formData, "address"),
+    city: getFormDataString(formData, "city"),
+    email: getFormDataString(formData, "email"),
+    first_name: getFormDataString(formData, "first_name"),
+    last_name: getFormDataString(formData, "last_name"),
+    notes: getFormDataString(formData, "notes"),
+    phone: getFormDataString(formData, "phone"),
+    state: getFormDataString(formData, "state"),
+    zip: getFormDataString(formData, "zip"),
+  };
+}
+
+function getFormDataString(formData: FormData, name: string) {
+  const value = formData.get(name);
+
+  return typeof value === "string" ? value : "";
 }
 
 function CheckoutPanel({

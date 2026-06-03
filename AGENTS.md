@@ -35,6 +35,28 @@ BayBlaze's backend-only delivery intelligence service and not as a frontend app.
   keep delivery intelligence, coordinates, cache behavior, and Google Maps cost
   controls out of page components.
 
+### AgeChecker.Net Integration
+
+The storefront enforces AgeChecker.Net before-payment checkout verification when
+`NEXT_PUBLIC_AGECHECKER_KEY` or `AGECHECKER_API_KEY` is configured. Without
+those env vars, checkout remains unblocked for local development and incomplete
+deployments.
+
+- The checkout UI loads the AgeChecker.Net popup from
+  `https://cdn.agechecker.net/static/popup/v1/popup.js` in manual mode and
+  passes the accepted UUID to `src/app/api/age-verification/route.ts`.
+- The age verification API route validates accepted popup UUIDs server-side
+  against `https://api.agechecker.net/v1/validate`, then mints a signed
+  BayBlaze token scoped to the checkout customer details.
+- `src/app/api/checkout/order/route.ts` requires that signed token before
+  creating a Medusa cart/order whenever AgeChecker.Net is configured.
+- Store only verification status/UUID/timestamp in Medusa cart and order
+  metadata (`age_verification_provider`, `age_verification_status`,
+  `age_verification_uuid`, `age_verified_at`). Do not store DOB, ID images, or
+  sensitive identity document data in the storefront or Medusa metadata.
+- `AGE_VERIFICATION_TOKEN_SECRET` should be a long server-only random value. If
+  omitted, the storefront falls back to `EMAIL_VERIFICATION_SECRET`.
+
 ### Storefront Domain Model
 
 The storefront should model business concepts explicitly instead of duplicating
