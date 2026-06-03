@@ -188,10 +188,10 @@ export default function CheckoutPageClient({
           </nav>
 
           <div className="max-w-[760px]">
-            <h1 className="text-[34px] font-semibold uppercase leading-none tracking-[0.08em] text-[var(--ast-global-color-0)] sm:text-[48px]">
+            <h1 className="text-[34px] font-semibold uppercase leading-none tracking-[0.08em] text-black sm:text-[48px]">
               Your vape run, delivered
             </h1>
-            <p className="mt-4 max-w-[620px] text-[17px] font-medium leading-[1.55] text-black sm:text-[21px]">
+            <p className="mt-4 max-w-[620px] text-[17px] font-medium leading-[1.55] text-[var(--ast-global-color-3)] sm:text-[21px]">
               Place your order online. Pay the driver when it arrives.
             </p>
           </div>
@@ -200,7 +200,7 @@ export default function CheckoutPageClient({
 
       <section className="mx-auto grid w-full max-w-[1180px] gap-7 px-4 py-8 sm:px-5 sm:py-10 lg:grid-cols-[minmax(0,1fr)_360px]">
         <form className="grid gap-8" onSubmit={handlePlaceOrder}>
-          <CheckoutPanel title="Contact information">
+          <CheckoutPanel title="Contact Information">
             {customer ? (
               <p className="mb-5 border border-[#d9d9d9] bg-[var(--ast-global-color-4)] px-4 py-3 text-[16px] font-medium leading-[1.5] text-black">
                 Signed in as {customer.email}.
@@ -248,7 +248,7 @@ export default function CheckoutPageClient({
             </div>
           </CheckoutPanel>
 
-          <CheckoutPanel title="Delivery address">
+          <CheckoutPanel title="Delivery Address">
             <div className="grid gap-5">
               <CheckoutField label="Street address" name="address" required />
 
@@ -284,7 +284,7 @@ export default function CheckoutPageClient({
             </div>
           </CheckoutPanel>
 
-          <CheckoutPanel title="Delivery timing">
+          <CheckoutPanel title="Delivery Timing">
             <div className="grid gap-5">
               <p className="text-[16px] font-medium leading-[1.55] text-black sm:text-[17px]">
                 {DELIVERY_SCHEDULING_RULE}
@@ -430,7 +430,7 @@ export default function CheckoutPageClient({
         <aside className="h-fit border-2 border-black bg-white">
           <div className="border-b-2 border-black px-5 py-4">
             <h2 className="text-[21px] font-medium leading-tight text-black sm:text-[24px]">
-              Order summary
+              Order Summary
             </h2>
           </div>
 
