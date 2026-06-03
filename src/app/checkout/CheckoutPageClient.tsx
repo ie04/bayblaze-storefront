@@ -188,11 +188,8 @@ export default function CheckoutPageClient({
           </nav>
 
           <div className="max-w-[760px]">
-            <p className="text-[14px] font-semibold uppercase tracking-[0.14em] text-[var(--ast-global-color-0)]">
+            <h1 className="text-[34px] font-semibold uppercase leading-none tracking-[0.08em] text-[var(--ast-global-color-0)] sm:text-[48px]">
               Bayblaze delivery
-            </p>
-            <h1 className="bayblaze-checkout-title mt-2 text-black">
-              Checkout
             </h1>
             <p className="mt-4 max-w-[620px] text-[17px] font-medium leading-[1.55] text-black sm:text-[21px]">
               Place your order online. Pay the driver when it arrives.
