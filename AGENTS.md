@@ -6,8 +6,9 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## Project Memory
 
-When code changes are complete, ask the user if they want to commit and push the
-changes. Offer a suitable commit message/name with that prompt.
+When code changes are complete, automatically commit and push the changes unless
+the user explicitly says not to. Use a concise commit message that reflects the
+completed work.
 
 When infrastructure, deployment, environment variables, service topology,
 runner setup, or cross-repo integration details change, update the relevant

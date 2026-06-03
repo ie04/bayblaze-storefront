@@ -142,6 +142,12 @@ export default function HomeCarousel<TItem>({
                 breakpoints={{
                   768: {
                     centeredSlides: false,
+                    slidesPerView: definition.behavior.tabletSlidesPerView,
+                    spaceBetween: definition.behavior.desktopSpaceBetween,
+                  },
+                  1024: {
+                    centeredSlides: false,
+                    slidesPerView: definition.behavior.desktopSlidesPerView,
                     spaceBetween: definition.behavior.desktopSpaceBetween,
                   },
                 }}

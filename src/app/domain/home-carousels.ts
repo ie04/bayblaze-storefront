@@ -20,6 +20,8 @@ export type HomeCarouselBehavior = {
   minimumLoopItems: number;
   mobileSpaceBetween: number;
   desktopSpaceBetween: number;
+  tabletSlidesPerView: number;
+  desktopSlidesPerView: number;
 };
 
 const infiniteCenteredMobileCarousel: HomeCarouselBehavior = {
@@ -28,6 +30,8 @@ const infiniteCenteredMobileCarousel: HomeCarouselBehavior = {
   minimumLoopItems: 8,
   mobileSpaceBetween: 16,
   desktopSpaceBetween: 24,
+  tabletSlidesPerView: 2,
+  desktopSlidesPerView: 4,
 };
 
 export type HomeCategoryItem = {
@@ -89,7 +93,7 @@ export function getBestSellersCarousel(
     previousLabel: "Previous product",
     nextLabel: "Next product",
     behavior: infiniteCenteredMobileCarousel,
-    slideClassName: "!h-auto !w-[220px] max-w-[78vw] sm:!w-[230px] lg:!w-[244px]",
+    slideClassName: "!h-auto w-[220px] max-w-[78vw] sm:w-[230px] md:w-auto",
     swiperClassName: "bayblaze-product-swiper",
   };
 }
@@ -103,6 +107,6 @@ export const shopByCategoryCarousel: HomeCarouselDefinition<HomeCategoryItem> = 
   previousLabel: "Previous category",
   nextLabel: "Next category",
   behavior: infiniteCenteredMobileCarousel,
-  slideClassName: "!h-auto !w-[236px] max-w-[78vw] sm:!w-[258px] lg:!w-[276px]",
+  slideClassName: "!h-auto w-[236px] max-w-[78vw] sm:w-[258px] md:w-auto",
   swiperClassName: "bayblaze-category-swiper",
 };
