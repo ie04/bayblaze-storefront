@@ -42,12 +42,12 @@ export default function OrdersDashboard({
     <>
       <section className="bayblaze-auth-section px-4 py-7 sm:px-7 sm:py-10">
         <div className="mb-7 sm:mb-9">
-          <h1 className="bayblaze-auth-title text-black">
-            Your BayBlaze Deliveries
+          <h1 className="bayblaze-auth-title text-[clamp(2rem,3.5vw,3.65rem)] text-black">
+            Your Orders
           </h1>
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-2">
+        <div className="grid gap-6 pr-1 sm:pr-2 lg:grid-cols-2">
           <OrderGroup
             emptyText="No pending orders."
             orders={pendingOrders}
@@ -106,7 +106,7 @@ function OrderGroup({
       </summary>
 
       {orders.length ? (
-        <ul className="grid gap-4 p-5">
+        <ul className="grid gap-4 px-5 py-5 pr-6 sm:pr-7">
           {orders.map((order) => (
             <li key={order.id}>
               <button
