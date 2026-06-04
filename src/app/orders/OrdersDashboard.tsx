@@ -106,7 +106,7 @@ function OrderGroup({
       </summary>
 
       {orders.length ? (
-        <ul className="grid gap-4 px-5 py-5 pr-7 sm:px-6 sm:pr-8">
+        <ul className="grid gap-4 p-5 sm:p-6">
           {orders.map((order) => (
             <li key={order.id}>
               <button
