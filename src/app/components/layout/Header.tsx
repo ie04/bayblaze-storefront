@@ -98,7 +98,7 @@ export default function Header({
 
         <div className={styles.actions}>
           <Link
-            href="/account"
+            href="/orders"
             className={styles.fulfillment}
             aria-label="Track your order"
           >
