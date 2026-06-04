@@ -106,12 +106,12 @@ function OrderGroup({
       </summary>
 
       {orders.length ? (
-        <ul className="grid gap-4 p-5 sm:p-6">
+        <ul className="m-0 grid list-none gap-4 p-5 sm:p-6">
           {orders.map((order) => (
-            <li key={order.id}>
+            <li className="min-w-0" key={order.id}>
               <button
                 type="button"
-                className="w-full rounded-[8px] border border-[#e4ded4] bg-white p-4 text-left transition-colors hover:border-[var(--ast-global-color-1)] hover:bg-[#f7f6f2]"
+                className="block w-full rounded-[8px] border border-[#e4ded4] bg-white p-4 text-left transition-colors hover:border-[var(--ast-global-color-1)] hover:bg-[#f7f6f2]"
                 onClick={() => onOpenOrder(order)}
               >
                 <span className="flex items-start justify-between gap-4">
