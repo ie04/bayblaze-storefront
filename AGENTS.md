@@ -34,6 +34,24 @@ BayBlaze's backend-only delivery intelligence service and not as a frontend app.
 - Keep order and delivery UI display rules in the storefront domain layer, but
   keep delivery intelligence, coordinates, cache behavior, and Google Maps cost
   controls out of page components.
+- Checkout must run IsoChronos Routing's pre-checkout delivery eligibility
+  evaluation before triggering AgeChecker.Net or creating/finalizing a Medusa
+  order. Rejected evaluations should show customer-facing coverage/inventory
+  copy and must not spend an AgeChecker verification.
+- Accepted or conditionally accepted routing evaluations should show the
+  customer confirmation modal first. Only the `I Confirm` action should trigger
+  AgeChecker.Net, and only successful AgeChecker verification should call the
+  Medusa order creation route.
+- The storefront signs short-lived routing evaluation checkout tokens and the
+  Medusa order route verifies them when IsoChronos is configured. Required
+  server env for production routing: `ISOCHRONOS_BASE_URL`,
+  `ISOCHRONOS_ADMIN_TOKEN`, and a signing secret via
+  `ROUTING_EVALUATION_TOKEN_SECRET` or the existing verification secret
+  fallback.
+- Cart items sent to IsoChronos must be normalized to variant-level sellable
+  units and must carry explicit Medusa-owned `productId`, `variantId`,
+  `inventoryState`, `availableQuantity`, and requested `quantity`. Do not infer
+  missing inventory state or quantity in storefront code.
 
 ### AgeChecker.Net Integration
 

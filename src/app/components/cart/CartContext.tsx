@@ -11,8 +11,11 @@ import {
 
 export type CartItem = {
   id: string;
+  availableQuantity?: number;
   variantId?: string;
+  productId?: string;
   productHandle?: string;
+  inventoryState?: "ON_VEHICLE" | "IN_WAREHOUSE";
   name: string;
   flavor?: string;
   image?: string;
@@ -102,6 +105,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
           currentItem.id === item.id
             ? {
                 ...currentItem,
+                ...item,
                 quantity: currentItem.quantity + item.quantity,
               }
             : currentItem

@@ -41,6 +41,9 @@ export default function ProductPage({
       })?.id ?? product.variantId
     );
   }, [flavor, product.variantId, product.variants]);
+  const selectedVariant = useMemo(() => {
+    return product.variants.find((variant) => variant.id === selectedVariantId);
+  }, [product.variants, selectedVariantId]);
 
   const selectedSummary = useMemo(() => {
     if (!flavor) {
@@ -71,8 +74,12 @@ export default function ProductPage({
 
     addItem({
       id: cartItemId,
+      availableQuantity:
+        selectedVariant?.availableQuantity ?? product.availableQuantity,
       variantId: selectedVariantId,
+      productId: product.id,
       productHandle: product.handle,
+      inventoryState: selectedVariant?.inventoryState ?? product.inventoryState,
       name: product.name,
       flavor: flavor || undefined,
       image: product.images[0]?.src,

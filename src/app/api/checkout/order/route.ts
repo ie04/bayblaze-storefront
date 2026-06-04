@@ -4,12 +4,17 @@ import {
   type ValidDeliveryTiming,
   validateDeliveryTiming,
 } from "@/app/domain/delivery-scheduling";
+import { normalizePreCheckoutRoutingItems } from "@/app/domain/pre-checkout-routing";
 import { verifyCheckoutAgeVerification } from "@/app/lib/age-verification-token";
+import { verifyCheckoutRoutingEvaluation } from "@/app/lib/pre-checkout-routing-token";
 
 type CheckoutItem = {
   id?: string;
+  availableQuantity?: number;
   variantId?: string;
+  productId?: string;
   productHandle?: string;
+  inventoryState?: string;
   name?: string;
   flavor?: string;
   quantity?: number;
@@ -44,6 +49,9 @@ type CheckoutRequestBody = {
     scheduled_at?: unknown;
   };
   items?: CheckoutItem[];
+  routing?: {
+    token?: unknown;
+  };
 };
 
 type MedusaCart = {
@@ -139,6 +147,26 @@ export async function POST(request: Request) {
 
   const customer = body.customer as Required<CheckoutCustomer>;
   const items = body.items as ValidCheckoutItem[];
+  const normalizedRoutingItems = normalizePreCheckoutRoutingItems(body.items);
+
+  if ("error" in normalizedRoutingItems) {
+    return jsonError(
+      normalizedRoutingItems.error ?? "Invalid checkout inventory.",
+      400,
+    );
+  }
+
+  const routingItems = normalizedRoutingItems.items;
+  const routingEvaluation = verifyCheckoutRoutingEvaluation(body.routing, {
+    customer,
+    delivery: body.delivery,
+    items: routingItems,
+  });
+
+  if (routingEvaluation.error) {
+    return jsonError(routingEvaluation.error, 403);
+  }
+
   const ageVerification = verifyCheckoutAgeVerification(
     body.age_verification,
     customer,
@@ -151,6 +179,7 @@ export async function POST(request: Request) {
   const customerToken = await getCustomerToken();
   const deliveryMetadata = getDeliveryMetadata(deliveryTiming);
   const orderMetadata = {
+    ...routingEvaluation.metadata,
     ...ageVerification.metadata,
     ...deliveryMetadata,
   };
@@ -232,7 +261,10 @@ export async function POST(request: Request) {
               flavor: item.flavor,
               quantity: item.quantity,
               product_handle: item.productHandle,
+              product_id: item.productId,
               variant_id: item.variantId,
+              inventory_state: item.inventoryState,
+              available_quantity: item.availableQuantity,
             })),
           },
         },

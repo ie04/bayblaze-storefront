@@ -1,7 +1,7 @@
 "use client";
 
 import type { FormEvent, ReactNode } from "react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -56,6 +56,44 @@ type CheckoutCustomerPayload = AgeVerificationCustomer & {
   notes: string;
 };
 
+type CheckoutDeliveryPayload = {
+  checkout_opened_at?: string;
+  mode: DeliveryTimingMode;
+  scheduled_at?: string;
+};
+
+type PendingCheckout = {
+  checkoutCustomer: CheckoutCustomerPayload;
+  delivery: CheckoutDeliveryPayload;
+  routingToken: string;
+};
+
+type RoutingConfirmationState = {
+  estimatedMinutes?: number;
+  message: string;
+  requirements: string[];
+  title: string;
+};
+
+type PreCheckoutRoutingResult =
+  | {
+      error: string;
+      confirmation?: never;
+      estimatedMinutes?: never;
+      message?: never;
+      token?: never;
+    }
+  | {
+      error?: never;
+      confirmation: {
+        title: string;
+        requirements: string[];
+      };
+      estimatedMinutes?: number;
+      message: string;
+      token: string;
+    };
+
 const ageCheckerPublicKey =
   process.env.NEXT_PUBLIC_AGECHECKER_KEY?.trim() ?? "";
 
@@ -70,8 +108,12 @@ export default function CheckoutPageClient({
   const [orderMessage, setOrderMessage] = useState("");
   const [orderTrackingHref, setOrderTrackingHref] = useState("");
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
+  const [isRoutingEvaluating, setIsRoutingEvaluating] = useState(false);
   const [isAgeVerifying, setIsAgeVerifying] = useState(false);
   const [ageVerificationMessage, setAgeVerificationMessage] = useState("");
+  const [routingConfirmation, setRoutingConfirmation] =
+    useState<RoutingConfirmationState | null>(null);
+  const pendingCheckoutRef = useRef<PendingCheckout | null>(null);
   const [checkoutOpenedAt, setCheckoutOpenedAt] = useState<Date | null>(null);
   const [currentTime, setCurrentTime] = useState<Date | null>(null);
   const [deliveryMode, setDeliveryMode] =
@@ -112,6 +154,7 @@ export default function CheckoutPageClient({
     hasItems &&
     isCheckoutClockReady &&
     !isPlacingOrder &&
+    !isRoutingEvaluating &&
     !isAgeVerifying &&
     (!isExpressUnavailable || activeDeliveryMode === "scheduled") &&
     (!needsScheduledTime || Boolean(scheduledInputValue));
@@ -139,7 +182,7 @@ export default function CheckoutPageClient({
   async function handlePlaceOrder(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (!hasItems || isPlacingOrder) {
+    if (!hasItems || isPlacingOrder || isRoutingEvaluating) {
       return;
     }
 
@@ -147,11 +190,81 @@ export default function CheckoutPageClient({
     setOrderMessage("");
     setOrderTrackingHref("");
     setAgeVerificationMessage("");
-    setIsPlacingOrder(true);
+    pendingCheckoutRef.current = null;
+    setRoutingConfirmation(null);
+    setIsRoutingEvaluating(true);
 
     try {
       const formData = new FormData(event.currentTarget);
       const checkoutCustomer = getCheckoutCustomerFromFormData(formData);
+      const delivery: CheckoutDeliveryPayload = {
+        checkout_opened_at: checkoutOpenedAt?.toISOString(),
+        mode: activeDeliveryMode,
+        scheduled_at:
+          activeDeliveryMode === "scheduled"
+            ? scheduledInputValue
+            : undefined,
+      };
+      const preflight = await requestPreCheckoutRouting({
+        customer: checkoutCustomer,
+        delivery,
+        items,
+      });
+
+      if ("error" in preflight) {
+        setCheckoutError(
+          preflight.error ??
+            "Unable to check delivery eligibility right now. Please try again.",
+        );
+        return;
+      }
+
+      pendingCheckoutRef.current = {
+        checkoutCustomer,
+        delivery,
+        routingToken: preflight.token,
+      };
+      setRoutingConfirmation({
+        estimatedMinutes: preflight.estimatedMinutes,
+        message: preflight.message,
+        requirements: preflight.confirmation.requirements,
+        title: preflight.confirmation.title,
+      });
+    } catch {
+      setCheckoutError("Unable to reach checkout right now. Please try again.");
+    } finally {
+      setIsRoutingEvaluating(false);
+    }
+  }
+
+  async function handleConfirmDeliveryEligibility() {
+    const pendingCheckout = pendingCheckoutRef.current;
+
+    if (!pendingCheckout || isPlacingOrder) {
+      return;
+    }
+
+    setRoutingConfirmation(null);
+    pendingCheckoutRef.current = null;
+    await completeCheckout(pendingCheckout);
+  }
+
+  function handleCancelDeliveryEligibility() {
+    pendingCheckoutRef.current = null;
+    setRoutingConfirmation(null);
+  }
+
+  async function completeCheckout({
+    checkoutCustomer,
+    delivery,
+    routingToken,
+  }: PendingCheckout) {
+    setCheckoutError("");
+    setOrderMessage("");
+    setOrderTrackingHref("");
+    setIsPlacingOrder(true);
+
+    try {
       const ageVerification = await verifyAgeIfNeeded({
         customer: checkoutCustomer,
         key: ageCheckerPublicKey,
@@ -174,15 +287,11 @@ export default function CheckoutPageClient({
             ? { token: ageVerification.token }
             : undefined,
           customer: checkoutCustomer,
-          delivery: {
-            checkout_opened_at: checkoutOpenedAt?.toISOString(),
-            mode: activeDeliveryMode,
-            scheduled_at:
-              activeDeliveryMode === "scheduled"
-                ? scheduledInputValue
-                : undefined,
-          },
+          delivery,
           items,
+          routing: {
+            token: routingToken,
+          },
         }),
       });
 
@@ -501,7 +610,9 @@ export default function CheckoutPageClient({
             disabled={!canPlaceOrder}
             className="bayblaze-hero-button h-12 w-full rounded-[3px] bg-[var(--ast-global-color-0)] text-white transition-colors hover:bg-black disabled:cursor-not-allowed disabled:bg-[#b9c8af] sm:w-[260px]"
           >
-            {isAgeVerifying
+            {isRoutingEvaluating
+              ? "CHECKING DELIVERY..."
+              : isAgeVerifying
               ? "VERIFYING AGE..."
               : isPlacingOrder
                 ? "PLACING ORDER..."
@@ -606,6 +717,15 @@ export default function CheckoutPageClient({
           </div>
         </aside>
       </section>
+
+      {routingConfirmation ? (
+        <RoutingConfirmationDialog
+          confirmation={routingConfirmation}
+          isSubmitting={isPlacingOrder || isAgeVerifying}
+          onCancel={handleCancelDeliveryEligibility}
+          onConfirm={handleConfirmDeliveryEligibility}
+        />
+      ) : null}
     </main>
   );
 }
@@ -669,6 +789,80 @@ async function verifyAgeIfNeeded({
   } finally {
     setIsAgeVerifying(false);
   }
+}
+
+async function requestPreCheckoutRouting({
+  customer,
+  delivery,
+  items,
+}: {
+  customer: CheckoutCustomerPayload;
+  delivery: CheckoutDeliveryPayload;
+  items: CartItem[];
+}): Promise<PreCheckoutRoutingResult> {
+  const response = await fetch("/api/checkout/preflight", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      customer,
+      delivery,
+      items,
+    }),
+  });
+  const data = (await response.json().catch(() => ({}))) as {
+    accepted?: boolean;
+    confirmation?: {
+      title?: string;
+      requirements?: string[];
+    };
+    error?: string;
+    estimatedMinutes?: number;
+    message?: string;
+    token?: string;
+  };
+
+  if (!response.ok) {
+    return {
+      error:
+        data.error ??
+        "Unable to check delivery eligibility right now. Please try again.",
+    };
+  }
+
+  if (!data.accepted) {
+    return {
+      error:
+        data.message ??
+        "Sorry, BayBlaze cannot reasonably fulfill this delivery yet. We are actively working to expand our coverage area.",
+    };
+  }
+
+  if (!data.token) {
+    return {
+      error:
+        "Delivery eligibility could not be confirmed. Please review your order and try again.",
+    };
+  }
+
+  return {
+    confirmation: {
+      title: data.confirmation?.title ?? "Confirm delivery details",
+      requirements: data.confirmation?.requirements?.length
+        ? data.confirmation.requirements
+        : [
+            "Confirm the delivery address is correct.",
+            "Confirm you will be present at the estimated delivery time.",
+            "Confirm you will have your physical ID on hand when the driver arrives.",
+          ],
+    },
+    estimatedMinutes: data.estimatedMinutes,
+    message:
+      data.message ??
+      "BayBlaze can accept this checkout if you confirm the delivery details before age verification.",
+    token: data.token,
+  };
 }
 
 function runAgeCheckerPopup(
@@ -840,6 +1034,74 @@ function CheckoutField({
         type={type}
       />
     </label>
+  );
+}
+
+function RoutingConfirmationDialog({
+  confirmation,
+  isSubmitting,
+  onCancel,
+  onConfirm,
+}: {
+  confirmation: RoutingConfirmationState;
+  isSubmitting: boolean;
+  onCancel: () => void;
+  onConfirm: () => void;
+}) {
+  return (
+    <div
+      aria-labelledby="routing-confirmation-title"
+      aria-modal="true"
+      className="fixed inset-0 z-[80] grid place-items-center bg-black/55 px-4 py-6"
+      role="dialog"
+    >
+      <div className="w-full max-w-[560px] border-2 border-black bg-white p-5 shadow-2xl sm:p-6">
+        <h2
+          className="text-[26px] font-semibold leading-tight text-black sm:text-[32px]"
+          id="routing-confirmation-title"
+        >
+          {confirmation.title}
+        </h2>
+        <p className="mt-4 text-[16px] font-medium leading-[1.55] text-[#585858] sm:text-[18px]">
+          {confirmation.message}
+        </p>
+
+        {confirmation.estimatedMinutes ? (
+          <p className="mt-3 border border-[#d7d1c6] bg-[var(--ast-global-color-4)] px-4 py-3 text-[15px] font-semibold leading-[1.5] text-black">
+            Estimated delivery time: about {confirmation.estimatedMinutes}{" "}
+            minutes.
+          </p>
+        ) : null}
+
+        <ul className="mt-5 grid gap-3 text-[15px] font-medium leading-[1.5] text-black sm:text-[16px]">
+          {confirmation.requirements.map((requirement) => (
+            <li key={requirement} className="flex gap-3">
+              <span aria-hidden="true" className="mt-1 size-2 bg-black" />
+              <span>{requirement}</span>
+            </li>
+          ))}
+        </ul>
+
+        <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end">
+          <button
+            className="h-12 border border-black bg-white px-6 text-[14px] font-semibold uppercase tracking-[0.12em] text-black transition-colors hover:bg-[var(--ast-global-color-4)] disabled:cursor-not-allowed disabled:opacity-60"
+            disabled={isSubmitting}
+            onClick={onCancel}
+            type="button"
+          >
+            Go Back
+          </button>
+          <button
+            className="bayblaze-hero-button h-12 bg-[var(--ast-global-color-0)] px-6 text-white transition-colors hover:bg-black disabled:cursor-not-allowed disabled:bg-[#b9c8af]"
+            disabled={isSubmitting}
+            onClick={onConfirm}
+            type="button"
+          >
+            I Confirm
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 

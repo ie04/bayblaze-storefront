@@ -73,11 +73,15 @@ type MedusaProductCategory = {
   category_children?: MedusaProductCategory[];
 };
 
+export type InventoryLocationState = "ON_VEHICLE" | "IN_WAREHOUSE";
+
 export type StorefrontProduct = {
   id: string;
   handle: string;
   name: string;
   variantId: string;
+  inventoryState?: InventoryLocationState;
+  availableQuantity?: number;
   sku: string;
   brand: string;
   collectionTitle: string;
@@ -92,6 +96,8 @@ export type StorefrontProduct = {
     title: string;
     sku: string;
     flavor?: string;
+    inventoryState?: InventoryLocationState;
+    availableQuantity?: number;
     optionValues: string[];
   }[];
   details: string[];
@@ -252,12 +258,16 @@ function getVariantFlavor(variant: MedusaVariant) {
 function getStorefrontVariants(product: MedusaProduct) {
   return (product.variants ?? []).map((variant) => {
     const flavor = getVariantFlavor(variant);
+    const inventoryState = getVariantInventoryState(variant);
+    const availableQuantity = getVariantAvailableQuantity(variant);
 
     return {
       id: variant.id,
       title: variant.title,
       sku: variant.sku ?? "",
       flavor,
+      inventoryState,
+      availableQuantity,
       optionValues: flavor ? splitOptionValue(flavor) : [],
     };
   });
@@ -272,6 +282,44 @@ function splitOptionValue(value: string) {
 
 function getMetadataValue(product: MedusaProduct, key: string) {
   return product.metadata?.[key] ?? product.variants?.[0]?.metadata?.[key];
+}
+
+function getVariantMetadataValue(variant: MedusaVariant, ...keys: string[]) {
+  for (const key of keys) {
+    const value = variant.metadata?.[key];
+
+    if (value !== undefined && value !== null) {
+      return value;
+    }
+  }
+
+  return undefined;
+}
+
+function getVariantInventoryState(
+  variant: MedusaVariant,
+): InventoryLocationState | undefined {
+  const value = getVariantMetadataValue(
+    variant,
+    "inventoryState",
+    "inventory_state",
+  );
+
+  return value === "ON_VEHICLE" || value === "IN_WAREHOUSE"
+    ? value
+    : undefined;
+}
+
+function getVariantAvailableQuantity(variant: MedusaVariant) {
+  const value = getVariantMetadataValue(
+    variant,
+    "availableQuantity",
+    "available_quantity",
+  );
+
+  return Number.isInteger(value) && Number(value) >= 0
+    ? Number(value)
+    : undefined;
 }
 
 function getBrand(product: MedusaProduct) {
@@ -321,6 +369,12 @@ function toStorefrontProduct(product: MedusaProduct): StorefrontProduct {
     handle: product.handle,
     name: product.title,
     variantId: firstVariant?.id ?? "",
+    inventoryState: firstVariant
+      ? getVariantInventoryState(firstVariant)
+      : undefined,
+    availableQuantity: firstVariant
+      ? getVariantAvailableQuantity(firstVariant)
+      : undefined,
     sku: firstVariant?.sku ?? "",
     brand: getBrand(product),
     collectionTitle: product.collection?.title ?? categories[0]?.name ?? "",
