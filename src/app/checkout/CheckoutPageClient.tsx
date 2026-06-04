@@ -408,9 +408,9 @@ export default function CheckoutPageClient({
 
               {isCheckoutClockReady && isExpressUnavailable ? (
                 <p className="border border-[#d7d1c6] bg-white px-4 py-3 text-[15px] font-semibold leading-[1.5] text-black">
-                  Ordering is in scheduling mode right now. Choose any delivery
-                  time from {scheduledMinimumLabel} onward during delivery
-                  hours.
+                  Bayblaze Express Delivery is unavailable right now. Schedule
+                  your order for 10AM tomorrow or later. We&apos;re working on
+                  getting deliveries working 24/7 soon!
                 </p>
               ) : null}
 
