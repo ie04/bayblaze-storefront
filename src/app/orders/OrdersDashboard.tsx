@@ -10,7 +10,6 @@ import {
   formatOrderStatus,
   formatOrderTotal,
   groupOrdersByLifecycle,
-  type OrdersResponse,
 } from "@/app/domain/orders";
 
 export default function OrdersDashboard({
@@ -18,41 +17,12 @@ export default function OrdersDashboard({
 }: {
   initialOrders: CustomerOrder[];
 }) {
-  const [orders, setOrders] = useState(() => initialOrders);
   const [selectedOrder, setSelectedOrder] = useState<CustomerOrder | null>(null);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [error, setError] = useState("");
 
   const { completedOrders, pendingOrders } = useMemo(
-    () => groupOrdersByLifecycle(orders),
-    [orders],
+    () => groupOrdersByLifecycle(initialOrders),
+    [initialOrders],
   );
-
-  async function refreshOrders() {
-    setIsRefreshing(true);
-    setError("");
-
-    try {
-      const response = await fetch("/api/orders", {
-        cache: "no-store",
-      });
-      const data = (await response.json().catch(() => ({}))) as OrdersResponse;
-
-      if (!response.ok) {
-        throw new Error(data.error || "Unable to refresh orders.");
-      }
-
-      setOrders(data.orders ?? []);
-    } catch (refreshError) {
-      setError(
-        refreshError instanceof Error
-          ? refreshError.message
-          : "Unable to refresh orders.",
-      );
-    } finally {
-      setIsRefreshing(false);
-    }
-  }
 
   function openOrder(order: CustomerOrder) {
     setSelectedOrder(order);
@@ -71,31 +41,11 @@ export default function OrdersDashboard({
   return (
     <>
       <section className="bayblaze-auth-section px-4 py-7 sm:px-7 sm:py-10">
-        <div className="mb-7 flex flex-col gap-4 sm:mb-9 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <p className="mb-3 text-[13px] font-semibold uppercase tracking-[0.22em] text-[var(--ast-global-color-1)]">
-              Bayblaze Orders
-            </p>
-            <h1 className="bayblaze-auth-title text-black">Orders</h1>
-          </div>
-
-          <button
-            type="button"
-            className="bayblaze-soft-button w-full px-5 py-3 text-[15px] font-semibold leading-none disabled:cursor-wait disabled:opacity-60 sm:w-auto"
-            disabled={isRefreshing}
-            onClick={() => {
-              void refreshOrders();
-            }}
-          >
-            {isRefreshing ? "SYNCING" : "REFRESH ORDERS"}
-          </button>
+        <div className="mb-7 sm:mb-9">
+          <h1 className="bayblaze-auth-title text-black">
+            Your BayBlaze Deliveries
+          </h1>
         </div>
-
-        {error ? (
-          <p className="bayblaze-soft-alert mb-5 px-4 py-3 text-[16px] font-medium leading-[1.5] text-red-700">
-            {error}
-          </p>
-        ) : null}
 
         <div className="grid gap-6 lg:grid-cols-2">
           <OrderGroup
