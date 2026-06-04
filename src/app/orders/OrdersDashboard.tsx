@@ -95,7 +95,7 @@ function OrderGroup({
 }) {
   return (
     <details
-      className="bayblaze-soft-card bayblaze-soft-card--tint overflow-visible"
+      className="bayblaze-soft-card bayblaze-soft-card--tint overflow-hidden"
       open
     >
       <summary className="flex cursor-pointer list-none items-center justify-between border-b border-[#e8e2d8] px-5 py-4 text-[21px] font-semibold leading-tight text-black sm:text-[24px]">
@@ -111,7 +111,7 @@ function OrderGroup({
             <li key={order.id}>
               <button
                 type="button"
-                className="w-full rounded-[8px] border border-[#e4ded4] bg-white p-4 text-left transition-colors hover:border-[var(--ast-global-color-1)] hover:bg-[#f7f6f2] hover:shadow-[0_10px_24px_rgba(69,88,58,0.08)]"
+                className="w-full rounded-[8px] border border-[#e4ded4] bg-white p-4 text-left transition-colors hover:border-[var(--ast-global-color-1)] hover:bg-[#f7f6f2]"
                 onClick={() => onOpenOrder(order)}
               >
                 <span className="flex items-start justify-between gap-4">
