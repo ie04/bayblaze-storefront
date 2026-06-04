@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 export default function Page() {
   return (
     <main className="min-h-screen bg-[#f7f6f2]">
-      <Header />
+      <Header surface="solid" />
       <Suspense
         fallback={
           <div className="bayblaze-auth-page pb-20 pt-[112px]">
