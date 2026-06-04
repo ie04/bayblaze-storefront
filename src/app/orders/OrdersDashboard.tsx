@@ -95,7 +95,7 @@ function OrderGroup({
 }) {
   return (
     <details
-      className="bayblaze-soft-card bayblaze-soft-card--tint overflow-hidden"
+      className="bayblaze-soft-card bayblaze-soft-card--tint overflow-visible"
       open
     >
       <summary className="flex cursor-pointer list-none items-center justify-between border-b border-[#e8e2d8] px-5 py-4 text-[21px] font-semibold leading-tight text-black sm:text-[24px]">
@@ -106,7 +106,7 @@ function OrderGroup({
       </summary>
 
       {orders.length ? (
-        <ul className="grid gap-4 px-5 py-5 pr-6 sm:pr-7">
+        <ul className="grid gap-4 px-5 py-5 pr-7 sm:px-6 sm:pr-8">
           {orders.map((order) => (
             <li key={order.id}>
               <button
