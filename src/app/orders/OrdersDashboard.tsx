@@ -111,7 +111,7 @@ function OrderGroup({
             <li className="min-w-0" key={order.id}>
               <button
                 type="button"
-                className="mx-px block rounded-[8px] border border-[#e4ded4] bg-white p-4 text-left transition-colors hover:border-[var(--ast-global-color-1)] hover:bg-[#f7f6f2]"
+                className="mx-auto block w-[calc(100%_-_2px)] rounded-[8px] border border-[#e4ded4] bg-white p-4 text-left transition-colors hover:border-[var(--ast-global-color-1)] hover:bg-[#f7f6f2]"
                 onClick={() => onOpenOrder(order)}
               >
                 <span className="flex items-start justify-between gap-4">
