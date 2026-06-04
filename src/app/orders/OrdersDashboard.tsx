@@ -47,7 +47,7 @@ export default function OrdersDashboard({
           </h1>
         </div>
 
-        <div className="grid gap-6 pr-1 sm:pr-2 lg:grid-cols-2">
+        <div className="grid gap-6 lg:grid-cols-2">
           <OrderGroup
             emptyText="No pending orders."
             orders={pendingOrders}
@@ -111,7 +111,7 @@ function OrderGroup({
             <li className="min-w-0" key={order.id}>
               <button
                 type="button"
-                className="block w-full rounded-[8px] border border-[#e4ded4] bg-white p-4 text-left transition-colors hover:border-[var(--ast-global-color-1)] hover:bg-[#f7f6f2]"
+                className="mx-px block rounded-[8px] border border-[#e4ded4] bg-white p-4 text-left transition-colors hover:border-[var(--ast-global-color-1)] hover:bg-[#f7f6f2]"
                 onClick={() => onOpenOrder(order)}
               >
                 <span className="flex items-start justify-between gap-4">
