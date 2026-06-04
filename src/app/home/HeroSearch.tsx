@@ -17,7 +17,7 @@ const searchPrompts = [
 ];
 
 const ribbonTaglines = [
-  "Tampa’s 2-Hour Headshop",
+  "Tampa's Mobile Smokeshop",
   "Skip The Shop. We Pull Up.",
   "Tap. Order. Blaze.",
   "Popular Picks Delivered Today",
