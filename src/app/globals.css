@@ -470,11 +470,8 @@ body {
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.97), rgba(250, 249, 245, 0.97)),
     #ffffff;
-  border: 1px solid rgba(44, 84, 29, 0.22);
   border-radius: 22px;
-  box-shadow:
-    0 24px 56px rgba(44, 84, 29, 0.2),
-    0 0 0 8px rgba(255, 255, 255, 0.54);
+  box-shadow: 0 24px 56px rgba(44, 84, 29, 0.2);
   overflow: hidden;
 }
 
