@@ -95,7 +95,7 @@ function OrderGroup({
 }) {
   return (
     <details
-      className="bayblaze-soft-card bayblaze-soft-card--tint overflow-hidden"
+      className="bayblaze-soft-card bayblaze-soft-card--tint overflow-visible"
       open
     >
       <summary className="flex cursor-pointer list-none items-center justify-between border-b border-[#e8e2d8] px-5 py-4 text-[21px] font-semibold leading-tight text-black sm:text-[24px]">
@@ -111,11 +111,11 @@ function OrderGroup({
             <li className="min-w-0" key={order.id}>
               <button
                 type="button"
-                className="mx-auto block w-[calc(100%_-_2px)] rounded-[8px] border border-[#e4ded4] bg-white p-4 text-left transition-colors hover:border-[var(--ast-global-color-1)] hover:bg-[#f7f6f2]"
+                className="block box-border w-full max-w-full overflow-hidden rounded-[8px] border border-[#e4ded4] bg-white p-4 text-left transition-colors hover:border-[var(--ast-global-color-1)] hover:bg-[#f7f6f2]"
                 onClick={() => onOpenOrder(order)}
               >
-                <span className="flex items-start justify-between gap-4">
-                  <span>
+                <span className="flex min-w-0 items-start justify-between gap-4">
+                  <span className="min-w-0">
                     <span className="block text-[17px] font-semibold leading-snug text-black">
                       {formatOrderNumber(order)}
                     </span>
@@ -123,16 +123,16 @@ function OrderGroup({
                       {formatOrderDate(order.created_at)}
                     </span>
                   </span>
-                  <span className="bayblaze-soft-chip px-2.5 py-1 text-[12px] font-semibold uppercase tracking-[0.1em]">
+                  <span className="bayblaze-soft-chip shrink-0 px-2.5 py-1 text-[12px] font-semibold uppercase tracking-[0.1em]">
                     {formatOrderStatus(order.status)}
                   </span>
                 </span>
 
-                <span className="mt-3 flex items-center justify-between gap-4">
+                <span className="mt-3 flex min-w-0 items-center justify-between gap-4">
                   <span className="text-[16px] font-semibold text-black">
                     {formatOrderTotal(order.total, order.currency_code ?? "usd")}
                   </span>
-                  <span className="text-[12px] font-semibold uppercase tracking-[0.1em] text-[#585858]">
+                  <span className="shrink-0 text-[12px] font-semibold uppercase tracking-[0.1em] text-[#585858]">
                     Track order
                   </span>
                 </span>
