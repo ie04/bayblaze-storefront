@@ -1,6 +1,10 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import {
+  getReferralOfferCustomerMetadata,
+  getReferralOfferFromCookieHeader,
+} from "@/app/domain/referral-offers";
+import {
   CUSTOMER_TOKEN_COOKIE,
   completeCustomerOAuth,
 } from "@/app/lib/medusa-auth";
@@ -21,6 +25,9 @@ export async function GET(request: NextRequest) {
     const token = await completeCustomerOAuth(
       "google",
       request.nextUrl.searchParams,
+      getReferralOfferCustomerMetadata(
+        getReferralOfferFromCookieHeader(request.headers.get("cookie")),
+      ),
     );
     const redirectTo = getSafeRedirect(
       request.cookies.get(OAUTH_REDIRECT_COOKIE)?.value,
@@ -66,4 +73,3 @@ export async function GET(request: NextRequest) {
     return response;
   }
 }
-

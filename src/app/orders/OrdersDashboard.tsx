@@ -11,6 +11,7 @@ import {
   formatOrderTotal,
   groupOrdersByLifecycle,
 } from "@/app/domain/orders";
+import { getOrderFirstOrderOfferTotal } from "@/app/domain/referral-offers";
 
 export default function OrdersDashboard({
   initialOrders,
@@ -131,7 +132,10 @@ function OrderGroup({
 
                 <span className="mt-3 flex min-w-0 items-center justify-between gap-4">
                   <span className="text-[16px] font-semibold text-black">
-                    {formatOrderTotal(order.total, order.currency_code ?? "usd")}
+                    {formatOrderTotal(
+                      getOrderFirstOrderOfferTotal(order),
+                      order.currency_code ?? "usd",
+                    )}
                   </span>
                   <span className="shrink-0 text-[12px] font-semibold uppercase tracking-[0.1em] text-[#585858]">
                     Track order

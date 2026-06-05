@@ -9,6 +9,10 @@ import {
   serializePendingRegistration,
   verifyPendingRegistrationCode,
 } from "@/app/lib/email-verification";
+import {
+  getReferralOfferCustomerMetadata,
+  getReferralOfferFromCookieHeader,
+} from "@/app/domain/referral-offers";
 import { CUSTOMER_TOKEN_COOKIE, registerCustomer } from "@/app/lib/medusa-auth";
 
 const cookieMaxAge = 60 * 60 * 24 * 30;
@@ -113,6 +117,9 @@ export async function POST(request: Request) {
       password: normalizedPassword,
       firstName: normalizedFirstName,
       lastName: normalizedLastName,
+      metadata: getReferralOfferCustomerMetadata(
+        getReferralOfferFromCookieHeader(request.headers.get("cookie")),
+      ),
     });
     const response = NextResponse.json({ success: true });
 

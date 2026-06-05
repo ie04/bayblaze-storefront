@@ -5,6 +5,12 @@ import {
   validateDeliveryTiming,
 } from "@/app/domain/delivery-scheduling";
 import { normalizePreCheckoutRoutingItems } from "@/app/domain/pre-checkout-routing";
+import {
+  getReferralOfferDiscountAmount,
+  getReferralOfferFromCookieHeader,
+  getReferralOfferOrderMetadata,
+  getReferralOfferTotal,
+} from "@/app/domain/referral-offers";
 import { verifyCheckoutAgeVerification } from "@/app/lib/age-verification-token";
 import { verifyCheckoutRoutingEvaluation } from "@/app/lib/pre-checkout-routing-token";
 
@@ -16,6 +22,7 @@ type CheckoutItem = {
   productHandle?: string;
   inventoryState?: string;
   name?: string;
+  price?: string;
   flavor?: string;
   quantity?: number;
 };
@@ -178,10 +185,36 @@ export async function POST(request: Request) {
 
   const customerToken = await getCustomerToken();
   const deliveryMetadata = getDeliveryMetadata(deliveryTiming);
+  const referralOffer = getReferralOfferFromCookieHeader(
+    request.headers.get("cookie"),
+  );
+  const hasPriorOrders = customerToken
+    ? await customerHasExistingOrders(customerToken)
+    : false;
+
+  if (referralOffer && hasPriorOrders) {
+    return jsonError(
+      "The 30% QR discount is only available on your first order.",
+      400,
+    );
+  }
+
+  const discountSubtotal = getCheckoutItemsSubtotal(items);
+  const firstOrderDiscount = getReferralOfferDiscountAmount(
+    discountSubtotal,
+    referralOffer,
+  );
+  const referralOfferMetadata = getReferralOfferOrderMetadata({
+    discountAmount: firstOrderDiscount,
+    offer: referralOffer,
+    subtotal: discountSubtotal,
+    totalAfterDiscount: getReferralOfferTotal(discountSubtotal, referralOffer),
+  });
   const orderMetadata = {
     ...routingEvaluation.metadata,
     ...ageVerification.metadata,
     ...deliveryMetadata,
+    ...referralOfferMetadata,
   };
   const shippingAddress = {
     first_name: customer.first_name.trim(),
@@ -499,6 +532,36 @@ async function createPaymentCollection(
     );
 
   return paymentCollection;
+}
+
+async function customerHasExistingOrders(customerToken: string) {
+  try {
+    const { orders } = await medusaStoreRequest<{ orders?: { id: string }[] }>(
+      "/store/orders?limit=1&fields=id",
+      {},
+      customerToken,
+    );
+
+    return Boolean(orders?.length);
+  } catch {
+    return false;
+  }
+}
+
+function getCheckoutItemsSubtotal(items: ValidCheckoutItem[]) {
+  return items.reduce((total, item) => {
+    return total + parsePrice(item.price) * item.quantity;
+  }, 0);
+}
+
+function parsePrice(price?: string) {
+  if (!price) {
+    return 0;
+  }
+
+  const number = Number(price.replace(/[^0-9.]/g, ""));
+
+  return Number.isFinite(number) ? number : 0;
 }
 
 async function medusaStoreRequest<T>(

@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 
 import Header from "@/app/components/layout/Header";
 import { useCart, type CartItem } from "@/app/components/cart/CartContext";
+import { useReferralOffer } from "@/app/components/referral/ReferralOfferProvider";
 import {
   DELIVERY_SCHEDULING_RULE,
   formatDateTimeLocalInStoreTimeZone,
@@ -25,6 +26,11 @@ import {
   AGECHECKER_SUPPORT_EMAIL,
   type AgeVerificationCustomer,
 } from "@/app/domain/age-verification";
+import {
+  getOrderFirstOrderOfferTotal,
+  getReferralOfferDiscountAmount,
+  getReferralOfferTotal,
+} from "@/app/domain/referral-offers";
 import type { Customer, CustomerOrder } from "@/app/lib/medusa-auth";
 
 declare global {
@@ -104,6 +110,8 @@ export default function CheckoutPageClient({
 }) {
   const router = useRouter();
   const { items, cartCount, clearCart, removeItem } = useCart();
+  const { clearOffer: clearReferralOffer, offer: referralOffer } =
+    useReferralOffer();
   const [checkoutError, setCheckoutError] = useState("");
   const [orderMessage, setOrderMessage] = useState("");
   const [orderTrackingHref, setOrderTrackingHref] = useState("");
@@ -125,6 +133,12 @@ export default function CheckoutPageClient({
       return total + parsePrice(item.price) * item.quantity;
     }, 0);
   }, [items]);
+  const firstOrderDiscount = useMemo(() => {
+    return getReferralOfferDiscountAmount(subtotal, referralOffer);
+  }, [referralOffer, subtotal]);
+  const totalDue = useMemo(() => {
+    return getReferralOfferTotal(subtotal, referralOffer);
+  }, [referralOffer, subtotal]);
   const scheduleRequirement = useMemo(() => {
     return currentTime ? getDeliveryScheduleRequirement(currentTime) : null;
   }, [currentTime]);
@@ -313,6 +327,7 @@ export default function CheckoutPageClient({
         : null;
 
       clearCart();
+      clearReferralOffer();
 
       if (customer && recentOrder) {
         saveRecentOrder(recentOrder);
@@ -704,14 +719,23 @@ export default function CheckoutPageClient({
                 <dd className="text-black">{formatMoney(subtotal)}</dd>
               </div>
 
+              {referralOffer && firstOrderDiscount > 0 ? (
+                <div className="flex justify-between text-[var(--ast-global-color-1)]">
+                  <dt>{referralOffer.label}</dt>
+                  <dd className="font-semibold">
+                    -{formatMoney(firstOrderDiscount)}
+                  </dd>
+                </div>
+              ) : null}
+
               <div className="flex justify-between">
                 <dt>Delivery</dt>
                 <dd className="text-black">Calculated after order</dd>
               </div>
 
               <div className="flex justify-between border-t border-[#e7e7e7] pt-4 text-[19px] font-semibold text-black">
-                <dt>Total</dt>
-                <dd>{formatMoney(subtotal)}</dd>
+                <dt>Total due</dt>
+                <dd>{formatMoney(totalDue)}</dd>
               </div>
             </dl>
           </div>
@@ -1128,12 +1152,14 @@ function getRecentOrderSnapshot(
   subtotal: number,
   items: CartItem[],
 ): CustomerOrder {
+  const orderTotal = getOrderFirstOrderOfferTotal(order);
+
   return {
     ...order,
     created_at: order.created_at ?? new Date().toISOString(),
     currency_code: order.currency_code ?? "usd",
     status: order.status ?? "pending",
-    total: typeof order.total === "number" ? order.total : subtotal,
+    total: typeof orderTotal === "number" ? orderTotal : subtotal,
     items: order.items?.length
       ? order.items
       : items.map((item) => {

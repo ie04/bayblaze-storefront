@@ -19,6 +19,7 @@ import {
   isCustomerOrder,
   mergeOrderLists,
 } from "@/app/domain/orders";
+import { getOrderFirstOrderOfferTotal } from "@/app/domain/referral-offers";
 
 const medusaBackendUrl =
   process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL?.replace(/\/$/, "") ?? "";
@@ -189,10 +190,13 @@ export default function AccountOrdersSection({
                   </span>
 
                   <span className="mt-3 flex items-center justify-between gap-4">
-                    {typeof order.total === "number" &&
+                    {getOrderFirstOrderOfferTotal(order) !== null &&
                     order.currency_code ? (
                       <span className="text-[16px] font-semibold text-black">
-                        {formatOrderTotal(order.total, order.currency_code)}
+                        {formatOrderTotal(
+                          getOrderFirstOrderOfferTotal(order),
+                          order.currency_code,
+                        )}
                       </span>
                     ) : (
                       <span className="text-[14px] font-medium text-[#6a6a6a]">

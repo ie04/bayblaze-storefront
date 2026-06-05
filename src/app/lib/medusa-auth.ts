@@ -5,6 +5,7 @@ export type Customer = {
   email: string;
   first_name?: string | null;
   last_name?: string | null;
+  metadata?: Record<string, unknown> | null;
   phone?: string | null;
 };
 
@@ -252,6 +253,7 @@ export async function getCustomerOAuthRedirect(provider: "google", callbackUrl: 
 export async function completeCustomerOAuth(
   provider: "google",
   searchParams: URLSearchParams,
+  customerMetadata?: Record<string, unknown>,
 ) {
   const callbackParams = new URLSearchParams(searchParams);
   const callback = await medusaRequest<MedusaOAuthResponse>(
@@ -286,6 +288,7 @@ export async function completeCustomerOAuth(
         email,
         first_name: firstName,
         last_name: lastName,
+        metadata: customerMetadata,
       }),
     });
 
@@ -312,6 +315,7 @@ export async function registerCustomer(input: {
   password: string;
   firstName: string;
   lastName: string;
+  metadata?: Record<string, unknown>;
 }) {
   const registration = await medusaRequest<MedusaTokenResponse>(
     "/auth/customer/emailpass/register",
@@ -332,6 +336,7 @@ export async function registerCustomer(input: {
       email: input.email,
       first_name: input.firstName,
       last_name: input.lastName,
+      metadata: input.metadata,
     }),
   });
 

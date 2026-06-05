@@ -12,6 +12,7 @@ import {
   getVariantLabel,
   isCompletedOrder,
 } from "@/app/domain/orders";
+import { getOrderFirstOrderOfferTotal } from "@/app/domain/referral-offers";
 
 export default function OrderTrackingView({
   mode = "page",
@@ -108,7 +109,10 @@ function OrderSummary({ order }: { order: CustomerOrder }) {
         <div className="border-t border-[#ded8cf] pt-4">
           <dt className="font-semibold text-black">Total</dt>
           <dd className="text-[22px] font-semibold text-black">
-            {formatOrderTotal(order.total, order.currency_code ?? "usd")}
+            {formatOrderTotal(
+              getOrderFirstOrderOfferTotal(order),
+              order.currency_code ?? "usd",
+            )}
           </dd>
         </div>
       </dl>
