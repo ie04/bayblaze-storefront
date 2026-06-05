@@ -111,14 +111,11 @@ function ReferralOfferToast({ offer }: { offer: ReferralOffer }) {
   return (
     <div
       aria-live="polite"
-      className="fixed bottom-5 left-1/2 z-[120] w-[calc(100%-32px)] max-w-[420px] -translate-x-1/2 border-2 border-[#1f4f14] bg-[var(--ast-global-color-0)] px-5 py-4 text-center text-white shadow-[0_14px_30px_rgba(0,0,0,0.22)] sm:bottom-6"
+      className="fixed bottom-4 left-1/2 z-[120] w-[calc(100%-32px)] max-w-[300px] -translate-x-1/2 border border-[#bfd8b5] bg-[#eff8ea] px-4 py-3 text-center text-[#244f18] shadow-[0_10px_22px_rgba(36,79,24,0.16)] sm:bottom-6"
       role="status"
     >
-      <p className="text-[18px] font-semibold leading-tight text-white">
+      <p className="text-[14px] font-semibold leading-snug">
         {offer.label} is active.
-      </p>
-      <p className="mt-1 text-[14px] font-medium leading-[1.4] text-white">
-        We&apos;ll save it for this browser session and checkout.
       </p>
     </div>
   );
