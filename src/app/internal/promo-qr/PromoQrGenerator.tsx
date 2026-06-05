@@ -11,6 +11,7 @@ import {
 type CopyState = "idle" | "copied" | "failed";
 
 const qrCanvasSize = 1200;
+const qrBorderRadius = 28;
 const qrLogoMaxSize = 330;
 const qrLogoHorizontalPadding = 12;
 const qrLogoPath = "/icons/bayblaze-flame-qr.png";
@@ -194,7 +195,7 @@ export default function PromoQrGenerator({ siteUrl }: { siteUrl: string }) {
             <div className="mx-auto mt-5 grid size-[min(100%,390px)] place-items-center bg-white">
               <canvas
                 aria-label="BayBlaze first-order promo QR code"
-                className="h-full w-full"
+                className="h-full w-full rounded-[28px]"
                 height={qrCanvasSize}
                 ref={canvasRef}
                 width={qrCanvasSize}
@@ -236,6 +237,8 @@ async function renderPromoQr(
   if (!context) {
     throw new Error("Could not prepare the QR canvas.");
   }
+
+  applyCanvasBorderRadius(canvas, context, qrBorderRadius);
 
   const centeredLogo = await buildCenteredLogoCanvas(qrLogoPath);
   const logoX = (qrCanvasSize - centeredLogo.width) / 2;
@@ -307,4 +310,29 @@ async function buildCenteredLogoCanvas(src: string) {
   context.drawImage(logoCanvas, qrLogoHorizontalPadding, 0);
 
   return canvas;
+}
+
+function applyCanvasBorderRadius(
+  canvas: HTMLCanvasElement,
+  context: CanvasRenderingContext2D,
+  radius: number,
+) {
+  const sourceCanvas = document.createElement("canvas");
+  const sourceContext = sourceCanvas.getContext("2d");
+
+  if (!sourceContext) {
+    return;
+  }
+
+  sourceCanvas.width = canvas.width;
+  sourceCanvas.height = canvas.height;
+  sourceContext.drawImage(canvas, 0, 0);
+
+  context.clearRect(0, 0, canvas.width, canvas.height);
+  context.save();
+  context.beginPath();
+  context.roundRect(0, 0, canvas.width, canvas.height, radius);
+  context.clip();
+  context.drawImage(sourceCanvas, 0, 0);
+  context.restore();
 }
