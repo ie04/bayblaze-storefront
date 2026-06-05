@@ -15,6 +15,19 @@ runner setup, or cross-repo integration details change, update the relevant
 `AGENTS.md` files in the same work session so future Codex/LLM sessions inherit
 the current operating model.
 
+### Internal Promo Tools
+
+- The internal first-order promo QR generator lives at
+  `src/app/internal/promo-qr/page.tsx` and is intentionally unlinked from
+  customer navigation.
+- Production deployments should set the server-only
+  `INTERNAL_PROMO_TOOLS_TOKEN`. When configured, the generator only renders at
+  `/internal/promo-qr?token=...`.
+- The generated customer-facing promo link should use the canonical
+  `?promo=first30` parameter from `src/app/domain/referral-offers.ts`.
+- Keep QR promo URL construction in the referral offer domain helpers so the
+  scanner claim flow and internal generator do not drift.
+
 ### IsoChronos Integration
 
 IsoChronos lives in the sibling repository `bayblaze-isochronos`. Treat it as

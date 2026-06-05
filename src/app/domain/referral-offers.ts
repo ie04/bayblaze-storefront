@@ -39,6 +39,20 @@ export function getReferralOfferFromSearchParams(searchParams: URLSearchParams) 
   return null;
 }
 
+export function getFirstOrderQrPromoUrl({
+  landingPath = "/",
+  origin,
+}: {
+  landingPath?: string;
+  origin: string;
+}) {
+  const url = new URL(normalizeLandingPath(landingPath), origin);
+
+  url.searchParams.set("promo", FIRST_ORDER_QR_OFFER_CODE);
+
+  return url.toString();
+}
+
 export function serializeReferralOffer(offer: ReferralOffer) {
   return JSON.stringify(offer);
 }
@@ -157,4 +171,23 @@ function safelyDecodeURIComponent(value: string) {
   } catch {
     return "";
   }
+}
+
+function normalizeLandingPath(path: string) {
+  const trimmedPath = path.trim();
+
+  if (!trimmedPath || trimmedPath.startsWith("//")) {
+    return "/";
+  }
+
+  if (trimmedPath.startsWith("http://") || trimmedPath.startsWith("https://")) {
+    try {
+      const url = new URL(trimmedPath);
+      return `${url.pathname}${url.search}${url.hash}`;
+    } catch {
+      return "/";
+    }
+  }
+
+  return trimmedPath.startsWith("/") ? trimmedPath : `/${trimmedPath}`;
 }
