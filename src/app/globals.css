@@ -1179,10 +1179,12 @@ body {
     padding: 0 !important;
   }
 
-  .bayblaze-promo-qr-page > section > div {
+  .bayblaze-promo-qr-header,
+  .bayblaze-promo-qr-controls {
     display: none !important;
   }
 
+  .bayblaze-promo-qr-page > section > div,
   .bayblaze-promo-qr-page > section {
     display: block !important;
     max-width: none !important;
