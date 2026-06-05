@@ -106,7 +106,7 @@ export default function PromoQrGenerator({ siteUrl }: { siteUrl: string }) {
           </p>
         </header>
 
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_460px]">
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
           <section className="bayblaze-promo-qr-controls grid content-start gap-5 border border-[#d0d0d0] bg-white p-5 sm:p-6">
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="grid gap-2 text-[14px] font-semibold text-black">
@@ -189,10 +189,10 @@ export default function PromoQrGenerator({ siteUrl }: { siteUrl: string }) {
             <p className="text-[14px] font-semibold uppercase tracking-[0.14em] text-[var(--ast-global-color-1)]">
               BayBlaze
             </p>
-            <h2 className="mt-2 text-[28px] font-semibold leading-none">
+            <h2 className="mt-2 text-[24px] font-semibold leading-none">
               30% Off First Order
             </h2>
-            <div className="mx-auto mt-5 grid size-[min(100%,390px)] place-items-center bg-white">
+            <div className="mx-auto mt-5 grid size-[min(100%,220px)] place-items-center bg-white">
               <canvas
                 aria-label="BayBlaze first-order promo QR code"
                 className="h-full w-full rounded-[28px]"
@@ -291,7 +291,7 @@ async function buildCenteredLogoCanvas(src: string) {
     data[index] = 0;
     data[index + 1] = 0;
     data[index + 2] = 0;
-    data[index + 3] = alpha > 0 && luminance < 250 ? 255 : 0;
+    data[index + 3] = alpha > 0 && luminance < 200 ? 255 : 0;
   }
 
   logoContext.putImageData(imageData, 0, 0);
