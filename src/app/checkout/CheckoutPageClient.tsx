@@ -102,6 +102,13 @@ type PreCheckoutRoutingResult =
     };
 
 
+type CheckoutAddressPayload = {
+  address?: unknown;
+  city?: unknown;
+  state?: unknown;
+  zip?: unknown;
+};
+
 type ValidatedCheckoutAddress = {
   address: string;
   city: string;
@@ -1389,7 +1396,7 @@ function loadGoogleMapsPlaces(apiKey: string) {
 }
 
 async function validateCheckoutAddress(
-  customer: CheckoutCustomerPayload,
+  customer: CheckoutAddressPayload,
   {
     existingValidation,
     setAddressValidation,
@@ -1468,7 +1475,7 @@ async function validateCheckoutAddress(
   }
 }
 
-function getCheckoutAddressFingerprint(customer: CheckoutCustomerPayload) {
+function getCheckoutAddressFingerprint(customer: CheckoutAddressPayload) {
   const address = normalizeCheckoutAddressValue(customer.address);
   const city = normalizeCheckoutAddressValue(customer.city);
   const state = normalizeCheckoutAddressValue(customer.state).toUpperCase();
