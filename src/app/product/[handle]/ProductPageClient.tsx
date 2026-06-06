@@ -351,7 +351,7 @@ export default function ProductPage({
                   disabled={(product.flavors.length > 0 && !flavor) || !canAddSelectedVariant}
                   className="h-12 min-w-[180px] flex-1 bg-[var(--ast-global-color-0)] px-7 text-[15px] font-semibold uppercase tracking-[0.1em] text-white transition-colors hover:bg-black disabled:cursor-not-allowed disabled:bg-[#9ca3af] min-[420px]:flex-none sm:tracking-[0.12em]"
                 >
-                  {isOutOfStock ? "Out of Stock" : "Add to cart"}
+                  {canAddSelectedVariant ? "Add to cart" : "Out of Stock"}
                 </button>
               </div>
 
