@@ -16,6 +16,12 @@
   --ast-body-line-height: 1.7em;
   --bayblaze-header-x: 35px;
   --bayblaze-hero-spacer: 32vh;
+  --bayblaze-checkout-field-bg: var(--ast-global-color-5);
+  --bayblaze-checkout-field-fg: var(--ast-global-color-2);
+  --bayblaze-checkout-field-muted: var(--ast-global-color-3);
+  --bayblaze-checkout-field-border: #d6d6d6;
+  --bayblaze-checkout-field-focus-border: var(--ast-global-color-2);
+  --bayblaze-google-autocomplete-color-scheme: light;
 }
 
 @theme inline {
@@ -1198,23 +1204,39 @@ body {
     padding: 0.2in !important;
     width: 4in !important;
   }
-}\n
-.bayblaze-google-autocomplete-container,
-.bayblaze-google-place-autocomplete {
-  color-scheme: light;
 }
 
-.bayblaze-google-place-autocomplete {
-  background: #ffffff;
-  border: 1px solid #d6d6d6;
-  color: #000000;
+.bayblaze-google-autocomplete-container,
+.bayblaze-google-place-autocomplete,
+gmp-place-autocomplete.bayblaze-google-place-autocomplete {
+  color-scheme: var(--bayblaze-google-autocomplete-color-scheme);
+}
+
+.bayblaze-google-place-autocomplete,
+gmp-place-autocomplete.bayblaze-google-place-autocomplete {
+  --md-sys-color-background: var(--bayblaze-checkout-field-bg);
+  --md-sys-color-on-background: var(--bayblaze-checkout-field-fg);
+  --md-sys-color-on-surface: var(--bayblaze-checkout-field-fg);
+  --md-sys-color-on-surface-variant: var(--bayblaze-checkout-field-muted);
+  --md-sys-color-outline: var(--bayblaze-checkout-field-border);
+  --md-sys-color-primary: var(--ast-global-color-0);
+  --md-sys-color-surface: var(--bayblaze-checkout-field-bg);
+  --md-sys-color-surface-container: var(--bayblaze-checkout-field-bg);
+  --md-sys-color-surface-container-high: var(--ast-global-color-4);
+  --md-sys-typescale-body-large-font: var(--font-jost), Jost, Arial, sans-serif;
+  --md-sys-typescale-body-medium-font: var(--font-jost), Jost, Arial, sans-serif;
+
+  background: var(--bayblaze-checkout-field-bg);
+  border: 1px solid var(--bayblaze-checkout-field-border);
+  color: var(--bayblaze-checkout-field-fg);
   display: block;
   font-family: var(--font-jost), Jost, Arial, sans-serif;
   min-height: 52px;
   width: 100%;
 }
 
-.bayblaze-google-place-autocomplete:focus-within {
-  border-color: #000000;
+.bayblaze-google-place-autocomplete:focus-within,
+gmp-place-autocomplete.bayblaze-google-place-autocomplete:focus-within {
+  border-color: var(--bayblaze-checkout-field-focus-border);
 }
-\n
+
