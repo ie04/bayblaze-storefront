@@ -57,7 +57,11 @@ export default function ProductPage({
     selectedAvailableQuantity === undefined
       ? undefined
       : Math.max(selectedAvailableQuantity - existingCartQuantity, 0);
-  const isOutOfStock = remainingAvailableQuantity === 0;
+  const isOutOfStock = selectedAvailableQuantity === 0;
+  const hasReachedCartLimit =
+    selectedAvailableQuantity !== undefined &&
+    selectedAvailableQuantity > 0 &&
+    remainingAvailableQuantity === 0;
   const quantityLimit =
     remainingAvailableQuantity === undefined
       ? 12
@@ -65,7 +69,9 @@ export default function ProductPage({
   const canAddSelectedVariant =
     selectedAvailableQuantity !== undefined &&
     Boolean(selectedInventoryState) &&
-    !isOutOfStock;
+    selectedAvailableQuantity > 0 &&
+    remainingAvailableQuantity !== undefined &&
+    remainingAvailableQuantity > 0;
 
   useEffect(() => {
     if (quantity > quantityLimit) {
@@ -122,7 +128,11 @@ export default function ProductPage({
     }
 
     if (availableToAdd === 0) {
-      setCartNotice(`${product.name} is out of stock.`);
+      setCartNotice(
+        isOutOfStock
+          ? `${product.name} is out of stock.`
+          : `You already have all ${selectedAvailableQuantity} available units in your cart.`,
+      );
       return;
     }
 
@@ -258,9 +268,9 @@ export default function ProductPage({
                   ? "Stock status unavailable"
                   : isOutOfStock
                     ? "Out of stock"
-                    : remainingAvailableQuantity === selectedAvailableQuantity
-                      ? `${selectedAvailableQuantity} in stock`
-                      : `${remainingAvailableQuantity} left available`}
+                    : existingCartQuantity > 0
+                      ? `${selectedAvailableQuantity} in stock · ${existingCartQuantity} in cart`
+                      : `${selectedAvailableQuantity} in stock`}
               </p>
 
             {product.details[0] ? (
@@ -351,7 +361,11 @@ export default function ProductPage({
                   disabled={(product.flavors.length > 0 && !flavor) || !canAddSelectedVariant}
                   className="h-12 min-w-[180px] flex-1 bg-[var(--ast-global-color-0)] px-7 text-[15px] font-semibold uppercase tracking-[0.1em] text-white transition-colors hover:bg-black disabled:cursor-not-allowed disabled:bg-[#9ca3af] min-[420px]:flex-none sm:tracking-[0.12em]"
                 >
-                  {canAddSelectedVariant ? "Add to cart" : "Out of Stock"}
+                  {isOutOfStock
+                    ? "Out of Stock"
+                    : hasReachedCartLimit
+                      ? "Max in Cart"
+                      : "Add to cart"}
                 </button>
               </div>
 
