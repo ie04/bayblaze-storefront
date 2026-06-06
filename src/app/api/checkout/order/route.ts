@@ -107,6 +107,7 @@ type MedusaOrder = {
   custom_display_id?: string;
   email?: string;
   metadata?: Record<string, unknown> | null;
+  shipping_address?: MedusaCart["shipping_address"];
 };
 
 type MedusaShippingOption = {
