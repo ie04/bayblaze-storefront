@@ -152,8 +152,13 @@ export default function CheckoutPageClient({
   const [routingConfirmation, setRoutingConfirmation] =
     useState<RoutingConfirmationState | null>(null);
   const pendingCheckoutRef = useRef<PendingCheckout | null>(null);
-  const addressInputRef = useRef<HTMLInputElement | null>(null);
-  const googleAutocompleteRef = useRef<GooglePlacesAutocomplete | null>(null);
+  const addressFieldRef = useRef<HTMLInputElement | null>(null);
+  const googleAutocompleteContainerRef = useRef<HTMLDivElement | null>(null);
+  const googleAutocompleteRef = useRef<GooglePlaceAutocompleteElement | null>(
+    null,
+  );
+  const [isPlacesAutocompleteReady, setIsPlacesAutocompleteReady] =
+    useState(false);
   const [validatedAddress, setValidatedAddress] =
     useState<CheckoutAddressValidationState | null>(null);
   const [isAddressValidating, setIsAddressValidating] = useState(false);
@@ -232,82 +237,110 @@ export default function CheckoutPageClient({
   }, []);
 
   useEffect(() => {
-    if (!googleMapsBrowserKey || !addressInputRef.current) {
+    if (!googleMapsBrowserKey || !googleAutocompleteContainerRef.current) {
       return;
     }
 
     let isCancelled = false;
-    let listener: GoogleMapsListener | undefined;
+    let autocompleteElement: GooglePlaceAutocompleteElement | null = null;
+    let handlePlaceSelect: ((event: Event) => void) | null = null;
 
     loadGoogleMapsPlaces(googleMapsBrowserKey)
-      .then(() => {
-        if (
-          isCancelled ||
-          !addressInputRef.current ||
-          !window.google?.maps?.places?.Autocomplete
-        ) {
+      .then(({ PlaceAutocompleteElement }) => {
+        const container = googleAutocompleteContainerRef.current;
+
+        if (isCancelled || !container) {
           return;
         }
 
-        const autocomplete = new window.google.maps.places.Autocomplete(
-          addressInputRef.current,
-          {
-            bounds: {
-              east: -82.15,
-              north: 28.18,
-              south: 27.75,
-              west: -82.75,
-            },
-            componentRestrictions: { country: "us" },
-            fields: [
-              "address_components",
-              "formatted_address",
-              "geometry",
-              "place_id",
-            ],
-            strictBounds: false,
-            types: ["address"],
-          },
-        );
+        const placeAutocomplete = new PlaceAutocompleteElement();
+        placeAutocomplete.placeholder = "Start typing your delivery address";
+        placeAutocomplete.includedRegionCodes = ["us"];
+        placeAutocomplete.locationBias = {
+          center: { lat: 27.9506, lng: -82.4572 },
+          radius: 45_000,
+        };
+        placeAutocomplete.style.display = "block";
+        placeAutocomplete.style.width = "100%";
 
-        googleAutocompleteRef.current = autocomplete;
-        listener = autocomplete.addListener("place_changed", () => {
-          const place = autocomplete.getPlace();
-          const selectedAddress = getAddressFromGooglePlace(place);
+        handlePlaceSelect = (event: Event) => {
+          void handleGooglePlaceSelect(event);
+        };
 
-          if (!selectedAddress) {
-            setValidatedAddress(null);
-            setAddressValidationMessage(
-              "Choose a complete street address from the suggestions.",
-            );
-            return;
-          }
+        placeAutocomplete.addEventListener("gmp-select", handlePlaceSelect);
+        container.replaceChildren(placeAutocomplete);
 
-          setCheckoutAddressInputs(addressInputRef.current?.form, selectedAddress);
-          setValidatedAddress(null);
-          setAddressValidationMessage("Validating delivery address...");
-
-          validateCheckoutAddress(selectedAddress, {
-            existingValidation: null,
-            setAddressValidation: setValidatedAddress,
-            setAddressValidationMessage,
-            setIsAddressValidating,
-          }).catch(() => {
-            setAddressValidationMessage(
-              "Address validation failed. Please review the address and try again.",
-            );
-          });
-        });
+        autocompleteElement = placeAutocomplete;
+        googleAutocompleteRef.current = placeAutocomplete;
+        setIsPlacesAutocompleteReady(true);
+        setAddressValidationMessage("");
       })
       .catch(() => {
+        setIsPlacesAutocompleteReady(false);
         setAddressValidationMessage(
           "Address autocomplete could not load. You can still type your address manually.",
         );
       });
 
+    async function handleGooglePlaceSelect(event: Event) {
+      const placePrediction = (event as GooglePlacePredictionSelectEvent)
+        .placePrediction;
+      const place = placePrediction?.toPlace?.();
+
+      if (!place?.fetchFields) {
+        setValidatedAddress(null);
+        setAddressValidationMessage(
+          "Choose a complete street address from the suggestions.",
+        );
+        return;
+      }
+
+      try {
+        await place.fetchFields({
+          fields: ["id", "formattedAddress", "addressComponents", "location"],
+        });
+      } catch {
+        setValidatedAddress(null);
+        setAddressValidationMessage(
+          "Address details could not be loaded. Please choose the address again.",
+        );
+        return;
+      }
+
+      const selectedAddress = getAddressFromGooglePlace(place);
+
+      if (!selectedAddress) {
+        setValidatedAddress(null);
+        setAddressValidationMessage(
+          "Choose a complete street address from the suggestions.",
+        );
+        return;
+      }
+
+      setCheckoutAddressInputs(addressFieldRef.current?.form, selectedAddress);
+      setValidatedAddress(null);
+      setAddressValidationMessage("Validating delivery address...");
+
+      validateCheckoutAddress(selectedAddress, {
+        existingValidation: null,
+        setAddressValidation: setValidatedAddress,
+        setAddressValidationMessage,
+        setIsAddressValidating,
+      }).catch(() => {
+        setAddressValidationMessage(
+          "Address validation failed. Please review the address and try again.",
+        );
+      });
+    }
+
     return () => {
       isCancelled = true;
-      listener?.remove?.();
+
+      if (autocompleteElement && handlePlaceSelect) {
+        autocompleteElement.removeEventListener("gmp-select", handlePlaceSelect);
+      }
+
+      autocompleteElement?.remove();
       googleAutocompleteRef.current = null;
     };
   }, []);
@@ -584,14 +617,26 @@ export default function CheckoutPageClient({
             <div className="grid gap-5">
               <label className="grid gap-2 text-[15px] font-semibold text-black sm:text-[16px]">
                 Street address
+                {googleMapsBrowserKey ? (
+                  <div
+                    ref={googleAutocompleteContainerRef}
+                    className={`min-h-[50px] w-full min-w-0 bg-white sm:min-h-[52px] ${
+                      isPlacesAutocompleteReady ? "block" : "hidden"
+                    }`}
+                  />
+                ) : null}
                 <input
-                  ref={addressInputRef}
+                  ref={addressFieldRef}
                   autoComplete="street-address"
-                  className="h-[50px] w-full min-w-0 border border-[#d6d6d6] bg-white px-4 text-[16px] font-normal text-black outline-none transition focus:border-black sm:h-[52px] sm:text-[17px]"
+                  className={
+                    isPlacesAutocompleteReady
+                      ? "hidden"
+                      : "h-[50px] w-full min-w-0 border border-[#d6d6d6] bg-white px-4 text-[16px] font-normal text-black outline-none transition focus:border-black sm:h-[52px] sm:text-[17px]"
+                  }
                   name="address"
                   onChange={handleAddressInputChange}
                   placeholder="Start typing your delivery address"
-                  required
+                  required={!isPlacesAutocompleteReady}
                   type="text"
                 />
               </label>
@@ -1242,45 +1287,61 @@ function getFormDataString(formData: FormData, name: string) {
   return typeof value === "string" ? value : "";
 }
 
-type GoogleMapsListener = {
-  remove?: () => void;
+type GoogleMapsPlacesLibrary = {
+  PlaceAutocompleteElement: new (
+    options?: Record<string, unknown>,
+  ) => GooglePlaceAutocompleteElement;
 };
 
-type GooglePlacesAutocomplete = {
-  addListener: (
-    eventName: "place_changed",
-    handler: () => void,
-  ) => GoogleMapsListener;
-  getPlace: () => GooglePlace;
+type GooglePlaceAutocompleteElement = HTMLElement & {
+  includedRegionCodes?: string[];
+  locationBias?: {
+    center: {
+      lat: number;
+      lng: number;
+    };
+    radius: number;
+  } | null;
+  placeholder?: string;
+};
+
+type GooglePlacePredictionSelectEvent = Event & {
+  placePrediction?: {
+    toPlace?: () => GooglePlace;
+  };
 };
 
 type GooglePlace = {
-  address_components?: Array<{
-    long_name: string;
-    short_name: string;
-    types: string[];
-  }>;
-  formatted_address?: string;
-  geometry?: {
-    location?: {
-      lat: () => number;
-      lng: () => number;
-    };
-  };
-  name?: string;
-  place_id?: string;
+  addressComponents?: GoogleAddressComponent[];
+  fetchFields?: (request: { fields: string[] }) => Promise<void>;
+  formattedAddress?: string;
+  id?: string;
+  location?: GoogleLatLngValue;
+};
+
+type GoogleAddressComponent = {
+  longText?: string;
+  shortText?: string;
+  types: string[];
+};
+
+type GoogleLatLngValue = {
+  lat?: number | (() => number);
+  lng?: number | (() => number);
 };
 
 declare global {
   interface Window {
-    __bayblazeGoogleMapsPlacesPromise?: Promise<void>;
+    __bayblazeGoogleMapsPlacesPromise?: Promise<GoogleMapsPlacesLibrary>;
     google?: {
       maps?: {
+        importLibrary?: (
+          libraryName: "places",
+        ) => Promise<GoogleMapsPlacesLibrary>;
         places?: {
-          Autocomplete: new (
-            input: HTMLInputElement,
-            options: Record<string, unknown>,
-          ) => GooglePlacesAutocomplete;
+          PlaceAutocompleteElement?: new (
+            options?: Record<string, unknown>,
+          ) => GooglePlaceAutocompleteElement;
         };
       };
     };
@@ -1288,7 +1349,7 @@ declare global {
 }
 
 function getAddressFromGooglePlace(place: GooglePlace): ValidatedCheckoutAddress | null {
-  const components = place.address_components ?? [];
+  const components = place.addressComponents ?? [];
   const streetNumber = getGoogleAddressComponent(components, "street_number");
   const route = getGoogleAddressComponent(components, "route");
   const subpremise = getGoogleAddressComponent(components, "subpremise");
@@ -1296,7 +1357,11 @@ function getAddressFromGooglePlace(place: GooglePlace): ValidatedCheckoutAddress
     getGoogleAddressComponent(components, "locality") ||
     getGoogleAddressComponent(components, "sublocality") ||
     getGoogleAddressComponent(components, "postal_town");
-  const state = getGoogleAddressComponent(components, "administrative_area_level_1", true);
+  const state = getGoogleAddressComponent(
+    components,
+    "administrative_area_level_1",
+    true,
+  );
   const zip = getGoogleAddressComponent(components, "postal_code");
   const streetAddress = [streetNumber, route].filter(Boolean).join(" ");
   const address = subpremise
@@ -1307,28 +1372,40 @@ function getAddressFromGooglePlace(place: GooglePlace): ValidatedCheckoutAddress
     return null;
   }
 
-  const location = place.geometry?.location;
+  const location = getGoogleLatLng(place.location);
 
   return {
     address,
     city,
-    formatted_address: place.formatted_address,
-    google_place_id: place.place_id,
-    latitude: location?.lat(),
-    longitude: location?.lng(),
+    formatted_address: place.formattedAddress,
+    google_place_id: place.id,
+    latitude: location.latitude,
+    longitude: location.longitude,
     state,
     zip,
   };
 }
 
 function getGoogleAddressComponent(
-  components: NonNullable<GooglePlace["address_components"]>,
+  components: GoogleAddressComponent[],
   type: string,
   shortName = false,
 ) {
   const component = components.find((entry) => entry.types.includes(type));
 
-  return shortName ? component?.short_name ?? "" : component?.long_name ?? "";
+  return shortName ? component?.shortText ?? "" : component?.longText ?? "";
+}
+
+function getGoogleLatLng(location?: GoogleLatLngValue) {
+  const rawLat = location?.lat;
+  const rawLng = location?.lng;
+  const latitude = typeof rawLat === "function" ? rawLat() : rawLat;
+  const longitude = typeof rawLng === "function" ? rawLng() : rawLng;
+
+  return {
+    latitude: typeof latitude === "number" ? latitude : undefined,
+    longitude: typeof longitude === "number" ? longitude : undefined,
+  };
 }
 
 function setCheckoutAddressInputs(
@@ -1358,11 +1435,12 @@ function loadGoogleMapsPlaces(apiKey: string) {
     return Promise.reject(new Error("Google Maps is unavailable."));
   }
 
-  if (window.google?.maps?.places?.Autocomplete) {
-    return Promise.resolve();
+  if (window.__bayblazeGoogleMapsPlacesPromise) {
+    return window.__bayblazeGoogleMapsPlacesPromise;
   }
 
-  if (window.__bayblazeGoogleMapsPlacesPromise) {
+  if (window.google?.maps?.importLibrary) {
+    window.__bayblazeGoogleMapsPlacesPromise = getGooglePlacesLibrary();
     return window.__bayblazeGoogleMapsPlacesPromise;
   }
 
@@ -1371,8 +1449,14 @@ function loadGoogleMapsPlaces(apiKey: string) {
       'script[data-bayblaze-google-maps="true"]',
     );
 
+    function resolvePlacesLibrary() {
+      getGooglePlacesLibrary().then(resolve).catch(reject);
+    }
+
     if (existingScript) {
-      existingScript.addEventListener("load", () => resolve(), { once: true });
+      existingScript.addEventListener("load", resolvePlacesLibrary, {
+        once: true,
+      });
       existingScript.addEventListener(
         "error",
         () => reject(new Error("Google Maps failed to load.")),
@@ -1386,13 +1470,26 @@ function loadGoogleMapsPlaces(apiKey: string) {
     script.dataset.bayblazeGoogleMaps = "true";
     script.defer = true;
     script.onerror = () => reject(new Error("Google Maps failed to load."));
-    script.onload = () => resolve();
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(apiKey)}&libraries=places&v=weekly`;
+    script.onload = resolvePlacesLibrary;
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(apiKey)}&v=weekly&loading=async`;
 
     document.head.appendChild(script);
   });
 
   return window.__bayblazeGoogleMapsPlacesPromise;
+}
+
+async function getGooglePlacesLibrary(): Promise<GoogleMapsPlacesLibrary> {
+  const importedLibrary = await window.google?.maps?.importLibrary?.("places");
+  const PlaceAutocompleteElement =
+    importedLibrary?.PlaceAutocompleteElement ??
+    window.google?.maps?.places?.PlaceAutocompleteElement;
+
+  if (!PlaceAutocompleteElement) {
+    throw new Error("Google Places Autocomplete is unavailable.");
+  }
+
+  return { PlaceAutocompleteElement };
 }
 
 async function validateCheckoutAddress(

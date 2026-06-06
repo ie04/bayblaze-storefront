@@ -74,10 +74,13 @@ BayBlaze's backend-only delivery intelligence service and not as a frontend app.
 Checkout address autocomplete and canonical address validation are owned by the
 storefront checkout flow, not IsoChronos.
 
-- The checkout page may use Google Places Autocomplete only for customer address
+- The checkout page uses the Places API (New)
+  `google.maps.places.PlaceAutocompleteElement` widget for customer address
   entry UX. The public browser key must be stored as
   `NEXT_PUBLIC_GOOGLE_MAPS_BROWSER_KEY` and restricted in Google Cloud to the
-  storefront website referrers plus the Maps JavaScript API and Places API.
+  storefront website referrers plus the Maps JavaScript API and Places API
+  (New). Do not use legacy `google.maps.places.Autocomplete` unless the key is
+  also intentionally authorized for the legacy Places API.
 - The server-side Google Address Validation key must be stored as
   `GOOGLE_MAPS_ADDRESS_VALIDATION_API_KEY` and restricted to the Address
   Validation API. Do not expose it through any `NEXT_PUBLIC_*` variable.
