@@ -45,6 +45,8 @@ export default function ProductPage({
     return product.variants.find((variant) => variant.id === selectedVariantId);
   }, [product.variants, selectedVariantId]);
 
+  const hasMultipleVariants = product.variants.length > 1;
+  const shouldShowStockStatus = !hasMultipleVariants || Boolean(flavor);
   const selectedAvailableQuantity =
     selectedVariant?.availableQuantity ?? product.availableQuantity;
   const selectedInventoryState =
@@ -257,21 +259,23 @@ export default function ProductPage({
               </ins>
             </p>
 
-              <p className={`mt-3 text-[15px] font-semibold leading-[1.5] ${
-                isOutOfStock
-                  ? "text-red-700"
-                  : selectedAvailableQuantity === undefined
-                    ? "text-[#585858]"
-                    : "text-[var(--ast-global-color-1)]"
-              }`}>
-                {selectedAvailableQuantity === undefined
-                  ? "Stock status unavailable"
-                  : isOutOfStock
-                    ? "Out of stock"
-                    : existingCartQuantity > 0
-                      ? `${selectedAvailableQuantity} in stock · ${existingCartQuantity} in cart`
-                      : `${selectedAvailableQuantity} in stock`}
-              </p>
+              {shouldShowStockStatus ? (
+                <p className={`mt-3 text-[15px] font-semibold leading-[1.5] ${
+                  isOutOfStock
+                    ? "text-red-700"
+                    : selectedAvailableQuantity === undefined
+                      ? "text-[#585858]"
+                      : "text-[var(--ast-global-color-1)]"
+                }`}>
+                  {selectedAvailableQuantity === undefined
+                    ? "Stock status unavailable"
+                    : isOutOfStock
+                      ? "Out of stock"
+                      : existingCartQuantity > 0
+                        ? `${selectedAvailableQuantity} in stock · ${existingCartQuantity} in cart`
+                        : `${selectedAvailableQuantity} in stock`}
+                </p>
+              ) : null}
 
             {product.details[0] ? (
               <p className="mt-5 text-[16px] leading-[1.7] text-[#585858] sm:mt-6 sm:text-[17px] sm:leading-[1.8]">
