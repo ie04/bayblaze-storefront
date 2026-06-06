@@ -112,14 +112,23 @@ export default function ProductPage({
       return;
     }
 
-    if (remainingAvailableQuantity === 0) {
+    const availableToAdd = remainingAvailableQuantity;
+
+    if (availableToAdd === undefined) {
+      setCartNotice(
+        "This product is missing inventory quantity data. Please contact BayBlaze before checkout.",
+      );
+      return;
+    }
+
+    if (availableToAdd === 0) {
       setCartNotice(`${product.name} is out of stock.`);
       return;
     }
 
-    if (quantity > remainingAvailableQuantity) {
+    if (quantity > availableToAdd) {
       setCartNotice(
-        `${product.name} has only ${remainingAvailableQuantity} left available.`,
+        `${product.name} has only ${availableToAdd} left available.`,
       );
       return;
     }
