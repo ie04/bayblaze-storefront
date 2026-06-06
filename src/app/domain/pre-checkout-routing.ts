@@ -102,8 +102,8 @@ export function normalizePreCheckoutRoutingItems(
     const productId = normalizeString(item.productId);
     const variantId = normalizeString(item.variantId);
     const title = normalizeString(item.name);
-    const requestedQuantity = item.quantity;
-    const availableQuantity = item.availableQuantity;
+    const requestedQuantity = normalizePositiveInteger(item.quantity);
+    const availableQuantity = normalizeNonNegativeInteger(item.availableQuantity);
     const inventoryState = item.inventoryState;
 
     if (!itemId || !productId || !variantId) {
@@ -121,25 +121,19 @@ export function normalizePreCheckoutRoutingItems(
       };
     }
 
-    if (
-      !Number.isInteger(availableQuantity) ||
-      Number(availableQuantity) < 0
-    ) {
+    if (availableQuantity === undefined) {
       return {
         error: `Please re-add ${itemLabel} to your cart so BayBlaze can verify available inventory.`,
       };
     }
 
-    if (
-      !Number.isInteger(requestedQuantity) ||
-      Number(requestedQuantity) < 1
-    ) {
+    if (requestedQuantity === undefined) {
       return {
         error: "Cart item quantities must be whole numbers greater than zero.",
       };
     }
 
-    if (Number(requestedQuantity) > Number(availableQuantity)) {
+    if (requestedQuantity > availableQuantity) {
       return {
         error: `${itemLabel} has only ${availableQuantity} available. Please update your cart quantity.`,
       };
@@ -150,8 +144,8 @@ export function normalizePreCheckoutRoutingItems(
       productId,
       variantId,
       title: title || undefined,
-      requestedQuantity: Number(requestedQuantity),
-      availableQuantity: Number(availableQuantity),
+      requestedQuantity,
+      availableQuantity,
       inventoryState: inventoryState as InventoryLocationState,
     });
   }
@@ -214,4 +208,29 @@ export function getPreCheckoutRoutingFingerprint({
 
 function normalizeString(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
+}
+
+function normalizeNonNegativeInteger(value: unknown) {
+  const integer = normalizeInteger(value);
+
+  return integer !== undefined && integer >= 0 ? integer : undefined;
+}
+
+function normalizePositiveInteger(value: unknown) {
+  const integer = normalizeInteger(value);
+
+  return integer !== undefined && integer >= 1 ? integer : undefined;
+}
+
+function normalizeInteger(value: unknown) {
+  if (typeof value === "string" && !value.trim()) {
+    return undefined;
+  }
+
+  const number =
+    typeof value === "number" || typeof value === "string"
+      ? Number(value)
+      : Number.NaN;
+
+  return Number.isInteger(number) ? number : undefined;
 }
