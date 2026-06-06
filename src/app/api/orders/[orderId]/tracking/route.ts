@@ -42,9 +42,11 @@ export async function GET(
       tracking: {
         orderId: order.id,
         orderReference,
-        driverUid,
-        status: "tracking_unavailable",
-        message: "Live tracking is not configured yet.",
+        driverUid: driverUid || null,
+        status: driverUid ? "tracking_unavailable" : "awaiting_assignment",
+        message: driverUid
+          ? "Live tracking is not configured yet."
+          : "Driver assignment pending.",
         customerLocation: customerLocation
           ? { ...customerLocation, address: customerAddress }
           : null,
@@ -78,7 +80,7 @@ export async function GET(
       tracking: {
         orderId: order.id,
         orderReference,
-        driverUid,
+        driverUid: driverUid || null,
         status: "tracking_unavailable",
         message: "Live tracking could not be loaded right now.",
         customerLocation: customerLocation
@@ -91,7 +93,6 @@ export async function GET(
   const payload = (await response.json()) as IsoChronosTrackingResponse;
   return Response.json(payload);
 }
-
 
 function getCustomerAddress(order: CustomerOrder) {
   const metadata = order.metadata ?? {};
