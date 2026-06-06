@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 
 import { useCart } from "@/app/components/cart/CartContext";
 import type { StorefrontProduct } from "@/app/lib/medusa-products";
@@ -20,7 +20,7 @@ export default function ProductPage({
 }: {
   product: StorefrontProduct;
 }) {
-  const { addItem } = useCart();
+  const { addItem, items } = useCart();
 
   const [activeImage, setActiveImage] = useState(0);
   const [activeTab, setActiveTab] = useState<TabId>("description");
@@ -45,6 +45,34 @@ export default function ProductPage({
     return product.variants.find((variant) => variant.id === selectedVariantId);
   }, [product.variants, selectedVariantId]);
 
+  const selectedAvailableQuantity =
+    selectedVariant?.availableQuantity ?? product.availableQuantity;
+  const selectedInventoryState =
+    selectedVariant?.inventoryState ?? product.inventoryState;
+  const selectedCartItemId = [selectedVariantId, flavor || "default"].join("::");
+  const existingCartQuantity = useMemo(() => {
+    return items.find((item) => item.id === selectedCartItemId)?.quantity ?? 0;
+  }, [items, selectedCartItemId]);
+  const remainingAvailableQuantity =
+    selectedAvailableQuantity === undefined
+      ? undefined
+      : Math.max(selectedAvailableQuantity - existingCartQuantity, 0);
+  const isOutOfStock = remainingAvailableQuantity === 0;
+  const quantityLimit =
+    remainingAvailableQuantity === undefined
+      ? 12
+      : Math.max(1, Math.min(12, remainingAvailableQuantity));
+  const canAddSelectedVariant =
+    selectedAvailableQuantity !== undefined &&
+    Boolean(selectedInventoryState) &&
+    !isOutOfStock;
+
+  useEffect(() => {
+    if (quantity > quantityLimit) {
+      setQuantity(quantityLimit);
+    }
+  }, [quantity, quantityLimit]);
+
   const selectedSummary = useMemo(() => {
     if (!flavor) {
       return "";
@@ -54,7 +82,7 @@ export default function ProductPage({
   }, [flavor, product.name, quantity]);
 
   function updateQuantity(nextQuantity: number) {
-    setQuantity(Math.min(Math.max(nextQuantity, 1), 12));
+    setQuantity(Math.min(Math.max(nextQuantity, 1), quantityLimit));
   }
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -70,16 +98,39 @@ export default function ProductPage({
       return;
     }
 
-    const cartItemId = [selectedVariantId, flavor || "default"].join("::");
+    if (selectedAvailableQuantity === undefined) {
+      setCartNotice(
+        "This product is missing inventory quantity data. Please contact BayBlaze before checkout.",
+      );
+      return;
+    }
+
+    if (!selectedInventoryState) {
+      setCartNotice(
+        "This product is missing delivery inventory data. Please contact BayBlaze before checkout.",
+      );
+      return;
+    }
+
+    if (remainingAvailableQuantity === 0) {
+      setCartNotice(`${product.name} is out of stock.`);
+      return;
+    }
+
+    if (quantity > remainingAvailableQuantity) {
+      setCartNotice(
+        `${product.name} has only ${remainingAvailableQuantity} left available.`,
+      );
+      return;
+    }
 
     addItem({
-      id: cartItemId,
-      availableQuantity:
-        selectedVariant?.availableQuantity ?? product.availableQuantity,
+      id: selectedCartItemId,
+      availableQuantity: selectedAvailableQuantity,
       variantId: selectedVariantId,
       productId: product.id,
       productHandle: product.handle,
-      inventoryState: selectedVariant?.inventoryState ?? product.inventoryState,
+      inventoryState: selectedInventoryState,
       name: product.name,
       flavor: flavor || undefined,
       image: product.images[0]?.src,
@@ -187,6 +238,22 @@ export default function ProductPage({
               </ins>
             </p>
 
+              <p className={`mt-3 text-[15px] font-semibold leading-[1.5] ${
+                isOutOfStock
+                  ? "text-red-700"
+                  : selectedAvailableQuantity === undefined
+                    ? "text-[#585858]"
+                    : "text-[var(--ast-global-color-1)]"
+              }`}>
+                {selectedAvailableQuantity === undefined
+                  ? "Stock status unavailable"
+                  : isOutOfStock
+                    ? "Out of stock"
+                    : remainingAvailableQuantity === selectedAvailableQuantity
+                      ? `${selectedAvailableQuantity} in stock`
+                      : `${remainingAvailableQuantity} left available`}
+              </p>
+
             {product.details[0] ? (
               <p className="mt-5 text-[16px] leading-[1.7] text-[#585858] sm:mt-6 sm:text-[17px] sm:leading-[1.8]">
                 {product.details[0]}
@@ -252,7 +319,7 @@ export default function ProductPage({
                     className="min-w-0 border-x border-[#d6d6d6] text-center text-[16px] text-black outline-none"
                     inputMode="numeric"
                     min={1}
-                    max={12}
+                    max={quantityLimit}
                     type="number"
                     value={quantity}
                     onChange={(event) =>
@@ -272,10 +339,10 @@ export default function ProductPage({
 
                 <button
                   type="submit"
-                  disabled={product.flavors.length > 0 && !flavor}
+                  disabled={(product.flavors.length > 0 && !flavor) || !canAddSelectedVariant}
                   className="h-12 min-w-[180px] flex-1 bg-[var(--ast-global-color-0)] px-7 text-[15px] font-semibold uppercase tracking-[0.1em] text-white transition-colors hover:bg-black disabled:cursor-not-allowed disabled:bg-[#b9c8af] min-[420px]:flex-none sm:tracking-[0.12em]"
                 >
-                  Add to cart
+                  {isOutOfStock ? "Out of stock" : "Add to cart"}
                 </button>
               </div>
 
