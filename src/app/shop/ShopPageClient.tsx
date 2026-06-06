@@ -275,10 +275,6 @@ function ProductCard({
           )}
         </p>
 
-        <p className="mt-4 flex-1 text-[14px] leading-[1.6] text-[#676767]">
-          {product.description}
-        </p>
-
         {product.action === "Add to cart" ? (
           <button
             type="button"
