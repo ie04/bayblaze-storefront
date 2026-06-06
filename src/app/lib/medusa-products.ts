@@ -114,6 +114,20 @@ export type ProductPreviewItem = {
   isSale?: boolean;
 };
 
+export type ShopProductItem = {
+  name: string;
+  image: string;
+  href: string;
+  categories: string[];
+  originalPrice?: string;
+  salePrice: string;
+  price: string;
+  sortPrice: number;
+  action: "Add to cart" | "Select options";
+  isSale?: boolean;
+  description: string;
+};
+
 const backendUrl =
   process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL?.replace(/\/$/, "") ??
   "http://localhost:9000";
@@ -488,6 +502,30 @@ function toStorefrontProduct(product: MedusaProduct): StorefrontProduct {
   };
 }
 
+function toShopProductItem(product: MedusaProduct): ShopProductItem {
+  const storefrontProduct = toStorefrontProduct(product);
+  const price = product.variants?.[0]?.calculated_price;
+  const formattedPrice = formatPrice(price) || "Price unavailable";
+
+  return {
+    name: product.title,
+    image: storefrontProduct.images[0]?.src ?? "",
+    href: `/product/${product.handle}`,
+    categories: storefrontProduct.categories.map((category) => category.name),
+    originalPrice: getOriginalPrice(price),
+    salePrice: formattedPrice,
+    price: formattedPrice,
+    sortPrice: price?.calculated_amount ?? Number.MAX_SAFE_INTEGER,
+    action: "Select options",
+    isSale: hasSalePrice(price),
+    description:
+      product.description ??
+      product.subtitle ??
+      storefrontProduct.details.find(Boolean) ??
+      "BayBlaze product available for local delivery.",
+  };
+}
+
 function toProductPreviewItem(
   product: MedusaProduct,
   index: number,
@@ -591,6 +629,43 @@ export async function getProductByStorefrontHandle(handle: string) {
   const product = data.products[0];
 
   return product ? toStorefrontProduct(product) : undefined;
+}
+
+export async function getShopProducts() {
+  const regionId = await getDefaultRegionId();
+  const productParams = new URLSearchParams({
+    limit: "100",
+    fields:
+      "title,handle,subtitle,description,thumbnail,*variants.calculated_price,*variants,*variants.metadata,*variants.options,*options,*options.values,*images,*categories,*collection,*metadata",
+  });
+
+  if (regionId) {
+    productParams.set("region_id", regionId);
+  }
+
+  let productResponse: Response;
+
+  try {
+    productResponse = await fetch(
+      `${backendUrl}/store/products?${productParams.toString()}`,
+      {
+        headers: getHeaders(),
+        cache: "no-store",
+      },
+    );
+  } catch {
+    return [];
+  }
+
+  if (!productResponse.ok) {
+    return [];
+  }
+
+  const data = (await productResponse.json()) as MedusaProductsResponse;
+
+  return data.products.map(toShopProductItem).filter((product) => {
+    return Boolean(product.image);
+  });
 }
 
 export async function getProductPreviewsByCategoryHandle(

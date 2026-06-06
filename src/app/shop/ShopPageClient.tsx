@@ -5,18 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 
-type Product = {
-  name: string;
-  image: string;
-  href: string;
-  categories: string[];
-  originalPrice?: number;
-  salePrice?: number;
-  price: number;
-  action: "Add to cart" | "Select options";
-  isSale?: boolean;
-  description: string;
-};
+import type { ShopProductItem } from "@/app/lib/medusa-products";
 
 const categories = [
   "All Categories",
@@ -54,65 +43,6 @@ const categoryCopy: Record<
   },
 };
 
-const products: Product[] = [
-  {
-    name: "Lost Mary MT35000 Turbo",
-    image: "https://bayblaze.net/wp-content/uploads/2026/03/LMMTK35K.png",
-    href: "/product/lost-mary-mt35k-turbo",
-    categories: ["Vapes"],
-    originalPrice: 20,
-    salePrice: 17.99,
-    price: 17.99,
-    action: "Select options",
-    isSale: true,
-    description: "Long-lasting disposable vape with bold flavor options.",
-  },
-  {
-    name: "RAW Cone Classic 1 1/4 (20 Pack)",
-    image:
-      "https://bayblaze.net/wp-content/uploads/2026/03/raw-classic-cone-20pk-1.jpg",
-    href: "https://bayblaze.net/product/raw-classic-cones-20pack/",
-    categories: ["Cones & Wraps"],
-    price: 6.99,
-    action: "Add to cart",
-    description: "Classic RAW pre-rolled cones in a convenient 20 pack.",
-  },
-  {
-    name: "Raw Cones King Size (3 Pack)",
-    image: "https://bayblaze.net/wp-content/uploads/2026/03/raw-king-cones-3pk.jpg",
-    href: "https://bayblaze.net/product/raw-cones-king-size-3-pack/",
-    categories: ["Cones & Wraps"],
-    price: 3.99,
-    action: "Add to cart",
-    description: "King size RAW cones for simple, consistent sessions.",
-  },
-  {
-    name: "RAZ LTX 25000 (Gush Edition)",
-    image:
-      "https://bayblaze.net/wp-content/uploads/2026/03/raz-ltx-25000-gush-edition-blue-raz-gush.png",
-    href: "https://bayblaze.net/product/raz-ltx-25000-gush-edition/",
-    categories: ["Vapes"],
-    originalPrice: 30,
-    salePrice: 17.99,
-    price: 17.99,
-    action: "Select options",
-    isSale: true,
-    description: "Gush Edition disposable vape with sweet fruit flavor profiles.",
-  },
-  {
-    name: "Wave",
-    image: "https://bayblaze.net/wp-content/uploads/2026/03/wave.png",
-    href: "https://bayblaze.net/product/wave/",
-    categories: ["Vapes"],
-    originalPrice: 25,
-    salePrice: 14.99,
-    price: 14.99,
-    action: "Select options",
-    isSale: true,
-    description: "Compact disposable vape with smooth, everyday draw.",
-  },
-];
-
 const sortOptions = [
   { value: "default", label: "Default sorting" },
   { value: "popularity", label: "Sort by popularity" },
@@ -125,8 +55,10 @@ type SortValue = (typeof sortOptions)[number]["value"];
 
 export default function ShopPageClient({
   initialSearchQuery = "",
+  products,
 }: {
   initialSearchQuery?: string;
+  products: ShopProductItem[];
 }) {
   const [activeCategory, setActiveCategory] = useState(categories[0]);
   const [sortBy, setSortBy] = useState<SortValue>("default");
@@ -159,11 +91,11 @@ export default function ShopPageClient({
 
     return [...searchFiltered].sort((a, b) => {
       if (sortBy === "price-asc") {
-        return a.price - b.price;
+        return a.sortPrice - b.sortPrice;
       }
 
       if (sortBy === "price-desc") {
-        return b.price - a.price;
+        return b.sortPrice - a.sortPrice;
       }
 
       if (sortBy === "latest") {
@@ -172,9 +104,9 @@ export default function ShopPageClient({
 
       return products.indexOf(a) - products.indexOf(b);
     });
-  }, [activeCategory, normalizedSearchQuery, sortBy]);
+  }, [activeCategory, normalizedSearchQuery, products, sortBy]);
 
-  function handleQuickAdd(product: Product) {
+  function handleQuickAdd(product: ShopProductItem) {
     setNotice(`${product.name} added.`);
   }
 
@@ -262,7 +194,7 @@ export default function ShopPageClient({
         >
           {visibleProducts.map((product) => (
             <ProductCard
-              key={product.name}
+              key={product.href}
               product={product}
               onQuickAdd={handleQuickAdd}
             />
@@ -277,8 +209,8 @@ function ProductCard({
   product,
   onQuickAdd,
 }: {
-  product: Product;
-  onQuickAdd: (product: Product) => void;
+  product: ShopProductItem;
+  onQuickAdd: (product: ShopProductItem) => void;
 }) {
   const isInternal = product.href.startsWith("/");
   const router = useRouter();
@@ -332,14 +264,14 @@ function ProductCard({
           {product.originalPrice ? (
             <>
               <del className="mr-2 text-[#7a7a7a]">
-                {formatPrice(product.originalPrice)}
+                {product.originalPrice}
               </del>
               <ins className="text-black no-underline">
-                {formatPrice(product.salePrice ?? product.price)}
+                {product.salePrice}
               </ins>
             </>
           ) : (
-            <span className="text-black">{formatPrice(product.price)}</span>
+            <span className="text-black">{product.price}</span>
           )}
         </p>
 
@@ -369,6 +301,3 @@ function ProductCard({
   );
 }
 
-function formatPrice(price: number) {
-  return `$ ${price.toFixed(2)}`;
-}
