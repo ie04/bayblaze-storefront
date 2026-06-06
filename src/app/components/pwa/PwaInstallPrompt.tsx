@@ -38,6 +38,14 @@ function isStandaloneDisplay() {
   );
 }
 
+function isInstallPromptDismissed() {
+  if (typeof window === "undefined") {
+    return true;
+  }
+
+  return window.localStorage.getItem(DISMISS_STORAGE_KEY) === "true";
+}
+
 export default function PwaInstallPrompt() {
   const [installPrompt, setInstallPrompt] =
     useState<BeforeInstallPromptEvent | null>(null);
@@ -52,8 +60,7 @@ export default function PwaInstallPrompt() {
     }
 
     const promptStateTimer = window.setTimeout(() => {
-      const dismissed =
-        window.localStorage.getItem(DISMISS_STORAGE_KEY) === "true";
+      const dismissed = isInstallPromptDismissed();
       const shouldShowIosPrompt =
         isIosDevice() && !isStandaloneDisplay() && !dismissed;
 
@@ -66,11 +73,17 @@ export default function PwaInstallPrompt() {
         return;
       }
 
+      const dismissed = isInstallPromptDismissed();
+
+      setIsDismissed(dismissed);
+
+      if (dismissed || isStandaloneDisplay()) {
+        setInstallPrompt(null);
+        return;
+      }
+
       event.preventDefault();
       setInstallPrompt(event);
-      setIsDismissed(
-        window.localStorage.getItem(DISMISS_STORAGE_KEY) === "true",
-      );
     }
 
     function handleAppInstalled() {

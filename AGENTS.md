@@ -199,6 +199,22 @@ Additional UI constraints:
 - Address validation, routing, AgeChecker, and order creation should expose
   distinct loading/error copy so failures are easy to diagnose.
 
+### PWA Install Prompt
+
+The storefront owns a custom PWA install prompt in
+`src/app/components/pwa/PwaInstallPrompt.tsx`.
+
+- Register `/sw.js` from the app-level provider boundary, not individual pages.
+- The `beforeinstallprompt` handler should call `event.preventDefault()` only
+  when BayBlaze is actually going to show its own install UI. If the customer
+  has dismissed the install prompt or the app is already running standalone,
+  do not intercept the browser's native install flow.
+- The saved `BeforeInstallPromptEvent` should only call `.prompt()` from the
+  user-initiated `Add app` button click. Do not try to auto-open the install
+  prompt on page load.
+- Keep the iOS install path as instructional copy because iOS Safari uses the
+  share-sheet Add to Home Screen flow instead of the Chromium prompt event.
+
 ### Storefront Domain Model
 
 The storefront should model business concepts explicitly instead of duplicating
