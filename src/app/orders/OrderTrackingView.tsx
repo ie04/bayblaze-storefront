@@ -96,7 +96,7 @@ function OrderSummary({ order }: { order: CustomerOrder }) {
         </div>
         <div>
           <dt className="font-semibold text-black">Delivery address</dt>
-          <dd>{formatDeliveryAddress(order)}</dd>
+          <dd className="whitespace-pre-line">{formatDeliveryAddress(order)}</dd>
         </div>
         {scheduledDelivery ? (
           <div>
@@ -179,7 +179,7 @@ function DriverMap({ order }: { order: CustomerOrder }) {
         <div className="absolute left-[12%] top-[65%] size-4 rounded-full bg-[var(--ast-global-color-1)] shadow-[0_0_0_8px_rgba(51,104,79,0.12)]" />
         <div className="absolute right-[16%] top-[24%] size-4 rounded-full bg-black shadow-[0_0_0_8px_rgba(0,0,0,0.1)]" />
         <div className="absolute left-[15%] right-[19%] top-[35%] h-[3px] origin-left -rotate-[17deg] bg-[var(--ast-global-color-1)]" />
-        <div className="absolute bottom-4 left-5 right-5 rounded-[8px] border border-[#d8d1c6] bg-white/90 px-4 py-3 text-[14px] font-medium leading-[1.4] text-black">
+        <div className="absolute bottom-4 left-5 right-5 whitespace-pre-line rounded-[8px] border border-[#d8d1c6] bg-white/90 px-4 py-3 text-[14px] font-medium leading-[1.4] text-black">
           {formatDeliveryAddress(order)}
         </div>
       </div>

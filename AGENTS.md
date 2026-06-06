@@ -259,7 +259,11 @@ display and data-shaping rules inside page components.
   UI buckets.
 - Delivery-facing order copy belongs to the domain layer. Use
   `getOrderRecipient(order)` and `formatDeliveryAddress(order)` for tracking
-  and delivery summary surfaces.
+  and delivery summary surfaces. Address Line 2 must persist from checkout to
+  Medusa `shipping_address.address_2`; also mirror it into order metadata keys
+  `address_line_2`, `delivery_address_line_2`, and `checkout_address_line_2`
+  so order display and label printing can fall back when Medusa does not return
+  the nested shipping-address field.
 - The recent checkout order session key is `RECENT_ORDER_STORAGE_KEY` from the
   order domain. Do not duplicate the string in checkout or account components.
 - Customer auth-session cookie reading is centralized in

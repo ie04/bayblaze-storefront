@@ -44,6 +44,7 @@ type CheckoutCustomer = {
   email?: string;
   phone?: string;
   address?: string;
+  address_line_2?: string;
   city?: string;
   state?: string;
   zip?: string;
@@ -88,6 +89,7 @@ type MedusaCart = {
     first_name?: string | null;
     last_name?: string | null;
     address_1?: string | null;
+    address_2?: string | null;
     city?: string | null;
     province?: string | null;
     postal_code?: string | null;
@@ -248,17 +250,27 @@ export async function POST(request: Request) {
       ),
     }),
   };
+  const addressLine2 = normalizeOptionalString(customer.address_line_2);
+  const addressLine2Metadata = addressLine2
+    ? {
+        address_line_2: addressLine2,
+        checkout_address_line_2: addressLine2,
+        delivery_address_line_2: addressLine2,
+      }
+    : {};
   const orderMetadata = {
     ...routingEvaluation.metadata,
     ...addressValidation.metadata,
     ...ageVerification.metadata,
     ...deliveryMetadata,
     ...referralOfferMetadata,
+    ...addressLine2Metadata,
   };
   const shippingAddress = {
     first_name: customer.first_name.trim(),
     last_name: customer.last_name.trim(),
     address_1: customer.address.trim(),
+    address_2: addressLine2 || null,
     city: customer.city.trim(),
     province: customer.state.trim(),
     postal_code: customer.zip.trim(),
@@ -405,6 +417,7 @@ export async function POST(request: Request) {
     return Response.json({
       order: {
         ...completedCart.order,
+        shipping_address: completedCart.order.shipping_address ?? shippingAddress,
         metadata: {
           ...completedCart.order.metadata,
           ...orderMetadata,
@@ -415,6 +428,10 @@ export async function POST(request: Request) {
   } catch (error) {
     return jsonError(getErrorMessage(error), 502);
   }
+}
+
+function normalizeOptionalString(value: unknown) {
+  return typeof value === "string" ? value.trim() : "";
 }
 
 function getIgnoredReferralOfferMetadata({

@@ -189,20 +189,48 @@ export function getOrderRecipient(order: CustomerOrder) {
 }
 
 export function formatDeliveryAddress(order: CustomerOrder) {
+  const lines = getDeliveryAddressLines(order);
+
+  return lines.length ? lines.join("\n") : "Address unavailable";
+}
+
+export function getDeliveryAddressLines(order: CustomerOrder) {
   const address = order.shipping_address;
 
   if (!address) {
-    return "Address unavailable";
+    return [];
   }
 
-  return [
-    address.address_1,
-    address.address_2,
-    [address.city, address.province].filter(Boolean).join(", "),
-    address.postal_code,
-  ]
+  const cityRegion = [address.city, address.province]
+    .map(readAddressPart)
+    .filter(Boolean)
+    .join(", ");
+  const cityLine = [cityRegion, readAddressPart(address.postal_code)]
     .filter(Boolean)
     .join(" ");
+
+  return [
+    readAddressPart(address.address_1),
+    getDeliveryAddressLine2(order),
+    cityLine,
+  ].filter(Boolean);
+}
+
+export function getDeliveryAddressLine2(order: CustomerOrder) {
+  return (
+    readAddressPart(order.shipping_address?.address_2) ||
+    readOrderMetadataString(
+      order,
+      "address_line_2",
+      "delivery_address_line_2",
+      "checkout_address_line_2",
+      "customer_address_line_2",
+    )
+  );
+}
+
+function readAddressPart(value: unknown) {
+  return typeof value === "string" && value.trim() ? value.trim() : "";
 }
 
 function readOrderMetadataString(order: CustomerOrder, ...keys: string[]) {
