@@ -226,25 +226,28 @@ export async function POST(request: Request) {
   const hasPriorOrders = customerToken
     ? await customerHasExistingOrders(customerToken)
     : false;
-
-  if (referralOffer && hasPriorOrders) {
-    return jsonError(
-      "The 30% QR discount is only available on your first order.",
-      400,
-    );
-  }
+  const appliedReferralOffer = referralOffer && !hasPriorOrders ? referralOffer : null;
 
   const discountSubtotal = getCheckoutItemsSubtotal(items);
   const firstOrderDiscount = getReferralOfferDiscountAmount(
     discountSubtotal,
-    referralOffer,
+    appliedReferralOffer,
   );
-  const referralOfferMetadata = getReferralOfferOrderMetadata({
-    discountAmount: firstOrderDiscount,
-    offer: referralOffer,
-    subtotal: discountSubtotal,
-    totalAfterDiscount: getReferralOfferTotal(discountSubtotal, referralOffer),
-  });
+  const referralOfferMetadata = {
+    ...getIgnoredReferralOfferMetadata({
+      hasPriorOrders,
+      offer: referralOffer,
+    }),
+    ...getReferralOfferOrderMetadata({
+      discountAmount: firstOrderDiscount,
+      offer: appliedReferralOffer,
+      subtotal: discountSubtotal,
+      totalAfterDiscount: getReferralOfferTotal(
+        discountSubtotal,
+        appliedReferralOffer,
+      ),
+    }),
+  };
   const orderMetadata = {
     ...routingEvaluation.metadata,
     ...addressValidation.metadata,
@@ -412,6 +415,25 @@ export async function POST(request: Request) {
   } catch (error) {
     return jsonError(getErrorMessage(error), 502);
   }
+}
+
+function getIgnoredReferralOfferMetadata({
+  hasPriorOrders,
+  offer,
+}: {
+  hasPriorOrders: boolean;
+  offer: ReturnType<typeof getReferralOfferFromCookieHeader>;
+}) {
+  if (!offer || !hasPriorOrders) {
+    return {};
+  }
+
+  return {
+    first_order_offer_code: offer.code,
+    first_order_offer_discount_percent: offer.discountPercent,
+    first_order_offer_source: offer.source,
+    first_order_offer_status: "ignored_prior_order",
+  };
 }
 
 function getDeliveryMetadata(deliveryTiming: ValidDeliveryTiming) {
