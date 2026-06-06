@@ -1116,7 +1116,7 @@ function RoutingConfirmationDialog({
             Go Back
           </button>
           <button
-            className="bayblaze-hero-button h-12 bg-[var(--ast-global-color-0)] px-6 text-white transition-colors hover:bg-black disabled:cursor-not-allowed disabled:bg-[#b9c8af]"
+            className="h-12 bg-[var(--ast-global-color-0)] px-6 text-[14px] font-semibold text-white transition-colors hover:bg-black disabled:cursor-not-allowed disabled:bg-[#b9c8af]"
             disabled={isSubmitting}
             onClick={onConfirm}
             type="button"
