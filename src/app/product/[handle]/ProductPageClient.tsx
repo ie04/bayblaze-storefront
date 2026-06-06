@@ -349,9 +349,9 @@ export default function ProductPage({
                 <button
                   type="submit"
                   disabled={(product.flavors.length > 0 && !flavor) || !canAddSelectedVariant}
-                  className="h-12 min-w-[180px] flex-1 bg-[var(--ast-global-color-0)] px-7 text-[15px] font-semibold uppercase tracking-[0.1em] text-white transition-colors hover:bg-black disabled:cursor-not-allowed disabled:bg-[#b9c8af] min-[420px]:flex-none sm:tracking-[0.12em]"
+                  className="h-12 min-w-[180px] flex-1 bg-[var(--ast-global-color-0)] px-7 text-[15px] font-semibold uppercase tracking-[0.1em] text-white transition-colors hover:bg-black disabled:cursor-not-allowed disabled:bg-[#9ca3af] min-[420px]:flex-none sm:tracking-[0.12em]"
                 >
-                  {isOutOfStock ? "Out of stock" : "Add to cart"}
+                  {isOutOfStock ? "Out of Stock" : "Add to cart"}
                 </button>
               </div>
 
