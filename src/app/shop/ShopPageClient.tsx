@@ -20,10 +20,9 @@ type Product = {
 
 const categories = [
   "All Categories",
-  "Cones & Rolling Papers",
-  "Smoking Accessories",
-  "Pre-Rolled Cones",
   "Vapes",
+  "Cones & Wraps",
+  "Smoking Accessories",
 ];
 
 const categoryCopy: Record<
@@ -36,27 +35,22 @@ const categoryCopy: Record<
   "All Categories": {
     title: "All Categories",
     description:
-      "Browse our full selection of vapes, rolling papers, cones, and everyday smoke shop essentials.",
-  },
-  "Cones & Rolling Papers": {
-    title: "Cones & Rolling Papers",
-    description:
-      "Find rolling papers, pre-rolled cones, and simple smoking essentials for a smooth session.",
-  },
-  "Smoking Accessories": {
-    title: "Smoking Accessories",
-    description:
-      "Explore useful add-ons and everyday accessories made to keep your setup ready.",
-  },
-  "Pre-Rolled Cones": {
-    title: "Pre-Rolled Cones",
-    description:
-      "Stock up on convenient pre-rolled cones for quick, consistent, and easy packing.",
+      "Browse our full selection of vapes, cones, wraps, and smoking accessories.",
   },
   Vapes: {
     title: "Vapes",
     description:
       "Explore vape options including disposables and flavor-focused products ready for delivery.",
+  },
+  "Cones & Wraps": {
+    title: "Cones & Wraps",
+    description:
+      "Find cones, wraps, rolling papers, and session-ready rolling essentials.",
+  },
+  "Smoking Accessories": {
+    title: "Smoking Accessories",
+    description:
+      "Explore useful add-ons and everyday accessories made to keep your setup ready.",
   },
 };
 
@@ -65,7 +59,7 @@ const products: Product[] = [
     name: "Lost Mary MT35000 Turbo",
     image: "https://bayblaze.net/wp-content/uploads/2026/03/LMMTK35K.png",
     href: "/product/lost-mary-mt35k-turbo",
-    categories: ["Disposable Vapes", "Vapes"],
+    categories: ["Vapes"],
     originalPrice: 20,
     salePrice: 17.99,
     price: 17.99,
@@ -78,7 +72,7 @@ const products: Product[] = [
     image:
       "https://bayblaze.net/wp-content/uploads/2026/03/raw-classic-cone-20pk-1.jpg",
     href: "https://bayblaze.net/product/raw-classic-cones-20pack/",
-    categories: ["Cones & Rolling Papers", "Smoking Accessories", "Pre-Rolled Cones"],
+    categories: ["Cones & Wraps"],
     price: 6.99,
     action: "Add to cart",
     description: "Classic RAW pre-rolled cones in a convenient 20 pack.",
@@ -87,7 +81,7 @@ const products: Product[] = [
     name: "Raw Cones King Size (3 Pack)",
     image: "https://bayblaze.net/wp-content/uploads/2026/03/raw-king-cones-3pk.jpg",
     href: "https://bayblaze.net/product/raw-cones-king-size-3-pack/",
-    categories: ["Cones & Rolling Papers", "Smoking Accessories", "Pre-Rolled Cones"],
+    categories: ["Cones & Wraps"],
     price: 3.99,
     action: "Add to cart",
     description: "King size RAW cones for simple, consistent sessions.",
@@ -97,7 +91,7 @@ const products: Product[] = [
     image:
       "https://bayblaze.net/wp-content/uploads/2026/03/raz-ltx-25000-gush-edition-blue-raz-gush.png",
     href: "https://bayblaze.net/product/raz-ltx-25000-gush-edition/",
-    categories: ["Disposable Vapes", "Vapes"],
+    categories: ["Vapes"],
     originalPrice: 30,
     salePrice: 17.99,
     price: 17.99,
@@ -109,7 +103,7 @@ const products: Product[] = [
     name: "Wave",
     image: "https://bayblaze.net/wp-content/uploads/2026/03/wave.png",
     href: "https://bayblaze.net/product/wave/",
-    categories: ["Disposable Vapes", "Vapes"],
+    categories: ["Vapes"],
     originalPrice: 25,
     salePrice: 14.99,
     price: 14.99,

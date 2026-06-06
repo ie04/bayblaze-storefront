@@ -167,13 +167,13 @@ export default function Header({
 }
 
 const headerSearchSuggestions = [
+  "Vapes",
+  "Cones & Wraps",
+  "Smoking Accessories",
   "RAZ",
   "Lost Mary",
-  "ZYN",
-  "vapes",
-  "wraps",
   "cones",
-  "lighters",
+  "wraps",
   "rolling papers",
 ];
 
@@ -236,7 +236,7 @@ function HeaderSearchOverlay({
             type="search"
             autoComplete="off"
             className={styles.searchOverlayInput}
-            placeholder="Search vapes, wraps, cones..."
+            placeholder="Search vapes, cones, wraps, accessories..."
           />
 
           <button

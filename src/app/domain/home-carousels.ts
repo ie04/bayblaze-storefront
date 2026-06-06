@@ -45,37 +45,19 @@ export const homeCategories: HomeCategoryItem[] = [
   {
     name: "Vapes",
     description: "Disposable devices",
-    href: "/shop?q=vapes",
+    href: "/shop?q=Vapes",
     image: "/images/categories/vapes.svg",
   },
   {
-    name: "Nicotine Pouches",
-    description: "ZYNs and pouches",
-    href: "/shop?q=ZYN",
-    image: "/images/categories/nicotine-pouches.svg",
-  },
-  {
-    name: "Wraps & Papers",
+    name: "Cones & Wraps",
     description: "Rolling essentials",
-    href: "/shop?q=wraps",
+    href: "/shop?q=Cones%20%26%20Wraps",
     image: "/images/categories/wraps-papers.svg",
   },
   {
-    name: "Pre-Rolled Cones",
-    description: "Ready-to-pack cones",
-    href: "/shop?q=cones",
-    image: "/images/categories/cones.svg",
-  },
-  {
-    name: "Lighters",
-    description: "Everyday fire",
-    href: "/shop?q=lighters",
-    image: "/images/categories/lighters.svg",
-  },
-  {
-    name: "Accessories",
+    name: "Smoking Accessories",
     description: "Tools and add-ons",
-    href: "/shop?q=accessories",
+    href: "/shop?q=Smoking%20Accessories",
     image: "/images/categories/accessories.svg",
   },
 ];
@@ -86,7 +68,7 @@ export function getBestSellersCarousel(
   return {
     id: "best-sellers",
     title: "Best Sellers",
-    href: "/product-category/vapes",
+    href: "/shop?q=Vapes",
     linkLabel: "Shop All",
     items: products,
     emptyText: "Products will appear here once the catalog is connected.",

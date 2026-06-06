@@ -122,6 +122,57 @@ const publishableKey = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY;
 
 const defaultRegionId = process.env.NEXT_PUBLIC_MEDUSA_REGION_ID;
 
+const defaultStorefrontCategory = {
+  name: "Vapes",
+  handle: "vapes",
+};
+
+const storefrontCategoryAliases = [
+  {
+    name: "Vapes",
+    handle: "vapes",
+    aliases: ["vape", "vapes", "disposable vape", "disposable vapes"],
+  },
+  {
+    name: "Cones & Wraps",
+    handle: "cones-wraps",
+    aliases: [
+      "cones",
+      "cone",
+      "wraps",
+      "wrap",
+      "papers",
+      "rolling papers",
+      "rolling paper",
+      "pre rolled cones",
+      "pre rolled cone",
+      "pre-rolled cones",
+      "pre-rolled cone",
+      "cones and wraps",
+      "cones wraps",
+      "wraps papers",
+      "cones and rolling papers",
+    ],
+  },
+  {
+    name: "Smoking Accessories",
+    handle: "smoking-accessories",
+    aliases: [
+      "smoking accessories",
+      "accessories",
+      "accessory",
+      "lighters",
+      "lighter",
+      "tools",
+      "nicotine pouches",
+      "nicotine pouch",
+      "pouches",
+      "zyn",
+    ],
+  },
+];
+
+
 function normalizeMedusaAssetUrl(url: string) {
   if (!url) {
     return url;
@@ -357,6 +408,41 @@ function getMetadataSpecs(product: MedusaProduct) {
   return specs;
 }
 
+function getCanonicalStorefrontCategories(product: MedusaProduct) {
+  const rawCategoryText = [
+    product.collection?.title,
+    ...(product.categories ?? []).flatMap((category) => [
+      category.name,
+      category.handle,
+    ]),
+  ]
+    .filter((value): value is string => Boolean(value))
+    .map(normalizeCategoryText)
+    .join(" ");
+
+  const category =
+    storefrontCategoryAliases.find((candidate) => {
+      return candidate.aliases.some((alias) =>
+        rawCategoryText.includes(normalizeCategoryText(alias)),
+      );
+    }) ?? defaultStorefrontCategory;
+
+  return [
+    {
+      name: category.name,
+      handle: category.handle,
+    },
+  ];
+}
+
+function normalizeCategoryText(value: string) {
+  return value
+    .toLowerCase()
+    .replace(/&/g, " and ")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
 function toStorefrontProduct(product: MedusaProduct): StorefrontProduct {
   const firstVariant = product.variants?.[0];
   const variants = getStorefrontVariants(product);
@@ -368,12 +454,7 @@ function toStorefrontProduct(product: MedusaProduct): StorefrontProduct {
     : [product.thumbnail]
         .filter((image): image is string => Boolean(image))
         .map(normalizeMedusaAssetUrl);
-  const categories = product.categories?.length
-    ? product.categories.map((category) => ({
-        name: category.name,
-        handle: category.handle,
-      }))
-    : [{ name: "Vapes", handle: "vapes" }];
+  const categories = getCanonicalStorefrontCategories(product);
 
   return {
     id: product.id,

@@ -180,7 +180,7 @@ export default function ProductPage({
 
           <Link
             className="text-black transition-colors hover:text-[var(--ast-global-color-0)]"
-            href={`/product-category/${primaryCategory?.handle ?? "vapes"}`}
+            href={`/shop?q=${encodeURIComponent(primaryCategory?.name ?? "Vapes")}`}
           >
             {primaryCategory?.name ?? "Vapes"}
           </Link>
