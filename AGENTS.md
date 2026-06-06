@@ -47,6 +47,12 @@ BayBlaze's backend-only delivery intelligence service and not as a frontend app.
 - Storefront live delivery UI should prefer IsoChronos ETA snapshots and
   interpolation-friendly data instead of triggering frequent paid route
   refreshes.
+- Public order tracking pages render live delivery maps through
+  `src/app/orders/OrderLiveMap.tsx`. The client map only receives display-safe
+  tracking JSON from `/api/orders/[orderId]/tracking`; server code retrieves the
+  Medusa order, extracts assigned driver metadata and geocoded destination
+  metadata, then calls IsoChronos `POST /orders/live-tracking` with
+  `ISOCHRONOS_BASE_URL`/`ISOCHRONOS_API_URL` and `ISOCHRONOS_ADMIN_TOKEN`.
 - Keep order and delivery UI display rules in the storefront domain layer, but
   keep delivery intelligence, routing cache behavior, and routing-related Google
   Maps spend out of page components.

@@ -1,4 +1,5 @@
 import type { CustomerOrder, CustomerOrderItem } from "@/app/lib/medusa-auth";
+import OrderLiveMap from "./OrderLiveMap";
 import {
   formatDeliveryAddress,
   formatOrderDate,
@@ -166,24 +167,13 @@ function OrderProgress({ order }: { order: CustomerOrder }) {
 
 function DriverMap({ order }: { order: CustomerOrder }) {
   return (
-    <section className="bayblaze-soft-card overflow-hidden bg-[#eef2e9]">
-      <div className="flex items-center justify-between border-b border-[#e8e2d8] bg-white px-5 py-4">
-        <h2 className="text-[20px] font-semibold leading-tight text-black">
-          Driver map
-        </h2>
-        <span className="text-[12px] font-semibold uppercase tracking-[0.1em] text-[var(--ast-global-color-1)]">
-          Live soon
-        </span>
-      </div>
-      <div className="relative min-h-[260px] bg-[linear-gradient(135deg,#edf3e9_25%,#f7f6f2_25%,#f7f6f2_50%,#edf3e9_50%,#edf3e9_75%,#f7f6f2_75%)] bg-[length:38px_38px]">
-        <div className="absolute left-[12%] top-[65%] size-4 rounded-full bg-[var(--ast-global-color-1)] shadow-[0_0_0_8px_rgba(51,104,79,0.12)]" />
-        <div className="absolute right-[16%] top-[24%] size-4 rounded-full bg-black shadow-[0_0_0_8px_rgba(0,0,0,0.1)]" />
-        <div className="absolute left-[15%] right-[19%] top-[35%] h-[3px] origin-left -rotate-[17deg] bg-[var(--ast-global-color-1)]" />
-        <div className="absolute bottom-4 left-5 right-5 whitespace-pre-line rounded-[8px] border border-[#d8d1c6] bg-white/90 px-4 py-3 text-[14px] font-medium leading-[1.4] text-black">
-          {formatDeliveryAddress(order)}
-        </div>
-      </div>
-    </section>
+    <OrderLiveMap
+      fallbackAddress={formatDeliveryAddress(order)}
+      orderReference={
+        order.custom_display_id ??
+        String(order.display_id ?? order.id)
+      }
+    />
   );
 }
 
