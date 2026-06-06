@@ -146,6 +146,7 @@ export default function CheckoutPageClient({
   const [checkoutError, setCheckoutError] = useState("");
   const [orderMessage, setOrderMessage] = useState("");
   const [orderTrackingHref, setOrderTrackingHref] = useState("");
+  const [isOrderComplete, setIsOrderComplete] = useState(false);
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
   const [isRoutingEvaluating, setIsRoutingEvaluating] = useState(false);
   const [isAgeVerifying, setIsAgeVerifying] = useState(false);
@@ -359,6 +360,7 @@ export default function CheckoutPageClient({
     setCheckoutError("");
     setOrderMessage("");
     setOrderTrackingHref("");
+    setIsOrderComplete(false);
     setAgeVerificationMessage("");
     pendingCheckoutRef.current = null;
     setRoutingConfirmation(null);
@@ -512,6 +514,7 @@ export default function CheckoutPageClient({
         ? getRecentOrderSnapshot(data.order, subtotal, items)
         : null;
 
+      setIsOrderComplete(true);
       clearCart();
       clearReferralOffer();
 
@@ -848,7 +851,7 @@ export default function CheckoutPageClient({
             </div>
           </CheckoutPanel>
 
-          {!hasItems ? (
+          {!hasItems && !isOrderComplete ? (
             <p className="text-[16px] font-medium leading-[1.5] text-red-700">
               Add at least one product to your cart before placing an order.
             </p>
@@ -902,7 +905,7 @@ export default function CheckoutPageClient({
           </div>
 
           <div className="px-5 py-6">
-            {!hasItems ? (
+            {!hasItems && !isOrderComplete ? (
               <div className="border border-dashed border-[#bdbdbd] bg-[var(--ast-global-color-4)] px-4 py-8 text-center">
                 <p className="text-[18px] font-medium leading-[1.45] text-black">
                   Your cart is empty.
