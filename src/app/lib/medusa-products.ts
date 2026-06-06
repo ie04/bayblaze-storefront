@@ -317,9 +317,20 @@ function getVariantAvailableQuantity(variant: MedusaVariant) {
     "available_quantity",
   );
 
-  return Number.isInteger(value) && Number(value) >= 0
-    ? Number(value)
-    : undefined;
+  return normalizeInventoryQuantity(value);
+}
+
+function normalizeInventoryQuantity(value: unknown) {
+  if (typeof value === "string" && !value.trim()) {
+    return undefined;
+  }
+
+  const quantity =
+    typeof value === "number" || typeof value === "string"
+      ? Number(value)
+      : Number.NaN;
+
+  return Number.isInteger(quantity) && quantity >= 0 ? quantity : undefined;
 }
 
 function getBrand(product: MedusaProduct) {
