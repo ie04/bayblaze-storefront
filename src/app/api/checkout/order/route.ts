@@ -1,4 +1,5 @@
 import { getCustomerToken } from "@/app/lib/customer-session";
+import { verifyCheckoutAddressValidation } from "@/app/domain/address-validation";
 import {
   formatScheduledDelivery,
   type ValidDeliveryTiming,
@@ -50,6 +51,9 @@ type CheckoutCustomer = {
 };
 
 type CheckoutRequestBody = {
+  address_validation?: {
+    token?: unknown;
+  };
   age_verification?: {
     token?: unknown;
   };
@@ -196,6 +200,15 @@ export async function POST(request: Request) {
     accountCustomer,
     customer,
   );
+  const addressValidation = verifyCheckoutAddressValidation(
+    body.address_validation,
+    customer,
+  );
+
+  if (addressValidation.error) {
+    return jsonError(addressValidation.error, 403);
+  }
+
   const ageVerification = verifyCheckoutAgeVerification(
     body.age_verification,
     customer,
@@ -234,6 +247,7 @@ export async function POST(request: Request) {
   });
   const orderMetadata = {
     ...routingEvaluation.metadata,
+    ...addressValidation.metadata,
     ...ageVerification.metadata,
     ...deliveryMetadata,
     ...referralOfferMetadata,

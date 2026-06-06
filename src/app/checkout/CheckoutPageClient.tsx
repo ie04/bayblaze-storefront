@@ -69,6 +69,7 @@ type CheckoutDeliveryPayload = {
 };
 
 type PendingCheckout = {
+  addressValidationToken: string;
   checkoutCustomer: CheckoutCustomerPayload;
   delivery: CheckoutDeliveryPayload;
   routingToken: string;
@@ -100,8 +101,30 @@ type PreCheckoutRoutingResult =
       token: string;
     };
 
+
+type ValidatedCheckoutAddress = {
+  address: string;
+  city: string;
+  formatted_address?: string;
+  google_place_id?: string;
+  latitude?: number;
+  longitude?: number;
+  state: string;
+  zip: string;
+};
+
+type CheckoutAddressValidationState = {
+  address: ValidatedCheckoutAddress;
+  fingerprint: string;
+  token: string;
+};
+
 const ageCheckerPublicKey =
   process.env.NEXT_PUBLIC_AGECHECKER_KEY?.trim() ?? "";
+const googleMapsBrowserKey =
+  process.env.NEXT_PUBLIC_GOOGLE_MAPS_BROWSER_KEY?.trim() ??
+  process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY?.trim() ??
+  "";
 
 export default function CheckoutPageClient({
   customer,
@@ -122,6 +145,12 @@ export default function CheckoutPageClient({
   const [routingConfirmation, setRoutingConfirmation] =
     useState<RoutingConfirmationState | null>(null);
   const pendingCheckoutRef = useRef<PendingCheckout | null>(null);
+  const addressInputRef = useRef<HTMLInputElement | null>(null);
+  const googleAutocompleteRef = useRef<GooglePlacesAutocomplete | null>(null);
+  const [validatedAddress, setValidatedAddress] =
+    useState<CheckoutAddressValidationState | null>(null);
+  const [isAddressValidating, setIsAddressValidating] = useState(false);
+  const [addressValidationMessage, setAddressValidationMessage] = useState("");
   const [checkoutOpenedAt, setCheckoutOpenedAt] = useState<Date | null>(null);
   const [currentTime, setCurrentTime] = useState<Date | null>(null);
   const [deliveryMode, setDeliveryMode] =
@@ -169,6 +198,7 @@ export default function CheckoutPageClient({
     isCheckoutClockReady &&
     !isPlacingOrder &&
     !isRoutingEvaluating &&
+    !isAddressValidating &&
     !isAgeVerifying &&
     (!isExpressUnavailable || activeDeliveryMode === "scheduled") &&
     (!needsScheduledTime || Boolean(scheduledInputValue));
@@ -194,6 +224,87 @@ export default function CheckoutPageClient({
     };
   }, []);
 
+  useEffect(() => {
+    if (!googleMapsBrowserKey || !addressInputRef.current) {
+      return;
+    }
+
+    let isCancelled = false;
+    let listener: GoogleMapsListener | undefined;
+
+    loadGoogleMapsPlaces(googleMapsBrowserKey)
+      .then(() => {
+        if (
+          isCancelled ||
+          !addressInputRef.current ||
+          !window.google?.maps?.places?.Autocomplete
+        ) {
+          return;
+        }
+
+        const autocomplete = new window.google.maps.places.Autocomplete(
+          addressInputRef.current,
+          {
+            bounds: {
+              east: -82.15,
+              north: 28.18,
+              south: 27.75,
+              west: -82.75,
+            },
+            componentRestrictions: { country: "us" },
+            fields: [
+              "address_components",
+              "formatted_address",
+              "geometry",
+              "place_id",
+            ],
+            strictBounds: false,
+            types: ["address"],
+          },
+        );
+
+        googleAutocompleteRef.current = autocomplete;
+        listener = autocomplete.addListener("place_changed", () => {
+          const place = autocomplete.getPlace();
+          const selectedAddress = getAddressFromGooglePlace(place);
+
+          if (!selectedAddress) {
+            setValidatedAddress(null);
+            setAddressValidationMessage(
+              "Choose a complete street address from the suggestions.",
+            );
+            return;
+          }
+
+          setCheckoutAddressInputs(addressInputRef.current?.form, selectedAddress);
+          setValidatedAddress(null);
+          setAddressValidationMessage("Validating delivery address...");
+
+          validateCheckoutAddress(selectedAddress, {
+            existingValidation: null,
+            setAddressValidation: setValidatedAddress,
+            setAddressValidationMessage,
+            setIsAddressValidating,
+          }).catch(() => {
+            setAddressValidationMessage(
+              "Address validation failed. Please review the address and try again.",
+            );
+          });
+        });
+      })
+      .catch(() => {
+        setAddressValidationMessage(
+          "Address autocomplete could not load. You can still type your address manually.",
+        );
+      });
+
+    return () => {
+      isCancelled = true;
+      listener?.remove?.();
+      googleAutocompleteRef.current = null;
+    };
+  }, []);
+
   async function handlePlaceOrder(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
@@ -211,7 +322,26 @@ export default function CheckoutPageClient({
 
     try {
       const formData = new FormData(event.currentTarget);
-      const checkoutCustomer = getCheckoutCustomerFromFormData(formData);
+      const rawCheckoutCustomer = getCheckoutCustomerFromFormData(formData);
+      const addressValidation = await validateCheckoutAddress(rawCheckoutCustomer, {
+        existingValidation: validatedAddress,
+        setAddressValidation: setValidatedAddress,
+        setAddressValidationMessage,
+        setIsAddressValidating,
+      });
+
+      if ("error" in addressValidation) {
+        setCheckoutError(addressValidation.error);
+        return;
+      }
+
+      const checkoutCustomer = {
+        ...rawCheckoutCustomer,
+        address: addressValidation.address.address,
+        city: addressValidation.address.city,
+        state: addressValidation.address.state,
+        zip: addressValidation.address.zip,
+      };
       const delivery: CheckoutDeliveryPayload = {
         checkout_opened_at: checkoutOpenedAt?.toISOString(),
         mode: activeDeliveryMode,
@@ -235,6 +365,7 @@ export default function CheckoutPageClient({
       }
 
       pendingCheckoutRef.current = {
+        addressValidationToken: addressValidation.token,
         checkoutCustomer,
         delivery,
         routingToken: preflight.token,
@@ -269,9 +400,15 @@ export default function CheckoutPageClient({
     setRoutingConfirmation(null);
   }
 
+  function handleAddressInputChange() {
+    setValidatedAddress(null);
+    setAddressValidationMessage("");
+  }
+
   async function completeCheckout({
     checkoutCustomer,
     delivery,
+    addressValidationToken,
     routingToken,
   }: PendingCheckout) {
     setCheckoutError("");
@@ -299,6 +436,9 @@ export default function CheckoutPageClient({
           "content-type": "application/json",
         },
         body: JSON.stringify({
+          address_validation: {
+            token: addressValidationToken,
+          },
           age_verification: ageVerification.token
             ? { token: ageVerification.token }
             : undefined,
@@ -435,28 +575,75 @@ export default function CheckoutPageClient({
 
           <CheckoutPanel title="Delivery Address">
             <div className="grid gap-5">
-              <CheckoutField label="Street address" name="address" required />
+              <label className="grid gap-2 text-[15px] font-semibold text-black sm:text-[16px]">
+                Street address
+                <input
+                  ref={addressInputRef}
+                  autoComplete="street-address"
+                  className="h-[50px] w-full min-w-0 border border-[#d6d6d6] bg-white px-4 text-[16px] font-normal text-black outline-none transition focus:border-black sm:h-[52px] sm:text-[17px]"
+                  name="address"
+                  onChange={handleAddressInputChange}
+                  placeholder="Start typing your delivery address"
+                  required
+                  type="text"
+                />
+              </label>
 
               <div className="grid gap-5 sm:grid-cols-[minmax(0,1fr)_110px_110px]">
-                <CheckoutField
-                  label="City"
-                  name="city"
-                  defaultValue="Tampa"
-                  required
-                />
-                <CheckoutField
-                  label="State"
-                  name="state"
-                  defaultValue="FL"
-                  required
-                />
-                <CheckoutField
-                  label="ZIP"
-                  name="zip"
-                  inputMode="numeric"
-                  required
-                />
+                <label className="grid gap-2 text-[15px] font-semibold text-black sm:text-[16px]">
+                  City
+                  <input
+                    autoComplete="address-level2"
+                    className="h-[50px] w-full min-w-0 border border-[#d6d6d6] bg-white px-4 text-[16px] font-normal text-black outline-none transition focus:border-black sm:h-[52px] sm:text-[17px]"
+                    defaultValue="Tampa"
+                    name="city"
+                    onChange={handleAddressInputChange}
+                    required
+                    type="text"
+                  />
+                </label>
+
+                <label className="grid gap-2 text-[15px] font-semibold text-black sm:text-[16px]">
+                  State
+                  <input
+                    autoComplete="address-level1"
+                    className="h-[50px] w-full min-w-0 border border-[#d6d6d6] bg-white px-4 text-[16px] font-normal uppercase text-black outline-none transition focus:border-black sm:h-[52px] sm:text-[17px]"
+                    defaultValue="FL"
+                    maxLength={2}
+                    name="state"
+                    onChange={handleAddressInputChange}
+                    required
+                    type="text"
+                  />
+                </label>
+
+                <label className="grid gap-2 text-[15px] font-semibold text-black sm:text-[16px]">
+                  ZIP
+                  <input
+                    autoComplete="postal-code"
+                    className="h-[50px] w-full min-w-0 border border-[#d6d6d6] bg-white px-4 text-[16px] font-normal text-black outline-none transition focus:border-black sm:h-[52px] sm:text-[17px]"
+                    inputMode="numeric"
+                    name="zip"
+                    onChange={handleAddressInputChange}
+                    required
+                    type="text"
+                  />
+                </label>
               </div>
+
+              {addressValidationMessage ? (
+                <p className="border border-[#d7d1c6] bg-white px-4 py-3 text-[15px] font-semibold leading-[1.5] text-black">
+                  {addressValidationMessage}
+                </p>
+              ) : googleMapsBrowserKey ? (
+                <p className="text-[14px] font-medium leading-[1.5] text-[#585858]">
+                  Start typing and choose your address from the Google suggestions.
+                </p>
+              ) : (
+                <p className="text-[14px] font-medium leading-[1.5] text-[#585858]">
+                  Address autocomplete is unavailable until Google Maps is configured.
+                </p>
+              )}
 
               <label className="grid gap-2 text-[15px] font-semibold text-black sm:text-[16px]">
                 Delivery notes
@@ -626,7 +813,9 @@ export default function CheckoutPageClient({
             disabled={!canPlaceOrder}
             className="bayblaze-hero-button h-12 w-full rounded-[3px] bg-[var(--ast-global-color-0)] text-white transition-colors hover:bg-black disabled:cursor-not-allowed disabled:bg-[#b9c8af] sm:w-[260px]"
           >
-            {isRoutingEvaluating
+            {isAddressValidating
+              ? "VALIDATING ADDRESS..."
+              : isRoutingEvaluating
               ? "CHECKING DELIVERY..."
               : isAgeVerifying
               ? "VERIFYING AGE..."
@@ -1044,6 +1233,254 @@ function getFormDataString(formData: FormData, name: string) {
   const value = formData.get(name);
 
   return typeof value === "string" ? value : "";
+}
+
+type GoogleMapsListener = {
+  remove?: () => void;
+};
+
+type GooglePlacesAutocomplete = {
+  addListener: (
+    eventName: "place_changed",
+    handler: () => void,
+  ) => GoogleMapsListener;
+  getPlace: () => GooglePlace;
+};
+
+type GooglePlace = {
+  address_components?: Array<{
+    long_name: string;
+    short_name: string;
+    types: string[];
+  }>;
+  formatted_address?: string;
+  geometry?: {
+    location?: {
+      lat: () => number;
+      lng: () => number;
+    };
+  };
+  name?: string;
+  place_id?: string;
+};
+
+declare global {
+  interface Window {
+    __bayblazeGoogleMapsPlacesPromise?: Promise<void>;
+    google?: {
+      maps?: {
+        places?: {
+          Autocomplete: new (
+            input: HTMLInputElement,
+            options: Record<string, unknown>,
+          ) => GooglePlacesAutocomplete;
+        };
+      };
+    };
+  }
+}
+
+function getAddressFromGooglePlace(place: GooglePlace): ValidatedCheckoutAddress | null {
+  const components = place.address_components ?? [];
+  const streetNumber = getGoogleAddressComponent(components, "street_number");
+  const route = getGoogleAddressComponent(components, "route");
+  const subpremise = getGoogleAddressComponent(components, "subpremise");
+  const city =
+    getGoogleAddressComponent(components, "locality") ||
+    getGoogleAddressComponent(components, "sublocality") ||
+    getGoogleAddressComponent(components, "postal_town");
+  const state = getGoogleAddressComponent(components, "administrative_area_level_1", true);
+  const zip = getGoogleAddressComponent(components, "postal_code");
+  const streetAddress = [streetNumber, route].filter(Boolean).join(" ");
+  const address = subpremise
+    ? `${streetAddress} #${subpremise}`.trim()
+    : streetAddress.trim();
+
+  if (!address || !city || !state || !zip) {
+    return null;
+  }
+
+  const location = place.geometry?.location;
+
+  return {
+    address,
+    city,
+    formatted_address: place.formatted_address,
+    google_place_id: place.place_id,
+    latitude: location?.lat(),
+    longitude: location?.lng(),
+    state,
+    zip,
+  };
+}
+
+function getGoogleAddressComponent(
+  components: NonNullable<GooglePlace["address_components"]>,
+  type: string,
+  shortName = false,
+) {
+  const component = components.find((entry) => entry.types.includes(type));
+
+  return shortName ? component?.short_name ?? "" : component?.long_name ?? "";
+}
+
+function setCheckoutAddressInputs(
+  form: HTMLFormElement | null | undefined,
+  address: ValidatedCheckoutAddress,
+) {
+  setFormInputValue(form, "address", address.address);
+  setFormInputValue(form, "city", address.city);
+  setFormInputValue(form, "state", address.state);
+  setFormInputValue(form, "zip", address.zip);
+}
+
+function setFormInputValue(
+  form: HTMLFormElement | null | undefined,
+  name: string,
+  value: string,
+) {
+  const field = form?.elements.namedItem(name);
+
+  if (field instanceof HTMLInputElement) {
+    field.value = value;
+  }
+}
+
+function loadGoogleMapsPlaces(apiKey: string) {
+  if (typeof window === "undefined") {
+    return Promise.reject(new Error("Google Maps is unavailable."));
+  }
+
+  if (window.google?.maps?.places?.Autocomplete) {
+    return Promise.resolve();
+  }
+
+  if (window.__bayblazeGoogleMapsPlacesPromise) {
+    return window.__bayblazeGoogleMapsPlacesPromise;
+  }
+
+  window.__bayblazeGoogleMapsPlacesPromise = new Promise((resolve, reject) => {
+    const existingScript = document.querySelector<HTMLScriptElement>(
+      'script[data-bayblaze-google-maps="true"]',
+    );
+
+    if (existingScript) {
+      existingScript.addEventListener("load", () => resolve(), { once: true });
+      existingScript.addEventListener(
+        "error",
+        () => reject(new Error("Google Maps failed to load.")),
+        { once: true },
+      );
+      return;
+    }
+
+    const script = document.createElement("script");
+    script.async = true;
+    script.dataset.bayblazeGoogleMaps = "true";
+    script.defer = true;
+    script.onerror = () => reject(new Error("Google Maps failed to load."));
+    script.onload = () => resolve();
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(apiKey)}&libraries=places&v=weekly`;
+
+    document.head.appendChild(script);
+  });
+
+  return window.__bayblazeGoogleMapsPlacesPromise;
+}
+
+async function validateCheckoutAddress(
+  customer: CheckoutCustomerPayload,
+  {
+    existingValidation,
+    setAddressValidation,
+    setAddressValidationMessage,
+    setIsAddressValidating,
+  }: {
+    existingValidation: CheckoutAddressValidationState | null;
+    setAddressValidation: (validation: CheckoutAddressValidationState | null) => void;
+    setAddressValidationMessage: (message: string) => void;
+    setIsAddressValidating: (isValidating: boolean) => void;
+  },
+): Promise<CheckoutAddressValidationState | { error: string }> {
+  const fingerprint = getCheckoutAddressFingerprint(customer);
+
+  if (!fingerprint) {
+    return { error: "Enter a complete delivery address." };
+  }
+
+  if (existingValidation?.fingerprint === fingerprint) {
+    return existingValidation;
+  }
+
+  setIsAddressValidating(true);
+  setAddressValidationMessage("Validating delivery address...");
+
+  try {
+    const response = await fetch("/api/checkout/address/validate", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        customer,
+      }),
+    });
+    const data = (await response.json().catch(() => ({}))) as {
+      address?: ValidatedCheckoutAddress;
+      error?: string;
+      message?: string;
+      token?: string;
+    };
+
+    if (!response.ok || !data.address || !data.token) {
+      setAddressValidation(null);
+      setAddressValidationMessage(
+        data.error ?? "Delivery address could not be verified.",
+      );
+
+      return {
+        error: data.error ?? "Delivery address could not be verified.",
+      };
+    }
+
+    const normalizedFingerprint = getCheckoutAddressFingerprint(data.address);
+    const validation = {
+      address: data.address,
+      fingerprint: normalizedFingerprint || fingerprint,
+      token: data.token,
+    };
+
+    setAddressValidation(validation);
+    setAddressValidationMessage(data.message ?? "Delivery address verified.");
+
+    return validation;
+  } catch {
+    setAddressValidation(null);
+    setAddressValidationMessage(
+      "Address validation is unavailable right now. Please try again.",
+    );
+
+    return {
+      error: "Address validation is unavailable right now. Please try again.",
+    };
+  } finally {
+    setIsAddressValidating(false);
+  }
+}
+
+function getCheckoutAddressFingerprint(customer: CheckoutCustomerPayload) {
+  const address = normalizeCheckoutAddressValue(customer.address);
+  const city = normalizeCheckoutAddressValue(customer.city);
+  const state = normalizeCheckoutAddressValue(customer.state).toUpperCase();
+  const zip = normalizeCheckoutAddressValue(customer.zip).replace(/\D/g, "");
+
+  return address && city && state && zip
+    ? [address.toLowerCase(), city.toLowerCase(), state, zip].join("|")
+    : "";
+}
+
+function normalizeCheckoutAddressValue(value: unknown) {
+  return typeof value === "string" ? value.trim() : "";
 }
 
 function CheckoutPanel({
