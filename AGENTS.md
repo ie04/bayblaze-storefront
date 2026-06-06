@@ -81,6 +81,10 @@ storefront checkout flow, not IsoChronos.
   storefront website referrers plus the Maps JavaScript API and Places API
   (New). Do not use legacy `google.maps.places.Autocomplete` unless the key is
   also intentionally authorized for the legacy Places API.
+- Because `PlaceAutocompleteElement` is a Google web component rather than a
+  normal Tailwind-styled `<input>`, force its checkout host element to
+  `color-scheme: light` and apply the BayBlaze checkout field styling through
+  `bayblaze-google-place-autocomplete`.
 - The server-side Google Address Validation key must be stored as
   `GOOGLE_MAPS_ADDRESS_VALIDATION_API_KEY` and restricted to the Address
   Validation API. Do not expose it through any `NEXT_PUBLIC_*` variable.

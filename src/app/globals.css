@@ -1198,4 +1198,23 @@ body {
     padding: 0.2in !important;
     width: 4in !important;
   }
+}\n
+.bayblaze-google-autocomplete-container,
+.bayblaze-google-place-autocomplete {
+  color-scheme: light;
 }
+
+.bayblaze-google-place-autocomplete {
+  background: #ffffff;
+  border: 1px solid #d6d6d6;
+  color: #000000;
+  display: block;
+  font-family: var(--font-jost), Jost, Arial, sans-serif;
+  min-height: 52px;
+  width: 100%;
+}
+
+.bayblaze-google-place-autocomplete:focus-within {
+  border-color: #000000;
+}
+\n

@@ -255,13 +255,19 @@ export default function CheckoutPageClient({
         }
 
         const placeAutocomplete = new PlaceAutocompleteElement();
+        placeAutocomplete.className = "bayblaze-google-place-autocomplete";
         placeAutocomplete.placeholder = "Start typing your delivery address";
         placeAutocomplete.includedRegionCodes = ["us"];
         placeAutocomplete.locationBias = {
           center: { lat: 27.9506, lng: -82.4572 },
           radius: 45_000,
         };
+        placeAutocomplete.style.backgroundColor = "#ffffff";
+        placeAutocomplete.style.color = "#000000";
+        placeAutocomplete.style.colorScheme = "light";
         placeAutocomplete.style.display = "block";
+        placeAutocomplete.style.fontFamily = "var(--font-jost), Jost, Arial, sans-serif";
+        placeAutocomplete.style.minHeight = "52px";
         placeAutocomplete.style.width = "100%";
 
         handlePlaceSelect = (event: Event) => {
@@ -622,7 +628,7 @@ export default function CheckoutPageClient({
                 {googleMapsBrowserKey ? (
                   <div
                     ref={googleAutocompleteContainerRef}
-                    className={`min-h-[50px] w-full min-w-0 bg-white sm:min-h-[52px] ${
+                    className={`bayblaze-google-autocomplete-container min-h-[50px] w-full min-w-0 bg-white sm:min-h-[52px] ${
                       isPlacesAutocompleteReady ? "block" : "hidden"
                     }`}
                   />
