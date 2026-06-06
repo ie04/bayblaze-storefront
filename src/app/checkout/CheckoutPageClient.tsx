@@ -262,11 +262,7 @@ export default function CheckoutPageClient({
           center: { lat: 27.9506, lng: -82.4572 },
           radius: 45_000,
         };
-        placeAutocomplete.style.backgroundColor = "#ffffff";
-        placeAutocomplete.style.color = "#000000";
-        placeAutocomplete.style.colorScheme = "light";
         placeAutocomplete.style.display = "block";
-        placeAutocomplete.style.fontFamily = "var(--font-jost), Jost, Arial, sans-serif";
         placeAutocomplete.style.minHeight = "52px";
         placeAutocomplete.style.width = "100%";
 
