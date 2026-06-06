@@ -173,6 +173,7 @@ export default function CheckoutPageClient({
     (!isExpressUnavailable || activeDeliveryMode === "scheduled") &&
     (!needsScheduledTime || Boolean(scheduledInputValue));
   const isAgeCheckerEnabled = Boolean(ageCheckerPublicKey);
+  const hasSavedAgeVerification = hasAcceptedAccountAgeVerification(customer);
 
   useEffect(() => {
     const openedAt = new Date();
@@ -280,6 +281,7 @@ export default function CheckoutPageClient({
 
     try {
       const ageVerification = await verifyAgeIfNeeded({
+        accountCustomer: customer,
         customer: checkoutCustomer,
         key: ageCheckerPublicKey,
         setIsAgeVerifying,
@@ -565,10 +567,9 @@ export default function CheckoutPageClient({
             <CheckoutPanel title="Age Verification">
               <div className="border border-[#e7e7e7] bg-white p-5">
                 <p className="text-[17px] font-medium leading-[1.6] text-black">
-                  BayBlaze verifies that every customer is 21+ with
-                  AgeChecker.Net before the order is created. If instant
-                  verification needs help, AgeChecker.Net may ask for a photo
-                  ID inside its secure popup.
+                  {hasSavedAgeVerification
+                    ? "Your successful AgeChecker.Net verification is saved to your BayBlaze account. Future orders on this account can skip the AgeChecker popup."
+                    : "BayBlaze verifies that every customer is 21+ with AgeChecker.Net before the order is created. If instant verification needs help, AgeChecker.Net may ask for a photo ID inside its secure popup."}
                 </p>
                 {ageVerificationMessage ? (
                   <p className="mt-3 text-[15px] font-semibold leading-[1.5] text-[#585858]">
@@ -754,18 +755,60 @@ export default function CheckoutPageClient({
   );
 }
 
+function hasAcceptedAccountAgeVerification(customer?: Customer) {
+  const metadata = customer?.metadata;
+
+  return (
+    metadata?.age_verification_provider === "agechecker.net" &&
+    metadata.age_verification_status === "accepted" &&
+    typeof metadata.age_verification_uuid === "string" &&
+    metadata.age_verification_uuid.length === 32 &&
+    typeof metadata.age_verified_at === "string"
+  );
+}
+
+function canUseSavedAgeVerification(
+  accountCustomer: Customer | undefined,
+  checkoutCustomer: CheckoutCustomerPayload,
+) {
+  if (!hasAcceptedAccountAgeVerification(accountCustomer)) {
+    return false;
+  }
+
+  const accountEmail = normalizeEmail(accountCustomer?.email);
+  const checkoutEmail = normalizeEmail(checkoutCustomer.email);
+  const metadataEmail = normalizeEmail(accountCustomer?.metadata?.age_verified_email);
+
+  if (!accountEmail || !checkoutEmail || accountEmail !== checkoutEmail) {
+    return false;
+  }
+
+  return !metadataEmail || metadataEmail === accountEmail;
+}
+
+function normalizeEmail(value: unknown) {
+  return typeof value === "string" ? value.trim().toLowerCase() : "";
+}
+
 async function verifyAgeIfNeeded({
+  accountCustomer,
   customer,
   key,
   setIsAgeVerifying,
   setMessage,
 }: {
+  accountCustomer?: Customer;
   customer: CheckoutCustomerPayload;
   key: string;
   setIsAgeVerifying: (isVerifying: boolean) => void;
   setMessage: (message: string) => void;
 }): Promise<{ error?: string; token?: string }> {
   if (!key) {
+    return {};
+  }
+
+  if (canUseSavedAgeVerification(accountCustomer, customer)) {
+    setMessage("Age verification is saved to your BayBlaze account.");
     return {};
   }
 

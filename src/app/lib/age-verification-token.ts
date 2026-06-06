@@ -5,6 +5,7 @@ import {
   type AgeVerificationCustomer,
   type AgeVerificationMetadata,
   getAgeVerificationCustomerFingerprint,
+  getReusableAgeVerificationMetadata,
   normalizeAgeVerificationCustomer,
 } from "@/app/domain/age-verification";
 import { isAgeCheckerConfigured } from "@/app/lib/agechecker-net";
@@ -70,9 +71,16 @@ export function createAgeVerificationToken({
 export function verifyCheckoutAgeVerification(
   ageVerification: CheckoutAgeVerificationInput | undefined,
   customer: AgeVerificationCustomer,
+  reusableMetadata?: AgeVerificationMetadata | null,
 ): VerifyAgeVerificationTokenResult {
   if (!isAgeCheckerConfigured()) {
     return { metadata: {} };
+  }
+
+  const savedMetadata = getReusableAgeVerificationMetadata(reusableMetadata);
+
+  if (savedMetadata) {
+    return { metadata: savedMetadata };
   }
 
   if (
@@ -116,7 +124,9 @@ export function verifyCheckoutAgeVerification(
       age_verification_provider: AGE_VERIFICATION_PROVIDER,
       age_verification_status: payload.status,
       age_verification_uuid: payload.uuid,
+      age_verification_source: "checkout",
       age_verified_at: payload.verified_at,
+      age_verified_email: normalizedCustomer.email,
     },
   };
 }

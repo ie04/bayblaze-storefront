@@ -4,6 +4,10 @@ import {
   type ValidDeliveryTiming,
   validateDeliveryTiming,
 } from "@/app/domain/delivery-scheduling";
+import {
+  getReusableAgeVerificationMetadata,
+  normalizeAgeVerificationCustomer,
+} from "@/app/domain/age-verification";
 import { normalizePreCheckoutRoutingItems } from "@/app/domain/pre-checkout-routing";
 import {
   getReferralOfferDiscountAmount,
@@ -59,6 +63,16 @@ type CheckoutRequestBody = {
   routing?: {
     token?: unknown;
   };
+};
+
+type MedusaCustomer = {
+  id: string;
+  email?: string | null;
+  metadata?: Record<string, unknown> | null;
+};
+
+type MedusaCustomerResponse = {
+  customer: MedusaCustomer;
 };
 
 type MedusaCart = {
@@ -174,16 +188,24 @@ export async function POST(request: Request) {
     return jsonError(routingEvaluation.error, 403);
   }
 
+  const customerToken = await getCustomerToken();
+  const accountCustomer = customerToken
+    ? await retrieveAuthenticatedCustomer(customerToken).catch(() => null)
+    : null;
+  const cachedAgeVerification = getAccountAgeVerificationMetadata(
+    accountCustomer,
+    customer,
+  );
   const ageVerification = verifyCheckoutAgeVerification(
     body.age_verification,
     customer,
+    cachedAgeVerification,
   );
 
   if (ageVerification.error) {
     return jsonError(ageVerification.error, 403);
   }
 
-  const customerToken = await getCustomerToken();
   const deliveryMetadata = getDeliveryMetadata(deliveryTiming);
   const referralOffer = getReferralOfferFromCookieHeader(
     request.headers.get("cookie"),
@@ -532,6 +554,44 @@ async function createPaymentCollection(
     );
 
   return paymentCollection;
+}
+
+async function retrieveAuthenticatedCustomer(customerToken: string) {
+  const { customer } = await medusaStoreRequest<MedusaCustomerResponse>(
+    "/store/customers/me",
+    {},
+    customerToken,
+  );
+
+  return customer;
+}
+
+function getAccountAgeVerificationMetadata(
+  accountCustomer: MedusaCustomer | null,
+  checkoutCustomer: CheckoutCustomer,
+) {
+  const metadata = getReusableAgeVerificationMetadata(accountCustomer?.metadata);
+  const normalizedCustomer = normalizeAgeVerificationCustomer(checkoutCustomer);
+  const accountEmail = accountCustomer?.email?.trim().toLowerCase();
+
+  if (!metadata || !normalizedCustomer || !accountCustomer || !accountEmail) {
+    return null;
+  }
+
+  if (normalizedCustomer.email !== accountEmail) {
+    return null;
+  }
+
+  if (metadata.age_verified_email && metadata.age_verified_email !== accountEmail) {
+    return null;
+  }
+
+  return {
+    ...metadata,
+    age_verification_source: "account" as const,
+    age_verified_account_id: accountCustomer.id,
+    age_verified_email: accountEmail,
+  };
 }
 
 async function customerHasExistingOrders(customerToken: string) {

@@ -29,8 +29,56 @@ export type AgeVerificationMetadata = {
   age_verification_provider?: typeof AGE_VERIFICATION_PROVIDER;
   age_verification_status?: "accepted";
   age_verification_uuid?: string;
+  age_verification_source?: "account" | "checkout";
+  age_verified_account_id?: string;
   age_verified_at?: string;
+  age_verified_email?: string;
 };
+
+export function getReusableAgeVerificationMetadata(
+  metadata?: Record<string, unknown> | null,
+): AgeVerificationMetadata | null {
+  if (!metadata) {
+    return null;
+  }
+
+  const provider = metadata.age_verification_provider;
+  const status = metadata.age_verification_status;
+  const uuid = metadata.age_verification_uuid;
+  const verifiedAt = metadata.age_verified_at;
+
+  if (
+    provider !== AGE_VERIFICATION_PROVIDER ||
+    status !== "accepted" ||
+    typeof uuid !== "string" ||
+    uuid.length !== 32 ||
+    typeof verifiedAt !== "string" ||
+    Number.isNaN(Date.parse(verifiedAt))
+  ) {
+    return null;
+  }
+
+  const source = metadata.age_verification_source;
+  const accountId = metadata.age_verified_account_id;
+  const email = metadata.age_verified_email;
+
+  return {
+    age_verification_provider: AGE_VERIFICATION_PROVIDER,
+    age_verification_status: "accepted",
+    age_verification_uuid: uuid,
+    age_verification_source:
+      source === "account" || source === "checkout" ? source : undefined,
+    age_verified_account_id:
+      typeof accountId === "string" && accountId.trim()
+        ? accountId.trim()
+        : undefined,
+    age_verified_at: verifiedAt,
+    age_verified_email:
+      typeof email === "string" && email.trim()
+        ? email.trim().toLowerCase()
+        : undefined,
+  };
+}
 
 const requiredCustomerFields: Array<keyof NormalizedAgeVerificationCustomer> = [
   "first_name",

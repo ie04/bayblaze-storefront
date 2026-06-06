@@ -1,4 +1,9 @@
-import { AGECHECKER_SUPPORT_EMAIL } from "@/app/domain/age-verification";
+import {
+  AGE_VERIFICATION_PROVIDER,
+  AGECHECKER_SUPPORT_EMAIL,
+  normalizeAgeVerificationCustomer,
+} from "@/app/domain/age-verification";
+import { getCustomerToken } from "@/app/lib/customer-session";
 import { validateAgeCheckerUuid } from "@/app/lib/agechecker-net";
 import { createAgeVerificationToken } from "@/app/lib/age-verification-token";
 
@@ -15,6 +20,20 @@ type AgeVerificationRequestBody = {
   };
   uuid?: unknown;
 };
+
+type MedusaCustomerResponse = {
+  customer: {
+    id: string;
+    email?: string | null;
+    metadata?: Record<string, unknown> | null;
+  };
+};
+
+const backendUrl =
+  process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL?.replace(/\/$/, "") ??
+  "http://localhost:9000";
+
+const publishableKey = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY;
 
 export async function POST(request: Request) {
   let body: AgeVerificationRequestBody;
@@ -39,18 +58,116 @@ export async function POST(request: Request) {
       );
     }
 
+    const token = createAgeVerificationToken({
+      customer: body.customer ?? {},
+      uuid: body.uuid,
+    });
+
+    await saveAcceptedAgeVerificationForAuthenticatedCustomer(
+      body.customer ?? {},
+      body.uuid,
+    ).catch(() => undefined);
+
     return Response.json({
-      provider: "agechecker.net",
+      provider: AGE_VERIFICATION_PROVIDER,
       status: "accepted",
-      token: createAgeVerificationToken({
-        customer: body.customer ?? {},
-        uuid: body.uuid,
-      }),
+      token,
       uuid: body.uuid,
     });
   } catch (error) {
     return jsonError(getErrorMessage(error), 502);
   }
+}
+
+async function saveAcceptedAgeVerificationForAuthenticatedCustomer(
+  customer: NonNullable<AgeVerificationRequestBody["customer"]>,
+  uuid: string,
+) {
+  const customerToken = await getCustomerToken();
+
+  if (!customerToken) {
+    return;
+  }
+
+  const normalizedCustomer = normalizeAgeVerificationCustomer(customer);
+
+  if (!normalizedCustomer) {
+    return;
+  }
+
+  const { customer: accountCustomer } =
+    await medusaStoreRequest<MedusaCustomerResponse>(
+      "/store/customers/me",
+      {},
+      customerToken,
+    );
+  const accountEmail = accountCustomer.email?.trim().toLowerCase();
+
+  if (!accountEmail || accountEmail !== normalizedCustomer.email) {
+    return;
+  }
+
+  const existingMetadata = isPlainObject(accountCustomer.metadata)
+    ? accountCustomer.metadata
+    : {};
+  const verifiedAt = new Date().toISOString();
+
+  await medusaStoreRequest<MedusaCustomerResponse>(
+    "/store/customers/me",
+    {
+      method: "POST",
+      body: {
+        metadata: {
+          ...existingMetadata,
+          age_verification_provider: AGE_VERIFICATION_PROVIDER,
+          age_verification_status: "accepted",
+          age_verification_uuid: uuid,
+          age_verification_source: "account",
+          age_verified_account_id: accountCustomer.id,
+          age_verified_at: verifiedAt,
+          age_verified_email: normalizedCustomer.email,
+        },
+      },
+    },
+    customerToken,
+  );
+}
+
+async function medusaStoreRequest<T>(
+  path: string,
+  init: Omit<RequestInit, "body"> & { body?: Record<string, unknown> } = {},
+  customerToken?: string,
+) {
+  const headers = new Headers(init.headers);
+
+  if (publishableKey) {
+    headers.set("x-publishable-api-key", publishableKey);
+  }
+
+  if (customerToken) {
+    headers.set("authorization", `Bearer ${customerToken}`);
+  }
+
+  if (init.body) {
+    headers.set("content-type", "application/json");
+  }
+
+  const response = await fetch(`${backendUrl}${path}`, {
+    ...init,
+    body: init.body ? JSON.stringify(init.body) : undefined,
+    cache: "no-store",
+    headers,
+  });
+
+  if (!response.ok) {
+    throw new Error("Medusa customer age verification metadata update failed.");
+  }
+
+  return (await response.json()) as T;
+}
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
 }
 
 function getAgeCheckerStatusMessage(status?: string, reason?: string) {
