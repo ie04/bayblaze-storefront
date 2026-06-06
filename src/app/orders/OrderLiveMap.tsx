@@ -34,7 +34,6 @@ type OrderTrackingPayload = {
 
 declare global {
   interface Window {
-    google?: any;
     __bayblazeInitTrackingMap?: () => void;
   }
 }
@@ -282,22 +281,29 @@ function renderTrackingMap({
   }
 }
 
-function getRoutePath(google: any, tracking: OrderTrackingPayload) {
+type MapPoint = {
+  lat: () => number;
+  lng: () => number;
+};
+
+function getRoutePath(google: any, tracking: OrderTrackingPayload): MapPoint[] {
   const encodedPolyline = tracking.route?.encodedPolyline;
 
   if (
     encodedPolyline &&
     google.maps.geometry?.encoding?.decodePath
   ) {
-    return google.maps.geometry.encoding.decodePath(encodedPolyline);
+    return google.maps.geometry.encoding.decodePath(encodedPolyline) as MapPoint[];
   }
 
   return [];
 }
 
 function loadGoogleMaps(key: string) {
-  if (window.google?.maps) {
-    return Promise.resolve(window.google);
+  const currentGoogle = getWindowGoogle();
+
+  if (currentGoogle?.maps) {
+    return Promise.resolve(currentGoogle);
   }
 
   if (googleMapsPromise) {
@@ -308,7 +314,7 @@ function loadGoogleMaps(key: string) {
     const existingScript = document.getElementById("bayblaze-google-maps-tracking");
 
     window.__bayblazeInitTrackingMap = () => {
-      resolve(window.google);
+      resolve(getWindowGoogle());
     };
 
     if (existingScript) {
@@ -327,6 +333,11 @@ function loadGoogleMaps(key: string) {
   });
 
   return googleMapsPromise;
+}
+
+
+function getWindowGoogle() {
+  return (window as typeof window & { google?: any }).google;
 }
 
 function getTrackingStatusCopy(
