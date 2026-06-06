@@ -276,10 +276,11 @@ export default function CheckoutPageClient({
         setIsPlacesAutocompleteReady(true);
         setAddressValidationMessage("");
       })
-      .catch(() => {
+      .catch((error) => {
+        console.error("[BayBlaze] Google Places autocomplete failed to load.", error);
         setIsPlacesAutocompleteReady(false);
         setAddressValidationMessage(
-          "Address autocomplete could not load. You can still type your address manually.",
+          "Address autocomplete could not load. Check the browser console for the BayBlaze Google Places loader error, or type your address manually.",
         );
       });
 
@@ -1348,10 +1349,12 @@ type GoogleLatLngValue = {
 declare global {
   interface Window {
     __bayblazeGoogleMapsPlacesPromise?: Promise<GoogleMapsPlacesLibrary>;
+    __bayblazeInitGoogleMaps?: () => void;
+    gm_authFailure?: () => void;
     google?: {
       maps?: {
         importLibrary?: (
-          libraryName: "places",
+          libraryName: string,
         ) => Promise<GoogleMapsPlacesLibrary>;
         places?: {
           PlaceAutocompleteElement?: new (
@@ -1454,6 +1457,11 @@ function loadGoogleMapsPlaces(apiKey: string) {
     return window.__bayblazeGoogleMapsPlacesPromise;
   }
 
+  if (window.google?.maps?.places?.PlaceAutocompleteElement) {
+    window.__bayblazeGoogleMapsPlacesPromise = getGooglePlacesLibrary();
+    return window.__bayblazeGoogleMapsPlacesPromise;
+  }
+
   if (window.google?.maps?.importLibrary) {
     window.__bayblazeGoogleMapsPlacesPromise = getGooglePlacesLibrary();
     return window.__bayblazeGoogleMapsPlacesPromise;
@@ -1463,30 +1471,94 @@ function loadGoogleMapsPlaces(apiKey: string) {
     const existingScript = document.querySelector<HTMLScriptElement>(
       'script[data-bayblaze-google-maps="true"]',
     );
+    const previousAuthFailure = window.gm_authFailure;
+    let timeoutId: number | undefined;
 
-    function resolvePlacesLibrary() {
-      getGooglePlacesLibrary().then(resolve).catch(reject);
+    function cleanup() {
+      if (timeoutId) {
+        window.clearTimeout(timeoutId);
+      }
+
+      if (window.__bayblazeInitGoogleMaps === resolvePlacesLibrary) {
+        delete window.__bayblazeInitGoogleMaps;
+      }
+
+      window.gm_authFailure = previousAuthFailure;
     }
 
+    function fail(error: Error) {
+      cleanup();
+      window.__bayblazeGoogleMapsPlacesPromise = undefined;
+      reject(error);
+    }
+
+    function resolvePlacesLibrary() {
+      getGooglePlacesLibrary()
+        .then((library) => {
+          cleanup();
+          resolve(library);
+        })
+        .catch((error: unknown) => {
+          fail(
+            error instanceof Error
+              ? error
+              : new Error("Google Places library could not initialize."),
+          );
+        });
+    }
+
+    window.__bayblazeInitGoogleMaps = resolvePlacesLibrary;
+    window.gm_authFailure = () => {
+      previousAuthFailure?.();
+      fail(
+        new Error(
+          "Google Maps rejected the browser key. Check API restrictions, referrer restrictions, and billing.",
+        ),
+      );
+    };
+
+    timeoutId = window.setTimeout(() => {
+      fail(
+        new Error(
+          "Google Maps timed out before loading the Places autocomplete widget.",
+        ),
+      );
+    }, 12_000);
+
     if (existingScript) {
+      if (window.google?.maps) {
+        resolvePlacesLibrary();
+        return;
+      }
+
       existingScript.addEventListener("load", resolvePlacesLibrary, {
         once: true,
       });
       existingScript.addEventListener(
         "error",
-        () => reject(new Error("Google Maps failed to load.")),
+        () => fail(new Error("Google Maps JavaScript API script failed to load.")),
         { once: true },
       );
       return;
     }
 
+    const params = new URLSearchParams({
+      callback: "__bayblazeInitGoogleMaps",
+      key: apiKey,
+      libraries: "places",
+      loading: "async",
+      region: "US",
+      v: "weekly",
+    });
+
     const script = document.createElement("script");
     script.async = true;
     script.dataset.bayblazeGoogleMaps = "true";
     script.defer = true;
-    script.onerror = () => reject(new Error("Google Maps failed to load."));
-    script.onload = resolvePlacesLibrary;
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(apiKey)}&v=weekly&loading=async`;
+    script.onerror = () => {
+      fail(new Error("Google Maps JavaScript API script failed to load."));
+    };
+    script.src = `https://maps.googleapis.com/maps/api/js?${params.toString()}`;
 
     document.head.appendChild(script);
   });
@@ -1501,7 +1573,9 @@ async function getGooglePlacesLibrary(): Promise<GoogleMapsPlacesLibrary> {
     window.google?.maps?.places?.PlaceAutocompleteElement;
 
   if (!PlaceAutocompleteElement) {
-    throw new Error("Google Places Autocomplete is unavailable.");
+    throw new Error(
+      "Google Places Autocomplete is unavailable after loading Maps JavaScript. Confirm Places API (New) is enabled and authorized on NEXT_PUBLIC_GOOGLE_MAPS_BROWSER_KEY.",
+    );
   }
 
   return { PlaceAutocompleteElement };
