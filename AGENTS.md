@@ -34,19 +34,22 @@ IsoChronos lives in the sibling repository `bayblaze-isochronos`. Treat it as
 BayBlaze's backend-only delivery intelligence service and not as a frontend app.
 
 - The storefront should consume delivery intelligence from IsoChronos through
-  backend/API boundaries rather than calling Google Maps APIs directly from
-  browser code.
-- Never expose Google Maps API keys or paid Google Maps request logic in
-  storefront client components.
-- Address autocomplete, geocoding, routing, live ETA, order partitioning, and
-  Google Maps usage guardrails belong in IsoChronos or a backend that delegates
-  to IsoChronos.
+  backend/API boundaries; IsoChronos remains the authority for delivery
+  feasibility, routing, ETA, driver positioning, route sequencing, and Google
+  Maps cost controls for routing.
+- Checkout address entry is the one intentional storefront-side Google Maps UI
+  exception: the browser may load Places Autocomplete with
+  `NEXT_PUBLIC_GOOGLE_MAPS_BROWSER_KEY`, restricted to allowed website referrers
+  and only the Maps JavaScript API / Places API.
+- Raw address validation should happen server-side in the storefront checkout
+  API through Google Address Validation, using a server-only key. Do not put the
+  Address Validation key in client components.
 - Storefront live delivery UI should prefer IsoChronos ETA snapshots and
   interpolation-friendly data instead of triggering frequent paid route
   refreshes.
 - Keep order and delivery UI display rules in the storefront domain layer, but
-  keep delivery intelligence, coordinates, cache behavior, and Google Maps cost
-  controls out of page components.
+  keep delivery intelligence, routing cache behavior, and routing-related Google
+  Maps spend out of page components.
 - Checkout must run IsoChronos Routing's pre-checkout delivery eligibility
   evaluation before triggering AgeChecker.Net or creating/finalizing a Medusa
   order. Rejected evaluations should show customer-facing coverage/inventory
@@ -65,6 +68,32 @@ BayBlaze's backend-only delivery intelligence service and not as a frontend app.
   units and must carry explicit Medusa-owned `productId`, `variantId`,
   `inventoryState`, `availableQuantity`, and requested `quantity`. Do not infer
   missing inventory state or quantity in storefront code.
+
+### Checkout Address Validation
+
+Checkout address autocomplete and canonical address validation are owned by the
+storefront checkout flow, not IsoChronos.
+
+- The checkout page may use Google Places Autocomplete only for customer address
+  entry UX. The public browser key must be stored as
+  `NEXT_PUBLIC_GOOGLE_MAPS_BROWSER_KEY` and restricted in Google Cloud to the
+  storefront website referrers plus the Maps JavaScript API and Places API.
+- The server-side Google Address Validation key must be stored as
+  `GOOGLE_MAPS_ADDRESS_VALIDATION_API_KEY` and restricted to the Address
+  Validation API. Do not expose it through any `NEXT_PUBLIC_*` variable.
+- The checkout address validation signing secret is
+  `ADDRESS_VALIDATION_TOKEN_SECRET`. Use a long random server-only value and set
+  it in local `.env.local` plus the deployment environment, such as Vercel.
+- `src/app/api/checkout/address/validate/route.ts` validates the delivery
+  address and returns a signed checkout address token. The Medusa order route
+  must verify this token before creating/finalizing an order when address
+  validation is configured.
+- The address-validation helper should accept address-shaped payloads, not only
+  full checkout customer payloads, because Google Places selections do not
+  include checkout-only fields such as delivery notes.
+- IsoChronos should receive already-normalized address/coordinate inputs for
+  feasibility/routing. It should not own the checkout Places widget or raw
+  customer address form UX.
 
 ### AgeChecker.Net Integration
 
@@ -87,6 +116,82 @@ deployments.
   sensitive identity document data in the storefront or Medusa metadata.
 - `AGE_VERIFICATION_TOKEN_SECRET` should be a long server-only random value. If
   omitted, the storefront falls back to `EMAIL_VERIFICATION_SECRET`.
+- Successful AgeChecker.Net verification should be reusable for the signed-in
+  Medusa customer account so future orders on the same account/email can skip
+  the AgeChecker popup and avoid repeated verification fees.
+- Account-level age verification metadata should record only the minimum status
+  needed for reuse, such as provider/status/UUID/timestamp/email. Do not store
+  DOB, ID images, or sensitive identity document data in Medusa customer, cart,
+  or order metadata.
+- Checkout should still require AgeChecker for guests or for signed-in users
+  whose checkout email does not match the saved verified account email.
+
+### Inventory and Cart Availability
+
+Medusa remains the source of truth for product variants and inventory-like
+storefront availability metadata.
+
+- Variant metadata may arrive from Medusa as numbers or numeric strings. Normalize
+  `availableQuantity` defensively, and treat `0` as a valid explicit value, not
+  as missing metadata.
+- Every cart item must carry Medusa-owned `productId`, `variantId`,
+  `inventoryState`, `availableQuantity`, and requested `quantity` so checkout and
+  IsoChronos can verify availability at the variant level.
+- Product pages should show stock status only after a customer selects a variant
+  for multi-variant products. Single-variant products may show stock status
+  immediately.
+- `Out of Stock` means Medusa/storefront availability is actually `0`. Do not
+  display `Out of Stock` merely because the shopper already added every
+  available unit to their cart; use separate copy such as `Max in Cart`.
+- Checkout should reject stale cart items whose inventory metadata is missing or
+  unverifiable and ask the customer to re-add the product so BayBlaze can confirm
+  current availability.
+- Storefront code should not fake inventory state or quantity. Missing
+  `inventoryState` or `availableQuantity` should be treated as a data/config
+  problem that must be fixed in Medusa or the inventory app.
+
+### Catalog, Categories, and Shop Data
+
+The storefront catalog must stay Medusa-owned. Do not reintroduce static `/shop`
+product arrays, stale WordPress image URLs, or product data duplicated inside page
+components.
+
+- `/shop` should load product cards from Medusa through
+  `src/app/lib/medusa-products.ts`, currently via `getShopProducts()`.
+- Product images shown on `/shop` should come from Medusa product
+  thumbnail/images after `normalizeMedusaAssetUrl()`, not hardcoded
+  `bayblaze.net/wp-content/uploads/...` URLs.
+- Customer-facing storefront categories are intentionally limited to exactly:
+  `Vapes`, `Cones & Wraps`, and `Smoking Accessories`.
+- All visible product/category UI should collapse Medusa category aliases into
+  one of those three buckets. For example, `Disposable Vapes` maps to `Vapes`;
+  `Cones & Rolling Papers`, `Pre-Rolled Cones`, `Wraps & Papers`, and similar
+  rolling terms map to `Cones & Wraps`; `Lighters`, `Accessories`, and tool/add-on
+  categories map to `Smoking Accessories`.
+- Homepage category carousel data lives in
+  `src/app/domain/home-carousels.ts` and should use the same three category
+  buckets as `/shop`.
+- Product page breadcrumbs should route customers back to `/shop?q=...` for the
+  canonical storefront bucket rather than old `/product-category/...` paths.
+
+### Checkout Flow and UI Rules
+
+Checkout should preserve a clear, low-friction customer sequence:
+
+1. Validate/canonicalize the delivery address.
+2. Run IsoChronos pre-checkout delivery eligibility.
+3. Show the delivery details confirmation modal.
+4. Only after `I Confirm`, run AgeChecker if needed.
+5. Only after successful age verification/reuse, create the Medusa order.
+
+Additional UI constraints:
+
+- The delivery confirmation modal button should not use overly wide hero-button
+  letter spacing; keep `I Confirm` readable as normal button text.
+- Avoid spending AgeChecker verifications before routing eligibility and customer
+  delivery confirmation succeed.
+- Address validation, routing, AgeChecker, and order creation should expose
+  distinct loading/error copy so failures are easy to diagnose.
 
 ### Storefront Domain Model
 
