@@ -35,21 +35,7 @@ export async function GET(
   const orderReference = getOrderReference(order) || order.id;
   const driverUid = getAssignedDriverUid(order);
   const customerLocation = getCustomerLocation(order);
-  const customerAddress = formatDeliveryAddress(order);
-
-  if (!driverUid) {
-    return Response.json({
-      tracking: {
-        orderId: order.id,
-        orderReference,
-        status: "awaiting_assignment",
-        message: "Driver assignment pending.",
-        customerLocation: customerLocation
-          ? { ...customerLocation, address: customerAddress }
-          : null,
-      },
-    });
-  }
+  const customerAddress = getCustomerAddress(order);
 
   if (!isochronosBaseUrl || !isochronosAdminToken) {
     return Response.json({
@@ -77,7 +63,7 @@ export async function GET(
       body: JSON.stringify({
         orderId: order.id,
         orderReference,
-        driverUid,
+        driverUid: driverUid || undefined,
         destination: customerLocation
           ? { ...customerLocation, address: customerAddress }
           : undefined,
@@ -104,6 +90,23 @@ export async function GET(
 
   const payload = (await response.json()) as IsoChronosTrackingResponse;
   return Response.json(payload);
+}
+
+
+function getCustomerAddress(order: CustomerOrder) {
+  const metadata = order.metadata ?? {};
+  const formattedAddress = readString(
+    metadata.address_validation_formatted_address,
+    metadata.delivery_address_formatted,
+    metadata.customer_address,
+  );
+  const deliveryAddress = formatDeliveryAddress(order);
+
+  if (deliveryAddress && deliveryAddress !== "Address unavailable") {
+    return deliveryAddress;
+  }
+
+  return formattedAddress || deliveryAddress;
 }
 
 function getAssignedDriverUid(order: CustomerOrder) {
