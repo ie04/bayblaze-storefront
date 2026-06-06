@@ -7,6 +7,7 @@ import {
   formatOrderTotal,
   getOrderItemTotal,
   getOrderItemTitle,
+  getOrderLifecycleStatus,
   getOrderRecipient,
   getScheduledDeliveryDisplay,
   getVariantLabel,
@@ -24,6 +25,7 @@ export default function OrderTrackingView({
   order: CustomerOrder;
 }) {
   const isComplete = isCompletedOrder(order);
+  const lifecycleStatus = getOrderLifecycleStatus(order);
 
   return (
     <section
@@ -43,13 +45,13 @@ export default function OrderTrackingView({
             {formatOrderNumber(order)}
           </h1>
           <p className="mt-3 text-[16px] font-medium leading-[1.5] text-black">
-            {formatOrderStatus(order.status)} - {formatOrderDate(order.created_at)}
+            {formatOrderStatus(lifecycleStatus)} - {formatOrderDate(order.created_at)}
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
           <span className="bayblaze-soft-chip bg-white px-3 py-2 text-[12px] font-semibold uppercase tracking-[0.1em]">
-            {isComplete ? "Complete" : "Pending"}
+            {isComplete ? formatOrderStatus(lifecycleStatus) : "Pending"}
           </span>
           {onClose ? (
             <button
@@ -289,6 +291,10 @@ function OrderItemRow({
 }
 
 function getCurrentDeliveryStep(order: CustomerOrder) {
+  if (getOrderLifecycleStatus(order) === "completed") {
+    return "delivered";
+  }
+
   if (order.fulfillment_status === "shipped") {
     return "out_for_delivery";
   }

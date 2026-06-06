@@ -57,6 +57,25 @@ export function formatOrderStatus(status?: string | null) {
     .join(" ");
 }
 
+export function getOrderLifecycleStatus(order: CustomerOrder) {
+  const deliveryStatus = readOrderMetadataString(
+    order,
+    "bayblaze_delivery_status",
+    "delivery_status",
+    "driver_delivery_status",
+  ).toLowerCase();
+
+  if (deliveryStatus === "completed") {
+    return "completed";
+  }
+
+  if (deliveryStatus === "cancelled" || deliveryStatus === "canceled") {
+    return "canceled";
+  }
+
+  return order.status ?? "pending";
+}
+
 export function getScheduledDeliveryDisplay(order: CustomerOrder) {
   const display = order.metadata?.scheduled_delivery_display;
 
@@ -125,7 +144,9 @@ export function getOrderTimestamp(order: CustomerOrder) {
 }
 
 export function isCompletedOrder(order: CustomerOrder) {
-  return ["archived", "canceled", "completed"].includes(order.status ?? "");
+  return ["archived", "canceled", "completed"].includes(
+    getOrderLifecycleStatus(order),
+  );
 }
 
 export function sortOrdersByNewest(orders: CustomerOrder[]) {
@@ -182,4 +203,17 @@ export function formatDeliveryAddress(order: CustomerOrder) {
   ]
     .filter(Boolean)
     .join(" ");
+}
+
+function readOrderMetadataString(order: CustomerOrder, ...keys: string[]) {
+  const metadata = order.metadata ?? {};
+
+  for (const key of keys) {
+    const value = metadata[key];
+    if (typeof value === "string" && value.trim()) {
+      return value.trim();
+    }
+  }
+
+  return "";
 }

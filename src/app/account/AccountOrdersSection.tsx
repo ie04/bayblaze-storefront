@@ -13,6 +13,7 @@ import {
   formatOrderNumber,
   formatOrderStatus,
   formatOrderTotal,
+  getOrderLifecycleStatus,
   getOrderItemTitle,
   getOrderItemTotal,
   getVariantLabel,
@@ -179,7 +180,7 @@ export default function AccountOrdersSection({
 
                     <span className="flex shrink-0 flex-col items-end gap-2">
                       <span className="bayblaze-soft-chip px-2.5 py-1 text-[12px] font-semibold uppercase tracking-[0.1em]">
-                        {formatOrderStatus(order.status)}
+                        {formatOrderStatus(getOrderLifecycleStatus(order))}
                       </span>
                       {isHighlighted ? (
                         <span className="text-[12px] font-semibold uppercase tracking-[0.1em] text-[var(--ast-global-color-1)]">

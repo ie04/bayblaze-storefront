@@ -121,6 +121,11 @@ display and data-shaping rules inside page components.
 - Money/date/status presentation for orders belongs to the domain layer. Use
   `formatOrderTotal`, `formatOrderDate`, and `formatOrderStatus` rather than
   creating local `Intl` formatters for order UI.
+- Customer-visible order lifecycle should use `getOrderLifecycleStatus(order)`
+  from `src/app/domain/orders.ts`, not raw `order.status`, because driver
+  completion/cancellation is stored in Medusa order metadata
+  `bayblaze_delivery_status` and should move orders into completed/canceled
+  UI buckets.
 - Delivery-facing order copy belongs to the domain layer. Use
   `getOrderRecipient(order)` and `formatDeliveryAddress(order)` for tracking
   and delivery summary surfaces.

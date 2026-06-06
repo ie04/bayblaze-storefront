@@ -9,6 +9,7 @@ import {
   formatOrderNumber,
   formatOrderStatus,
   formatOrderTotal,
+  getOrderLifecycleStatus,
   groupOrdersByLifecycle,
 } from "@/app/domain/orders";
 import { getOrderFirstOrderOfferTotal } from "@/app/domain/referral-offers";
@@ -126,7 +127,7 @@ function OrderGroup({
                     </span>
                   </span>
                   <span className="bayblaze-soft-chip shrink-0 px-2.5 py-1 text-[12px] font-semibold uppercase tracking-[0.1em]">
-                    {formatOrderStatus(order.status)}
+                    {formatOrderStatus(getOrderLifecycleStatus(order))}
                   </span>
                 </span>
 
