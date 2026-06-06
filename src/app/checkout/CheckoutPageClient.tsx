@@ -59,6 +59,7 @@ type AgeCheckerVerification = {
 };
 
 type CheckoutCustomerPayload = AgeVerificationCustomer & {
+  address_line_2: string;
   notes: string;
 };
 
@@ -637,6 +638,17 @@ export default function CheckoutPageClient({
                   onChange={handleAddressInputChange}
                   placeholder="Start typing your delivery address"
                   required={!isPlacesAutocompleteReady}
+                  type="text"
+                />
+              </label>
+
+              <label className="grid gap-2 text-[15px] font-semibold text-black sm:text-[16px]">
+                Address Line 2 <span className="font-normal text-[#777]">(optional)</span>
+                <input
+                  autoComplete="address-line2"
+                  className="h-[50px] w-full min-w-0 border border-[#d6d6d6] bg-white px-4 text-[16px] font-normal text-black outline-none transition focus:border-black sm:h-[52px] sm:text-[17px]"
+                  name="address_line_2"
+                  placeholder="Apt, suite, building, floor, or unit"
                   type="text"
                 />
               </label>
@@ -1270,6 +1282,7 @@ function getCheckoutCustomerFromFormData(
 ): CheckoutCustomerPayload {
   return {
     address: getFormDataString(formData, "address"),
+    address_line_2: getFormDataString(formData, "address_line_2"),
     city: getFormDataString(formData, "city"),
     email: getFormDataString(formData, "email"),
     first_name: getFormDataString(formData, "first_name"),
