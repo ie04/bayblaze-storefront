@@ -281,8 +281,14 @@ function OrderItemRow({
 }
 
 function getCurrentDeliveryStep(order: CustomerOrder) {
-  if (getOrderLifecycleStatus(order) === "completed") {
+  const lifecycleStatus = getOrderLifecycleStatus(order);
+
+  if (lifecycleStatus === "completed") {
     return "delivered";
+  }
+
+  if (lifecycleStatus === "out_for_delivery") {
+    return "out_for_delivery";
   }
 
   if (order.fulfillment_status === "shipped") {

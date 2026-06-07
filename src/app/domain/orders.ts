@@ -58,12 +58,7 @@ export function formatOrderStatus(status?: string | null) {
 }
 
 export function getOrderLifecycleStatus(order: CustomerOrder) {
-  const deliveryStatus = readOrderMetadataString(
-    order,
-    "bayblaze_delivery_status",
-    "delivery_status",
-    "driver_delivery_status",
-  ).toLowerCase();
+  const deliveryStatus = getOrderDeliveryStatus(order);
 
   if (deliveryStatus === "completed") {
     return "completed";
@@ -73,7 +68,24 @@ export function getOrderLifecycleStatus(order: CustomerOrder) {
     return "canceled";
   }
 
+  if (
+    deliveryStatus === "out_for_delivery" ||
+    deliveryStatus === "items_boxed" ||
+    deliveryStatus === "boxed"
+  ) {
+    return "out_for_delivery";
+  }
+
   return order.status ?? "pending";
+}
+
+export function getOrderDeliveryStatus(order: CustomerOrder) {
+  return readOrderMetadataString(
+    order,
+    "bayblaze_delivery_status",
+    "delivery_status",
+    "driver_delivery_status",
+  ).toLowerCase();
 }
 
 export function getScheduledDeliveryDisplay(order: CustomerOrder) {
