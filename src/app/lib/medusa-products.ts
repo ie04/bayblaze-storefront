@@ -377,6 +377,19 @@ function getMetadataSpecs(product: MedusaProduct) {
 }
 
 function getCanonicalStorefrontCategories(product: MedusaProduct) {
+  const metadataCategory = getMetadataValue(product, "inventoryCategory");
+
+  if (typeof metadataCategory === "string" && metadataCategory.trim()) {
+    const name = metadataCategory.trim();
+
+    return [
+      {
+        name,
+        handle: toCategoryHandle(name),
+      },
+    ];
+  }
+
   const medusaCategories = (product.categories ?? []).flatMap((category) => {
     const name = category.name?.trim();
 
@@ -394,19 +407,6 @@ function getCanonicalStorefrontCategories(product: MedusaProduct) {
 
   if (medusaCategories.length) {
     return dedupeStorefrontCategories(medusaCategories);
-  }
-
-  const metadataCategory = getMetadataValue(product, "inventoryCategory");
-
-  if (typeof metadataCategory === "string" && metadataCategory.trim()) {
-    const name = metadataCategory.trim();
-
-    return [
-      {
-        name,
-        handle: toCategoryHandle(name),
-      },
-    ];
   }
 
   return [defaultStorefrontCategory];
