@@ -137,55 +137,9 @@ const publishableKey = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY;
 const defaultRegionId = process.env.NEXT_PUBLIC_MEDUSA_REGION_ID;
 
 const defaultStorefrontCategory = {
-  name: "Vapes",
-  handle: "vapes",
+  name: "Uncategorized",
+  handle: "uncategorized",
 };
-
-const storefrontCategoryAliases = [
-  {
-    name: "Vapes",
-    handle: "vapes",
-    aliases: ["vape", "vapes", "disposable vape", "disposable vapes"],
-  },
-  {
-    name: "Cones & Wraps",
-    handle: "cones-wraps",
-    aliases: [
-      "cones",
-      "cone",
-      "wraps",
-      "wrap",
-      "papers",
-      "rolling papers",
-      "rolling paper",
-      "pre rolled cones",
-      "pre rolled cone",
-      "pre-rolled cones",
-      "pre-rolled cone",
-      "cones and wraps",
-      "cones wraps",
-      "wraps papers",
-      "cones and rolling papers",
-    ],
-  },
-  {
-    name: "Smoking Accessories",
-    handle: "smoking-accessories",
-    aliases: [
-      "smoking accessories",
-      "accessories",
-      "accessory",
-      "lighters",
-      "lighter",
-      "tools",
-      "nicotine pouches",
-      "nicotine pouch",
-      "pouches",
-      "zyn",
-    ],
-  },
-];
-
 
 function normalizeMedusaAssetUrl(url: string) {
   if (!url) {
@@ -423,38 +377,62 @@ function getMetadataSpecs(product: MedusaProduct) {
 }
 
 function getCanonicalStorefrontCategories(product: MedusaProduct) {
-  const rawCategoryText = [
-    product.collection?.title,
-    ...(product.categories ?? []).flatMap((category) => [
-      category.name,
-      category.handle,
-    ]),
-  ]
-    .filter((value): value is string => Boolean(value))
-    .map(normalizeCategoryText)
-    .join(" ");
+  const medusaCategories = (product.categories ?? []).flatMap((category) => {
+    const name = category.name?.trim();
 
-  const category =
-    storefrontCategoryAliases.find((candidate) => {
-      return candidate.aliases.some((alias) =>
-        rawCategoryText.includes(normalizeCategoryText(alias)),
-      );
-    }) ?? defaultStorefrontCategory;
+    if (!name) {
+      return [];
+    }
 
-  return [
-    {
-      name: category.name,
-      handle: category.handle,
-    },
-  ];
+    return [
+      {
+        name,
+        handle: category.handle?.trim() || toCategoryHandle(name),
+      },
+    ];
+  });
+
+  if (medusaCategories.length) {
+    return dedupeStorefrontCategories(medusaCategories);
+  }
+
+  const metadataCategory = getMetadataValue(product, "inventoryCategory");
+
+  if (typeof metadataCategory === "string" && metadataCategory.trim()) {
+    const name = metadataCategory.trim();
+
+    return [
+      {
+        name,
+        handle: toCategoryHandle(name),
+      },
+    ];
+  }
+
+  return [defaultStorefrontCategory];
 }
 
-function normalizeCategoryText(value: string) {
-  return value
+function dedupeStorefrontCategories(categories: { name: string; handle: string }[]) {
+  const seen = new Set<string>();
+
+  return categories.filter((category) => {
+    const key = category.handle || toCategoryHandle(category.name);
+
+    if (seen.has(key)) {
+      return false;
+    }
+
+    seen.add(key);
+    return true;
+  });
+}
+
+function toCategoryHandle(categoryName: string) {
+  return categoryName
     .toLowerCase()
     .replace(/&/g, " and ")
-    .replace(/[^a-z0-9]+/g, " ")
-    .trim();
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
 }
 
 function toStorefrontProduct(product: MedusaProduct): StorefrontProduct {

@@ -3,45 +3,11 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import type { ShopProductItem } from "@/app/lib/medusa-products";
 
-const categories = [
-  "All Categories",
-  "Vapes",
-  "Cones & Wraps",
-  "Smoking Accessories",
-];
-
-const categoryCopy: Record<
-  string,
-  {
-    title: string;
-    description: string;
-  }
-> = {
-  "All Categories": {
-    title: "All Categories",
-    description:
-      "Browse our full selection of vapes, cones, wraps, and smoking accessories.",
-  },
-  Vapes: {
-    title: "Vapes",
-    description:
-      "Explore vape options including disposables and flavor-focused products ready for delivery.",
-  },
-  "Cones & Wraps": {
-    title: "Cones & Wraps",
-    description:
-      "Find cones, wraps, rolling papers, and session-ready rolling essentials.",
-  },
-  "Smoking Accessories": {
-    title: "Smoking Accessories",
-    description:
-      "Explore useful add-ons and everyday accessories made to keep your setup ready.",
-  },
-};
+const allCategoriesLabel = "All Categories";
 
 const sortOptions = [
   { value: "default", label: "Default sorting" },
@@ -60,12 +26,30 @@ export default function ShopPageClient({
   initialSearchQuery?: string;
   products: ShopProductItem[];
 }) {
-  const [activeCategory, setActiveCategory] = useState(categories[0]);
+  const categories = useMemo(() => {
+    const productCategories = Array.from(
+      new Set(products.flatMap((product) => product.categories)),
+    ).sort((first, second) =>
+      first.localeCompare(second, undefined, { sensitivity: "base" }),
+    );
+
+    return [allCategoriesLabel, ...productCategories];
+  }, [products]);
+  const [activeCategory, setActiveCategory] = useState(allCategoriesLabel);
   const [sortBy, setSortBy] = useState<SortValue>("default");
   const [notice, setNotice] = useState("");
-  const activeCategoryCopy = categoryCopy[activeCategory];
+  const activeCategoryDescription =
+    activeCategory === allCategoriesLabel
+      ? "Browse our full selection of BayBlaze products available for local delivery."
+      : `Browse ${activeCategory} products available for local delivery.`;
   const searchQuery = initialSearchQuery.trim();
   const normalizedSearchQuery = searchQuery.toLowerCase();
+
+  useEffect(() => {
+    if (!categories.includes(activeCategory)) {
+      setActiveCategory(allCategoriesLabel);
+    }
+  }, [activeCategory, categories]);
 
   const visibleProducts = useMemo(() => {
     const categoryFiltered =
@@ -126,11 +110,11 @@ export default function ShopPageClient({
 
         <header className="mb-6 border-b border-[#eeeeee] pb-6 sm:mb-8 sm:pb-8">
           <h1 className="bayblaze-shop-title text-black">
-            {activeCategoryCopy.title}
+            {activeCategory}
           </h1>
 
           <p className="mt-3 max-w-[640px] text-[16px] font-medium leading-[1.65] text-[#585858] sm:text-[18px] sm:font-semibold sm:leading-[1.7]">
-            {activeCategoryCopy.description}
+            {activeCategoryDescription}
           </p>
         </header>
 
