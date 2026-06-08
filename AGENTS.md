@@ -300,3 +300,27 @@ display and data-shaping rules inside page components.
   this shared component and only provide their item renderer card. Do not
   reimplement Swiper lifecycle state, arrow looping, header layout, link
   rendering, slide spacing, or readiness opacity separately for each carousel.
+
+## June 2026 Checkout, Tracking, and Label Contracts
+
+- Checkout Address Line 2 is a customer-entered delivery detail only. It must sit
+  under the main Address field in the checkout UI, must not use Google Places,
+  and must not be included in geocoding or Address Validation requests.
+- Address Line 2 must still persist everywhere operationally useful:
+  `shipping_address.address_2` plus order/cart metadata keys `address_line_2`,
+  `checkout_address_line_2`, and `delivery_address_line_2`. Customer-facing
+  order summaries and driver/label surfaces should render it when present.
+- Storefront order progress should read BayBlaze delivery lifecycle metadata from
+  Medusa order metadata. `bayblaze_delivery_status = "out_for_delivery"` marks
+  the customer timeline's Out for delivery step active; `completed` marks
+  Delivered; `cancelled`/`canceled` marks canceled.
+- The customer map at `/orders/[orderId]` should treat `awaiting_assignment` as a
+  resolver/data issue when the order already appears in the driver app. Debug the
+  full chain: Medusa order reference -> storefront tracking route -> IsoChronos
+  `/orders/live-tracking` -> driver Firestore `driver_delivery_queues`.
+- Failed, ignored, or ineligible promo/discount state must not block order
+  placement unless a discount was actually applied and invalidates the cart.
+  Promo errors should degrade to metadata/copy, not checkout failure.
+- Label-printing is operationally downstream of successful order creation. A
+  print failure or unavailable label-printer agent must never fail checkout.
+
