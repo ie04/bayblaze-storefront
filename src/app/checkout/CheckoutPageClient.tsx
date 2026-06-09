@@ -31,6 +31,7 @@ import {
   getReferralOfferDiscountAmount,
   getReferralOfferTotal,
 } from "@/app/domain/referral-offers";
+import { isAgeCheckerTestingBypassEnabled } from "@/app/lib/agechecker-testing";
 import type { Customer, CustomerOrder } from "@/app/lib/medusa-auth";
 
 declare global {
@@ -131,8 +132,10 @@ type CheckoutAddressValidationState = {
   token: string;
 };
 
-const ageCheckerPublicKey =
-  process.env.NEXT_PUBLIC_AGECHECKER_KEY?.trim() ?? "";
+const isAgeCheckerTestingBypass = isAgeCheckerTestingBypassEnabled();
+const ageCheckerPublicKey = isAgeCheckerTestingBypass
+  ? ""
+  : process.env.NEXT_PUBLIC_AGECHECKER_KEY?.trim() ?? "";
 const googleMapsBrowserKey =
   process.env.NEXT_PUBLIC_GOOGLE_MAPS_BROWSER_KEY?.trim() ??
   process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY?.trim() ??
@@ -220,7 +223,7 @@ export default function CheckoutPageClient({
     !isAgeVerifying &&
     (!isExpressUnavailable || activeDeliveryMode === "scheduled") &&
     (!needsScheduledTime || Boolean(scheduledInputValue));
-  const isAgeCheckerEnabled = Boolean(ageCheckerPublicKey);
+  const isAgeCheckerEnabled = Boolean(ageCheckerPublicKey) && !isAgeCheckerTestingBypass;
   const hasSavedAgeVerification = hasAcceptedAccountAgeVerification(customer);
 
   useEffect(() => {

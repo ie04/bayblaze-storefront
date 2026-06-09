@@ -9,6 +9,7 @@ import {
   normalizeAgeVerificationCustomer,
 } from "@/app/domain/age-verification";
 import { isAgeCheckerConfigured } from "@/app/lib/agechecker-net";
+import { isAgeCheckerTestingBypassEnabled } from "@/app/lib/agechecker-testing";
 
 type AgeVerificationTokenPayload = {
   customer_hash: string;
@@ -73,7 +74,7 @@ export function verifyCheckoutAgeVerification(
   customer: AgeVerificationCustomer,
   reusableMetadata?: AgeVerificationMetadata | null,
 ): VerifyAgeVerificationTokenResult {
-  if (!isAgeCheckerConfigured()) {
+  if (!isAgeCheckerConfigured() || isAgeCheckerTestingBypassEnabled()) {
     return { metadata: {} };
   }
 
