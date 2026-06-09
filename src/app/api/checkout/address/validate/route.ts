@@ -9,10 +9,19 @@ type AddressValidationRequestBody = {
   customer?: {
     address?: unknown;
     city?: unknown;
+    formatted_address?: unknown;
+    google_place_id?: unknown;
+    latitude?: unknown;
+    longitude?: unknown;
     state?: unknown;
     zip?: unknown;
   };
   place_id?: unknown;
+  selected_place?: {
+    formatted_address?: unknown;
+    latitude?: unknown;
+    longitude?: unknown;
+  };
   session_token?: unknown;
 };
 
@@ -104,19 +113,49 @@ export async function POST(request: Request) {
   const result = "result" in data ? data.result : undefined;
   const verdict = result?.verdict;
   const validationGranularity = verdict?.validationGranularity;
+  const geocodeGranularity = verdict?.geocodeGranularity;
   const location = result?.geocode?.location;
-  const latitude = location?.latitude;
-  const longitude = location?.longitude;
+  const googleLatitude = location?.latitude;
+  const googleLongitude = location?.longitude;
+  const selectedLatitude = getFiniteNumber(
+    body.selected_place?.latitude ?? body.customer?.latitude,
+  );
+  const selectedLongitude = getFiniteNumber(
+    body.selected_place?.longitude ?? body.customer?.longitude,
+  );
+  const latitude =
+    typeof googleLatitude === "number" ? googleLatitude : selectedLatitude;
+  const longitude =
+    typeof googleLongitude === "number" ? googleLongitude : selectedLongitude;
+  const placeId =
+    result?.geocode?.placeId ||
+    getString(body.place_id) ||
+    getString(body.customer?.google_place_id);
+  const hasAcceptedValidationGranularity =
+    typeof validationGranularity === "string" &&
+    acceptedGranularities.has(validationGranularity);
+  const hasAcceptedGeocodeGranularity =
+    typeof geocodeGranularity === "string" &&
+    acceptedGranularities.has(geocodeGranularity);
+  const hasSelectedPlaceFallback =
+    Boolean(placeId) &&
+    typeof selectedLatitude === "number" &&
+    typeof selectedLongitude === "number";
+  const hasUsableLocation =
+    typeof latitude === "number" && typeof longitude === "number";
 
   if (
-    !verdict?.addressComplete ||
-    !validationGranularity ||
-    !acceptedGranularities.has(validationGranularity) ||
-    typeof latitude !== "number" ||
-    typeof longitude !== "number"
+    !hasUsableLocation ||
+    (!hasAcceptedValidationGranularity &&
+      !hasAcceptedGeocodeGranularity &&
+      !hasSelectedPlaceFallback)
   ) {
     return jsonError(
-      getAddressValidationFailureMessage(verdict?.validationGranularity),
+      getAddressValidationFailureMessage(
+        verdict?.validationGranularity,
+        verdict?.geocodeGranularity,
+        Boolean(placeId),
+      ),
       422,
     );
   }
@@ -125,10 +164,11 @@ export async function POST(request: Request) {
   const validatedAddress: ValidatedCheckoutAddress = {
     address: postalAddress?.addressLines?.[0]?.trim() || inputAddress.address,
     city: postalAddress?.locality?.trim() || inputAddress.city,
-    formatted_address: result?.address?.formattedAddress,
-    google_place_id:
-      result?.geocode?.placeId ||
-      (typeof body.place_id === "string" ? body.place_id : undefined),
+    formatted_address:
+      result?.address?.formattedAddress ||
+      getString(body.selected_place?.formatted_address) ||
+      getString(body.customer?.formatted_address),
+    google_place_id: placeId || undefined,
     latitude,
     longitude,
     state: postalAddress?.administrativeArea?.trim() || inputAddress.state,
@@ -138,18 +178,40 @@ export async function POST(request: Request) {
   return Response.json({
     accepted: true,
     address: validatedAddress,
-    message: "Delivery address verified.",
+    message: hasAcceptedValidationGranularity
+      ? "Delivery address verified."
+      : "Delivery address matched. Please confirm any unit, gate, or building details are correct.",
     token: createAddressValidationToken(validatedAddress),
     verdict,
   });
 }
 
-function getAddressValidationFailureMessage(granularity?: string) {
-  if (!granularity || granularity === "OTHER" || granularity === "ROUTE") {
+function getAddressValidationFailureMessage(
+  validationGranularity?: string,
+  geocodeGranularity?: string,
+  hasPlaceId = false,
+) {
+  if (hasPlaceId && geocodeGranularity === "PREMISE") {
+    return "Google matched this address, but could not fully confirm every component. Please confirm any unit, gate, or building details.";
+  }
+
+  if (
+    !validationGranularity ||
+    validationGranularity === "OTHER" ||
+    validationGranularity === "ROUTE"
+  ) {
     return "Google could not verify a specific deliverable address. Please enter a full street address.";
   }
 
   return "Please review the delivery address. Google could not fully verify it as entered.";
+}
+
+function getString(value: unknown) {
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function getFiniteNumber(value: unknown) {
+  return typeof value === "number" && Number.isFinite(value) ? value : undefined;
 }
 
 function jsonError(message: string, status: number) {

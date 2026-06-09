@@ -106,6 +106,10 @@ type PreCheckoutRoutingResult =
 type CheckoutAddressPayload = {
   address?: unknown;
   city?: unknown;
+  formatted_address?: unknown;
+  google_place_id?: unknown;
+  latitude?: unknown;
+  longitude?: unknown;
   state?: unknown;
   zip?: unknown;
 };
@@ -1621,6 +1625,22 @@ async function validateCheckoutAddress(
       },
       body: JSON.stringify({
         customer,
+        place_id:
+          typeof customer.google_place_id === "string"
+            ? customer.google_place_id
+            : undefined,
+        selected_place:
+          typeof customer.latitude === "number" &&
+          typeof customer.longitude === "number"
+            ? {
+                formatted_address:
+                  typeof customer.formatted_address === "string"
+                    ? customer.formatted_address
+                    : undefined,
+                latitude: customer.latitude,
+                longitude: customer.longitude,
+              }
+            : undefined,
       }),
     });
     const data = (await response.json().catch(() => ({}))) as {
