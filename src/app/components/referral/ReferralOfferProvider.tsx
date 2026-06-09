@@ -79,7 +79,7 @@ export default function ReferralOfferProvider({
       setToastOffer(claimedOffer);
     }, 0);
 
-    const toastTimer = window.setTimeout(() => setToastOffer(null), 5200);
+    const toastTimer = window.setTimeout(() => setToastOffer(null), 2600);
 
     return () => {
       isActive = false;
@@ -111,11 +111,11 @@ function ReferralOfferToast({ offer }: { offer: ReferralOffer }) {
   return (
     <div
       aria-live="polite"
-      className="fixed bottom-4 left-1/2 z-[120] w-[calc(100%-32px)] max-w-[300px] -translate-x-1/2 border border-[#bfd8b5] bg-[#eff8ea] px-4 py-3 text-center text-[#244f18] shadow-[0_10px_22px_rgba(36,79,24,0.16)] sm:bottom-6"
+      className="pointer-events-none fixed bottom-[calc(env(safe-area-inset-bottom)+12px)] left-1/2 z-[120] w-fit max-w-[calc(100vw-32px)] -translate-x-1/2 rounded-xl border border-[#bfd8b5] bg-[#eff8ea]/95 px-3 py-2 text-center text-[#244f18] shadow-[0_8px_18px_rgba(36,79,24,0.14)] sm:bottom-5"
       role="status"
     >
-      <p className="text-[14px] font-semibold leading-snug">
-        {offer.label} is active.
+      <p className="whitespace-nowrap text-[12px] font-semibold leading-none sm:text-[13px]">
+        {offer.label} active
       </p>
     </div>
   );
