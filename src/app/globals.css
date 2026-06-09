@@ -875,7 +875,7 @@ body {
 .bayblaze-product-card-image {
   background-position: center;
   background-repeat: no-repeat;
-  background-size: contain;
+  background-size: cover;
   display: block;
   height: 218px;
   width: 100%;
