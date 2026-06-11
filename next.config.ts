@@ -15,10 +15,21 @@ const nextConfig: NextConfig = {
         pathname: "/static/**",
       },
       {
+        protocol: "https",
+        hostname: "api.bayblaze.net",
+        pathname: "/bayblaze/inventory-images/**",
+      },
+      {
         protocol: "http",
         hostname: "localhost",
         port: "9000",
         pathname: "/static/**",
+      },
+      {
+        protocol: "http",
+        hostname: "localhost",
+        port: "9000",
+        pathname: "/bayblaze/inventory-images/**",
       },
     ],
   },

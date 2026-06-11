@@ -178,6 +178,10 @@ components.
 - Product images shown on `/shop` should come from Medusa product
   thumbnail/images after `normalizeMedusaAssetUrl()`, not hardcoded
   `bayblaze.net/wp-content/uploads/...` URLs.
+- Product images uploaded through `bayblaze-inventory` are served by Medusa at
+  `/bayblaze/inventory-images/...`. Keep this path allowed in `next.config.ts`
+  image `remotePatterns` for both production `api.bayblaze.net` and local
+  `localhost:9000`.
 - `/shop` product cards should stay compact: render category, product name,
   price, sale badge, image, and action button, but do not render long Medusa
   product descriptions in the card grid.
