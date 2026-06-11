@@ -51,8 +51,10 @@ BayBlaze's backend-only delivery intelligence service and not as a frontend app.
   `src/app/orders/OrderLiveMap.tsx`. The client map only receives display-safe
   tracking JSON from `/api/orders/[orderId]/tracking`; server code retrieves the
   Medusa order, extracts assigned driver metadata and geocoded destination
-  metadata, then calls IsoChronos `POST /orders/live-tracking` with
-  `ISOCHRONOS_BASE_URL`/`ISOCHRONOS_API_URL` and `ISOCHRONOS_ADMIN_TOKEN`.
+  metadata, then prefers `bayblaze-api` `POST /v1/orders/live-tracking` with
+  server-only `BAYBLAZE_API_URL` and `BAYBLAZE_API_SERVICE_TOKEN`. Direct
+  IsoChronos `POST /orders/live-tracking` through `ISOCHRONOS_BASE_URL`/
+  `ISOCHRONOS_API_URL` and `ISOCHRONOS_ADMIN_TOKEN` remains a rollout fallback.
 - Keep order and delivery UI display rules in the storefront domain layer, but
   keep delivery intelligence, routing cache behavior, and routing-related Google
   Maps spend out of page components.
@@ -66,10 +68,12 @@ BayBlaze's backend-only delivery intelligence service and not as a frontend app.
   Medusa order creation route.
 - The storefront signs short-lived routing evaluation checkout tokens and the
   Medusa order route verifies them when IsoChronos is configured. Required
-  server env for production routing: `ISOCHRONOS_BASE_URL`,
-  `ISOCHRONOS_ADMIN_TOKEN`, and a signing secret via
+  server env for production routing now prefers `BAYBLAZE_API_URL`,
+  `BAYBLAZE_API_SERVICE_TOKEN`, and a signing secret via
   `ROUTING_EVALUATION_TOKEN_SECRET` or the existing verification secret
-  fallback.
+  fallback. `ISOCHRONOS_BASE_URL`/`ISOCHRONOS_API_URL` and
+  `ISOCHRONOS_ADMIN_TOKEN` remain supported as direct fallback env during the
+  migration.
 - Cart items sent to IsoChronos must be normalized to variant-level sellable
   units and must carry explicit Medusa-owned `productId`, `variantId`,
   `inventoryState`, `availableQuantity`, and requested `quantity`. Do not infer
@@ -323,4 +327,3 @@ display and data-shaping rules inside page components.
   Promo errors should degrade to metadata/copy, not checkout failure.
 - Label-printing is operationally downstream of successful order creation. A
   print failure or unavailable label-printer agent must never fail checkout.
-
