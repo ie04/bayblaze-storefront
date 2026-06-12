@@ -5,8 +5,9 @@ import { getShopProducts } from "@/app/lib/medusa-products";
 import ShopPageClient from "./ShopPageClient";
 
 export const metadata: Metadata = {
-  title: "Shop | Bayblaze",
-  description: "Shop Bayblaze vapes, cones, and smoking accessories.",
+  title: "Shop · BayBlaze Tampa Delivery",
+  description:
+    "Browse BayBlaze vapes, nicotine pouches, wraps, and accessories for fast Tampa delivery.",
 };
 
 type ShopPageProps = {
@@ -18,14 +19,12 @@ type ShopPageProps = {
 export default async function Page({ searchParams }: ShopPageProps) {
   const params = searchParams ? await searchParams : {};
   const queryParam = params.q;
-  const searchQuery = Array.isArray(queryParam)
-    ? queryParam[0]
-    : queryParam;
+  const searchQuery = Array.isArray(queryParam) ? queryParam[0] : queryParam;
   const products = await getShopProducts();
 
   return (
-    <main className="min-h-screen bg-white">
-      <Header />
+    <main className="min-h-screen bg-[var(--ast-global-color-4)] font-[var(--font-jost)] text-black">
+      <Header surface="solid" />
       <ShopPageClient initialSearchQuery={searchQuery ?? ""} products={products} />
     </main>
   );
