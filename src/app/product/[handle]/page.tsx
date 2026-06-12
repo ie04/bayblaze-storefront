@@ -17,13 +17,13 @@ export async function generateMetadata({
 
   if (!product) {
     return {
-      title: "Product not found | Bayblaze",
+      title: "Product not found | BayBlaze",
     };
   }
 
   return {
-    title: `${product.name} | Bayblaze`,
-    description: `Shop ${product.name} from Bayblaze.`,
+    title: `${product.name} | BayBlaze`,
+    description: `Shop ${product.name} from BayBlaze.`,
   };
 }
 
@@ -36,8 +36,8 @@ export default async function Page({ params }: ProductPageProps) {
   }
 
   return (
-    <main className="min-h-screen bg-white">
-      <Header />
+    <main className="min-h-screen bg-[var(--ast-global-color-4)] font-[var(--font-jost)] text-black">
+      <Header surface="solid" />
       <ProductPage product={product} />
     </main>
   );
