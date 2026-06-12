@@ -1484,7 +1484,13 @@ function loadGoogleMapsPlaces(apiKey: string) {
       'script[data-bayblaze-google-maps="true"]',
     );
     const previousAuthFailure = window.gm_authFailure;
-    let timeoutId: number | undefined;
+    const timeoutId = window.setTimeout(() => {
+      fail(
+        new Error(
+          "Google Maps timed out before loading the Places autocomplete widget.",
+        ),
+      );
+    }, 12_000);
 
     function cleanup() {
       if (timeoutId) {
@@ -1528,14 +1534,6 @@ function loadGoogleMapsPlaces(apiKey: string) {
         ),
       );
     };
-
-    timeoutId = window.setTimeout(() => {
-      fail(
-        new Error(
-          "Google Maps timed out before loading the Places autocomplete widget.",
-        ),
-      );
-    }, 12_000);
 
     if (existingScript) {
       if (window.google?.maps) {

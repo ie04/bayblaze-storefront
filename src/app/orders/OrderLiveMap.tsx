@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type MutableRefObject } from "react";
 
 type TrackingPoint = {
   lat: number;
@@ -24,6 +24,48 @@ type TrackingRoute = {
   encodedPolyline?: string | null;
 };
 
+type MapPoint = {
+  lat: () => number;
+  lng: () => number;
+};
+
+type MapPosition = TrackingPoint | MapPoint;
+
+type GoogleMap = {
+  fitBounds: (bounds: GoogleLatLngBounds, padding?: number) => void;
+  setCenter: (center: TrackingPoint) => void;
+};
+
+type GoogleMarker = {
+  setPosition: (position: TrackingPoint) => void;
+};
+
+type GooglePolyline = {
+  setPath: (path: MapPosition[]) => void;
+};
+
+type GoogleLatLngBounds = {
+  extend: (point: MapPosition) => void;
+  isEmpty: () => boolean;
+};
+
+type GoogleMapsApi = {
+  maps: {
+    LatLngBounds: new () => GoogleLatLngBounds;
+    Map: new (
+      container: HTMLDivElement,
+      options: Record<string, unknown>,
+    ) => GoogleMap;
+    Marker: new (options: Record<string, unknown>) => GoogleMarker;
+    Polyline: new (options: Record<string, unknown>) => GooglePolyline;
+    geometry?: {
+      encoding?: {
+        decodePath?: (encodedPath: string) => MapPoint[];
+      };
+    };
+  };
+};
+
 type OrderTrackingPayload = {
   customerLocation?: TrackingPoint | null;
   driverLocation?: DriverLocation | null;
@@ -43,7 +85,7 @@ const googleMapsBrowserKey =
   process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY?.trim() ||
   "";
 
-let googleMapsPromise: Promise<any> | null = null;
+let googleMapsPromise: Promise<GoogleMapsApi> | null = null;
 
 export default function OrderLiveMap({
   fallbackAddress,
@@ -53,10 +95,10 @@ export default function OrderLiveMap({
   orderReference: string;
 }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const mapRef = useRef<any>(null);
-  const driverMarkerRef = useRef<any>(null);
-  const customerMarkerRef = useRef<any>(null);
-  const routePolylineRef = useRef<any>(null);
+  const mapRef = useRef<GoogleMap | null>(null);
+  const driverMarkerRef = useRef<GoogleMarker | null>(null);
+  const customerMarkerRef = useRef<GoogleMarker | null>(null);
+  const routePolylineRef = useRef<GooglePolyline | null>(null);
   const [tracking, setTracking] = useState<OrderTrackingPayload | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
@@ -191,11 +233,11 @@ function renderTrackingMap({
   tracking,
 }: {
   container: HTMLDivElement;
-  customerMarkerRef: React.MutableRefObject<any>;
-  driverMarkerRef: React.MutableRefObject<any>;
-  google: any;
-  mapRef: React.MutableRefObject<any>;
-  routePolylineRef: React.MutableRefObject<any>;
+  customerMarkerRef: MutableRefObject<GoogleMarker | null>;
+  driverMarkerRef: MutableRefObject<GoogleMarker | null>;
+  google: GoogleMapsApi;
+  mapRef: MutableRefObject<GoogleMap | null>;
+  routePolylineRef: MutableRefObject<GooglePolyline | null>;
   tracking: OrderTrackingPayload;
 }) {
   const driver = tracking.driverLocation;
@@ -281,12 +323,7 @@ function renderTrackingMap({
   }
 }
 
-type MapPoint = {
-  lat: () => number;
-  lng: () => number;
-};
-
-function getRoutePath(google: any, tracking: OrderTrackingPayload): MapPoint[] {
+function getRoutePath(google: GoogleMapsApi, tracking: OrderTrackingPayload): MapPoint[] {
   const encodedPolyline = tracking.route?.encodedPolyline;
 
   if (
@@ -299,7 +336,7 @@ function getRoutePath(google: any, tracking: OrderTrackingPayload): MapPoint[] {
   return [];
 }
 
-function loadGoogleMaps(key: string) {
+function loadGoogleMaps(key: string): Promise<GoogleMapsApi> {
   const currentGoogle = getWindowGoogle();
 
   if (currentGoogle?.maps) {
@@ -314,7 +351,13 @@ function loadGoogleMaps(key: string) {
     const existingScript = document.getElementById("bayblaze-google-maps-tracking");
 
     window.__bayblazeInitTrackingMap = () => {
-      resolve(getWindowGoogle());
+      const google = getWindowGoogle();
+
+      if (google) {
+        resolve(google);
+      } else {
+        reject(new Error("Google Maps loaded without a browser API object."));
+      }
     };
 
     if (existingScript) {
@@ -337,7 +380,7 @@ function loadGoogleMaps(key: string) {
 
 
 function getWindowGoogle() {
-  return (window as typeof window & { google?: any }).google;
+  return (window as typeof window & { google?: GoogleMapsApi }).google;
 }
 
 function getTrackingStatusCopy(

@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 import type { ShopProductItem } from "@/app/lib/medusa-products";
 
@@ -38,25 +38,22 @@ export default function ShopPageClient({
   const [activeCategory, setActiveCategory] = useState(allCategoriesLabel);
   const [sortBy, setSortBy] = useState<SortValue>("default");
   const [notice, setNotice] = useState("");
+  const selectedCategory = categories.includes(activeCategory)
+    ? activeCategory
+    : allCategoriesLabel;
   const activeCategoryDescription =
-    activeCategory === allCategoriesLabel
+    selectedCategory === allCategoriesLabel
       ? "Browse our full selection of BayBlaze products available for local delivery."
-      : `Browse ${activeCategory} products available for local delivery.`;
+      : `Browse ${selectedCategory} products available for local delivery.`;
   const searchQuery = initialSearchQuery.trim();
   const normalizedSearchQuery = searchQuery.toLowerCase();
 
-  useEffect(() => {
-    if (!categories.includes(activeCategory)) {
-      setActiveCategory(allCategoriesLabel);
-    }
-  }, [activeCategory, categories]);
-
   const visibleProducts = useMemo(() => {
     const categoryFiltered =
-      activeCategory === "All Categories"
+      selectedCategory === allCategoriesLabel
         ? products
         : products.filter((product) =>
-            product.categories.includes(activeCategory),
+            product.categories.includes(selectedCategory),
           );
 
     const searchFiltered = normalizedSearchQuery
@@ -88,7 +85,7 @@ export default function ShopPageClient({
 
       return products.indexOf(a) - products.indexOf(b);
     });
-  }, [activeCategory, normalizedSearchQuery, products, sortBy]);
+  }, [normalizedSearchQuery, products, selectedCategory, sortBy]);
 
   function handleQuickAdd(product: ShopProductItem) {
     setNotice(`${product.name} added.`);
@@ -110,7 +107,7 @@ export default function ShopPageClient({
 
         <header className="mb-6 border-b border-[#eeeeee] pb-6 sm:mb-8 sm:pb-8">
           <h1 className="bayblaze-shop-title text-black">
-            {activeCategory}
+            {selectedCategory}
           </h1>
 
           <p className="mt-3 max-w-[640px] text-[16px] font-medium leading-[1.65] text-[#585858] sm:text-[18px] sm:font-semibold sm:leading-[1.7]">
@@ -125,11 +122,11 @@ export default function ShopPageClient({
                 key={category}
                 type="button"
                 className={`shrink-0 border px-4 py-2.5 text-[14px] font-medium leading-none transition-colors ${
-                  activeCategory === category
+                  selectedCategory === category
                     ? "border-black bg-black text-white"
                     : "border-[#dedede] bg-white text-black hover:border-[var(--ast-global-color-0)] hover:text-[var(--ast-global-color-0)]"
                 }`}
-                aria-pressed={activeCategory === category}
+                aria-pressed={selectedCategory === category}
                 onClick={() => {
                   setActiveCategory(category);
                   setNotice("");
@@ -280,4 +277,3 @@ function ProductCard({
     </article>
   );
 }
-
