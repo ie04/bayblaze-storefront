@@ -1,54 +1,105 @@
-import Image from "next/image";
+import Link from "next/link";
+
+import {
+  ClockLineIcon,
+  MapPinLineIcon,
+  ShieldCheckLineIcon,
+  TruckLineIcon,
+} from "@/app/components/icons/SharpIcons";
+
+const facts = [
+  {
+    title: "Local Tampa delivery",
+    body: "Built for quick local dispatch, not generic shipping.",
+    icon: <MapPinLineIcon className="h-5 w-5" />,
+  },
+  {
+    title: "Fast when in stock",
+    body: "Products marked for fast delivery are ready to move from local inventory.",
+    icon: <TruckLineIcon className="h-5 w-5" />,
+  },
+  {
+    title: "21+ verified",
+    body: "Have a valid government-issued ID ready when your driver arrives.",
+    icon: <ShieldCheckLineIcon className="h-5 w-5" />,
+  },
+];
 
 export default function HomeAbout() {
   return (
     <section
       id="about"
-      className="bayblaze-home-about font-[var(--font-jost)]"
+      className="bayblaze-home-about bg-[var(--ast-global-color-4)] font-[var(--font-jost)]"
     >
-      <div className="mx-auto w-full max-w-[1180px] px-4 py-10 sm:px-5 sm:py-16 md:py-[70px]">
-        <div className="bayblaze-about-paper">
-          <div className="relative z-10 grid gap-7 md:grid-cols-[minmax(0,0.58fr)_minmax(280px,0.42fr)] md:gap-8">
-            <div className="flex flex-col justify-center py-2 md:py-5 md:pr-12">
-              <h2 className="bayblaze-home-info-title text-black">About us</h2>
-              <div className="mt-4 space-y-4 text-[16px] font-medium leading-[1.65] text-[#585858] sm:text-[17px] sm:leading-[1.75]">
-                <p>
-                  We are BAYBLAZE, a mobile smoke shop based in Tampa. Blazing
-                  fast delivery is the name of our game, so if you&apos;re
-                  local your order will be delivered in under an hour. No more
-                  having to hitch rides off friends or
-                  waiting until the smoke shops open, we got you covered!
+      <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-16">
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,0.92fr)_minmax(320px,0.58fr)] lg:items-stretch">
+          <div className="bayblaze-sharp-card bg-white p-6 sm:p-8 lg:p-10">
+            <p className="text-[11px] font-bold uppercase tracking-widest text-[var(--ast-global-color-1)]">
+              About BayBlaze
+            </p>
+
+            <h2 className="mt-1 max-w-3xl text-4xl font-black uppercase leading-none text-black sm:text-5xl lg:text-6xl">
+              A mobile smoke shop built for Tampa.
+            </h2>
+
+            <p className="mt-4 max-w-2xl text-sm font-medium leading-[1.7] text-[#585858] sm:text-base">
+              BayBlaze brings smoke-shop essentials to your door with a simple
+              online ordering flow, local inventory, and driver-verified 21+
+              delivery.
+            </p>
+
+            <div className="mt-6 flex flex-wrap gap-3">
+              <Link
+                href="/shop"
+                className="bayblaze-sharp-button bayblaze-sharp-button--primary"
+              >
+                Start shopping
+              </Link>
+
+              <Link
+                href="/how-it-works"
+                className="bayblaze-sharp-button bayblaze-sharp-button--outline"
+              >
+                How it works
+              </Link>
+            </div>
+          </div>
+
+          <aside className="grid border-2 border-black bg-white">
+            <div className="flex items-start gap-3 border-b-2 border-black p-5">
+              <ClockLineIcon className="mt-0.5 h-5 w-5 shrink-0 text-[var(--ast-global-color-0)]" />
+              <div>
+                <p className="text-xs font-bold uppercase tracking-widest text-black">
+                  Delivery hours
                 </p>
-                <p>
-                  We focus on popular vape brands, ZYNs, wraps, cones,
-                  lighters, and everyday smoke-shop essentials. You&apos;ll only
-                  have to pay when your order arrives.
-                </p>
-                <p>
-                  Orders placed after 11 PM must be scheduled for 10AM the next
-                  day or later, but we&apos;re in the process of building a
-                  delivery network so that our 1 hour express delivery service
-                  becomes available 24/7.
-                </p>
-                <p className="text-red-700">
-                  Disclaimer: You must be 21 or older to order. Please have your
-                  ID with you on delivery for us to complete the order. Thank
-                  you!
+                <p className="mt-1 text-sm font-bold leading-[1.5] text-[#585858]">
+                  Daily · 10:00am – 11:00pm. Schedule ahead when needed.
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center justify-center border border-[#d0d0d0] bg-[var(--ast-global-color-4)] p-4 sm:p-6">
-              <Image
-                src="/icons/bayblaze-logo-source.png"
-                alt="Bayblaze flame logo"
-                width={1024}
-                height={1024}
-                sizes="(max-width: 767px) 88vw, 520px"
-                className="h-auto w-full max-w-[520px] object-contain"
-              />
-            </div>
-          </div>
+            {facts.map((fact, index) => (
+              <div
+                key={fact.title}
+                className={[
+                  "flex items-start gap-3 p-5",
+                  index < facts.length - 1 ? "border-b-2 border-black" : "",
+                ].join(" ")}
+              >
+                <span className="mt-0.5 shrink-0 text-[var(--ast-global-color-0)]">
+                  {fact.icon}
+                </span>
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-widest text-black">
+                    {fact.title}
+                  </p>
+                  <p className="mt-1 text-sm font-medium leading-[1.55] text-[#585858]">
+                    {fact.body}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </aside>
         </div>
       </div>
     </section>
