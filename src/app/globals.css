@@ -32,7 +32,7 @@
   --color-ast-black: var(--ast-global-color-2);
   --color-ast-gray: var(--ast-global-color-3);
   --color-ast-cream: var(--ast-global-color-4);
-  --font-sans: Roboto, Arial, Helvetica, sans-serif;
+  --font-sans: var(--font-jost), Jost, Arial, Helvetica, sans-serif;
   --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
 }
 
@@ -56,6 +56,11 @@ html {
   -webkit-text-size-adjust: 100%;
 }
 
+html,
+body {
+  font-family: var(--font-jost), Jost, Arial, Helvetica, sans-serif;
+}
+
 @media (max-width: 544px) {
   html {
     font-size: 96.9%;
@@ -73,7 +78,7 @@ button,
 input,
 select,
 textarea {
-  font-family: Roboto, Arial, Helvetica, sans-serif;
+  font-family: var(--font-jost), Jost, Arial, Helvetica, sans-serif;
   font-size: 1rem;
   font-weight: 400;
   line-height: var(--ast-body-line-height);

@@ -37,8 +37,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${jost.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col" suppressHydrationWarning>
+    <html lang="en" className={`${jost.variable} ${jost.className} h-full antialiased`}>
+      <body
+        className={`${jost.className} min-h-full flex flex-col`}
+        suppressHydrationWarning
+      >
         <Providers>{children}</Providers>
       </body>
     </html>
