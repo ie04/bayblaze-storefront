@@ -149,18 +149,17 @@ export default function Header({
 
           <button
             type="button"
-            className="relative inline-flex h-10 shrink-0 items-center gap-2 border-2 border-black bg-white px-3 font-semibold uppercase tracking-wider text-black transition-colors hover:bg-black hover:text-white"
+            className="relative flex h-10 w-10 shrink-0 items-center justify-center border-2 border-black bg-white text-black transition-colors hover:bg-black hover:text-white md:h-[46px] md:w-[46px]"
             aria-expanded={isCartOpen}
             aria-label={`Open shopping cart, ${cartCount} item${
               cartCount === 1 ? "" : "s"
             }`}
             onClick={openCart}
           >
-            <CartIcon className="size-4" />
-            <span className="hidden text-sm sm:inline">Cart</span>
+            <CartIcon className="size-[22px]" />
 
             {cartCount > 0 ? (
-              <span className="ml-1 inline-flex h-5 min-w-[1.25rem] items-center justify-center border-2 border-black bg-[var(--ast-global-color-0)] px-1 text-[11px] font-bold leading-none text-white">
+              <span className="absolute -right-2 -top-2 flex size-5 items-center justify-center rounded-full border-2 border-black bg-[var(--ast-global-color-0)] text-[11px] font-bold leading-none text-white">
                 {cartCount}
               </span>
             ) : null}
