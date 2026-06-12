@@ -20,12 +20,12 @@ export default function HomeExploreProducts({
             </p>
 
             <h2 className="bayblaze-section-heading">
-              Available for Fast Delivery
+              Available for Delivery
             </h2>
 
             <p className="mt-3 max-w-[620px] text-[16px] font-medium leading-[1.55] text-[#585858] sm:text-[18px]">
-              Products currently marked on vehicle and ready for local BayBlaze
-              dispatch.
+              Fresh picks loaded up and ready to head your way in the BayBlaze
+              delivery zone.
             </p>
           </div>
 
