@@ -162,10 +162,10 @@ export default function Header({
 
           <Link
             href={accountHref}
-            className="flex h-[42px] w-[42px] shrink-0 items-center justify-center text-black transition-colors hover:text-[var(--ast-global-color-0)] md:h-[43px] md:w-[43px]"
+            className="flex h-10 w-10 shrink-0 items-center justify-center border-2 border-black bg-white text-black transition-colors hover:bg-black hover:text-white md:h-[46px] md:w-[46px]"
             aria-label="Account"
           >
-            <AccountIcon className="size-[27px] md:size-[30px]" />
+            <AccountIcon className="size-[22px]" />
           </Link>
         </div>
       </div>
