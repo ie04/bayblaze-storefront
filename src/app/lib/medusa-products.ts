@@ -95,6 +95,7 @@ export type ProductPreviewItem = {
 
 export type ShopProductItem = {
   name: string;
+  brand: string;
   inventoryState?: InventoryLocationState;
   availableQuantity?: number;
   image: string;
@@ -431,6 +432,7 @@ function toShopProductItem(product: InventoryProduct): ShopProductItem {
 
   return {
     name: product.title,
+    brand: storefrontProduct.brand || "BayBlaze",
     inventoryState: storefrontProduct.inventoryState,
     availableQuantity: storefrontProduct.availableQuantity,
     image: storefrontProduct.images[0]?.src ?? "",
