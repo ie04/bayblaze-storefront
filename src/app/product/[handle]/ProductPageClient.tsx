@@ -394,7 +394,7 @@ export default function ProductPage({
                   <span key={category.handle}>
                     <Link
                       className="text-[#585858] transition-colors hover:text-[var(--ast-global-color-0)]"
-                      href={`/product-category/${category.handle}`}
+                      href={`/shop?q=${encodeURIComponent(category.name)}`}
                     >
                       {category.name}
                     </Link>

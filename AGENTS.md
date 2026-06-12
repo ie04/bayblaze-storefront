@@ -173,10 +173,17 @@ The storefront catalog must stay Medusa-owned. Do not reintroduce static `/shop`
 product arrays, stale WordPress image URLs, or product data duplicated inside page
 components.
 
-- `/shop` should load product cards from Medusa through
-  `src/app/lib/medusa-products.ts`, currently via `getShopProducts()`.
-- Product images shown on `/shop` should come from Medusa product
-  thumbnail/images after `normalizeMedusaAssetUrl()`, not hardcoded
+- `/shop`, `/product/[handle]`, and homepage product carousels should load
+  catalog data through `src/app/lib/medusa-products.ts`. That adapter must use
+  the shared `bayblaze-api` inventory bridge (`GET /v1/inventory`) with
+  server-only `BAYBLAZE_API_URL` and `BAYBLAZE_API_SERVICE_TOKEN`, matching the
+  inventory app's common product data boundary instead of making direct Store
+  API product reads from page code.
+- `NEXT_PUBLIC_MEDUSA_BACKEND_URL` remains available for public asset URL
+  normalization and other storefront Store API flows, but product catalog reads
+  should not depend on the browser publishable key.
+- Product images shown on `/shop` should come from Medusa-owned product or
+  variant image fields returned by `bayblaze-api`, not hardcoded
   `bayblaze.net/wp-content/uploads/...` URLs.
 - Product images uploaded through `bayblaze-inventory` are served by Medusa at
   `/bayblaze/inventory-images/...`. Keep this path allowed in `next.config.ts`

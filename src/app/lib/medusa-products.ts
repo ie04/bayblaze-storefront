@@ -1,77 +1,53 @@
-type MedusaCategory = {
-  name: string;
-  handle: string;
+import { connection } from "next/server";
+
+type InventoryState = "ON_VEHICLE" | "IN_WAREHOUSE";
+type ProductStatus = "draft" | "published";
+
+type InventoryProductImage = {
+  id?: string;
+  url?: string;
 };
 
-type MedusaCollection = {
+type InventoryVariant = {
+  id: string;
+  productId: string;
+  productTitle: string;
   title: string;
-  handle: string;
-};
-
-type MedusaImage = {
-  url: string;
-};
-
-type MedusaOptionValue = {
-  value: string;
-};
-
-type MedusaOption = {
-  title: string;
-  values?: MedusaOptionValue[];
-};
-
-type MedusaVariantOption = {
-  value: string;
-  option?: {
-    title: string;
+  sku: string;
+  priceCents: number;
+  imageUrl?: string;
+  imageUrls?: string[];
+  images?: Array<string | InventoryProductImage>;
+  metadata: {
+    assignedVehicleId?: string;
+    availableQuantity?: number | string;
+    barcode?: string;
+    brand?: string;
+    inventoryState?: InventoryState;
   };
+  updatedAt: string;
 };
 
-type MedusaCalculatedPrice = {
-  calculated_amount: number;
-  original_amount: number;
-  currency_code: string;
-};
-
-type MedusaVariant = {
+type InventoryProduct = {
   id: string;
-  title: string;
-  sku?: string | null;
-  images?: MedusaImage[];
-  metadata?: Record<string, unknown> | null;
-  options?: MedusaVariantOption[];
-  calculated_price?: MedusaCalculatedPrice;
-};
-
-type MedusaProduct = {
-  id: string;
+  collectionId?: string;
+  collectionTitle?: string;
+  description: string;
   title: string;
   handle: string;
-  subtitle?: string | null;
-  description?: string | null;
-  thumbnail?: string | null;
-  metadata?: Record<string, unknown> | null;
-  collection?: MedusaCollection | null;
-  categories?: MedusaCategory[];
-  images?: MedusaImage[];
-  options?: MedusaOption[];
-  variants?: MedusaVariant[];
+  metadata: Record<string, string>;
+  status: ProductStatus;
+  category: string;
+  thumbnail?: string;
+  imageUrl?: string;
+  imageUrls?: string[];
+  images?: Array<string | InventoryProductImage>;
+  productImages?: Array<string | InventoryProductImage>;
+  variants: InventoryVariant[];
 };
 
-type MedusaProductsResponse = {
-  products: MedusaProduct[];
-};
-
-type MedusaProductCategoriesResponse = {
-  product_categories: MedusaProductCategory[];
-};
-
-type MedusaProductCategory = {
-  id: string;
-  parent_category_id?: string | null;
-  mpath?: string | null;
-  category_children?: MedusaProductCategory[];
+type InventorySnapshot = {
+  products: InventoryProduct[];
 };
 
 export type InventoryLocationState = "ON_VEHICLE" | "IN_WAREHOUSE";
@@ -130,26 +106,32 @@ export type ShopProductItem = {
   description: string;
 };
 
-const backendUrl =
+const assetOrigin =
   process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL?.replace(/\/$/, "") ??
-  "http://localhost:9000";
-
-const publishableKey = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY;
-
-const defaultRegionId = process.env.NEXT_PUBLIC_MEDUSA_REGION_ID;
+  "https://api.bayblaze.net";
 
 const defaultStorefrontCategory = {
   name: "Uncategorized",
   handle: "uncategorized",
 };
 
-function normalizeMedusaAssetUrl(url: string) {
-  if (!url) {
-    return url;
-  }
-
-  return url.replace(/^https?:\/\/localhost:9000(?=\/)/, backendUrl);
-}
+const storefrontCategoryBuckets = [
+  {
+    name: "Vapes",
+    handle: "vapes",
+    terms: ["vape", "vapes", "disposable"],
+  },
+  {
+    name: "Cones & Wraps",
+    handle: "cones-and-wraps",
+    terms: ["cone", "cones", "wrap", "wraps", "paper", "papers", "rolling"],
+  },
+  {
+    name: "Smoking Accessories",
+    handle: "smoking-accessories",
+    terms: ["accessory", "accessories", "lighter", "lighters", "tool", "tools"],
+  },
+];
 
 const knownProductCopy: Record<
   string,
@@ -179,108 +161,60 @@ const placeholderSpecs: [string, string][] = [
   ["Placeholder spec", "Add spec_battery metadata"],
 ];
 
-function getHeaders() {
-  const headers = new Headers();
-
-  if (publishableKey) {
-    headers.set("x-publishable-api-key", publishableKey);
+function normalizeInventoryAssetUrl(url: string) {
+  if (!url) {
+    return url;
   }
 
-  return headers;
+  if (url.startsWith("/")) {
+    return `${assetOrigin}${url}`;
+  }
+
+  return url.replace(/^https?:\/\/localhost:9000(?=\/)/, assetOrigin);
 }
 
-async function getDefaultRegionId() {
-  if (defaultRegionId) {
-    return defaultRegionId;
-  }
-
-  let response: Response;
-
-  try {
-    response = await fetch(`${backendUrl}/store/regions?limit=1`, {
-      headers: getHeaders(),
-      cache: "no-store",
-    });
-  } catch {
-    return undefined;
-  }
-
-  if (!response.ok) {
-    return undefined;
-  }
-
-  const data = (await response.json()) as { regions?: { id: string }[] };
-  return data.regions?.[0]?.id;
-}
-
-function formatPrice(price?: MedusaCalculatedPrice) {
-  if (!price) {
+function formatPrice(cents?: number) {
+  if (!Number.isFinite(cents ?? Number.NaN)) {
     return "";
   }
 
   return new Intl.NumberFormat("en-US", {
+    currency: "USD",
     style: "currency",
-    currency: price.currency_code.toUpperCase(),
-  }).format(price.calculated_amount);
+  }).format((cents ?? 0) / 100);
 }
 
-function getOriginalPrice(price?: MedusaCalculatedPrice) {
-  if (!price || price.original_amount <= price.calculated_amount) {
-    return undefined;
+function hasSalePrice() {
+  return false;
+}
+
+function getSaleBadge() {
+  return undefined;
+}
+
+function getOriginalPrice() {
+  return undefined;
+}
+
+function getFlavorValues(product: InventoryProduct) {
+  if (product.variants.length <= 1) {
+    return [];
   }
 
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: price.currency_code.toUpperCase(),
-  }).format(price.original_amount);
-}
-
-function getSaleBadge(price?: MedusaCalculatedPrice) {
-  if (!price || price.original_amount <= price.calculated_amount) {
-    return undefined;
-  }
-
-  const percentOff = Math.round(
-    ((price.original_amount - price.calculated_amount) / price.original_amount) *
-      100,
+  return Array.from(
+    new Set(
+      product.variants.flatMap((variant) => splitOptionValue(variant.title)),
+    ),
   );
-
-  return `${percentOff}% OFF`;
 }
 
-function hasSalePrice(price?: MedusaCalculatedPrice) {
-  return Boolean(price && price.original_amount > price.calculated_amount);
+function getVariantFlavor(product: InventoryProduct, variant: InventoryVariant) {
+  return product.variants.length > 1 ? variant.title : undefined;
 }
 
-function getFlavorValues(product: MedusaProduct) {
-  const flavorOption = product.options?.find(
-    (option) => option.title.toLowerCase() === "flavor",
-  );
-
-  const values =
-    flavorOption?.values?.map((value) => value.value) ??
-    product.variants
-      ?.flatMap((variant) => variant.options ?? [])
-      .filter((option) => option.option?.title.toLowerCase() === "flavor")
-      .map((option) => option.value) ??
-    [];
-
-  return [...new Set(values.flatMap((value) => splitOptionValue(value)))];
-}
-
-function getVariantFlavor(variant: MedusaVariant) {
-  const flavorOption = variant.options?.find(
-    (option) => option.option?.title.toLowerCase() === "flavor",
-  );
-
-  return flavorOption?.value;
-}
-
-function getStorefrontVariants(product: MedusaProduct) {
-  return (product.variants ?? []).map((variant) => {
-    const flavor = getVariantFlavor(variant);
-    const inventoryState = getVariantInventoryState(variant);
-    const availableQuantity = getVariantAvailableQuantity(variant);
+function getStorefrontVariants(product: InventoryProduct) {
+  return product.variants.map((variant) => {
+    const flavor = getVariantFlavor(product, variant);
     const variantImages = getVariantImages(product, variant);
 
     return {
@@ -288,8 +222,8 @@ function getStorefrontVariants(product: MedusaProduct) {
       title: variant.title,
       sku: variant.sku ?? "",
       flavor,
-      inventoryState,
-      availableQuantity,
+      inventoryState: getVariantInventoryState(variant),
+      availableQuantity: getVariantAvailableQuantity(variant),
       images: variantImages.map((src, index) => ({
         src,
         alt:
@@ -302,36 +236,14 @@ function getStorefrontVariants(product: MedusaProduct) {
   });
 }
 
-function getVariantImages(product: MedusaProduct, variant: MedusaVariant) {
-  const metadataImages = readMetadataImageUrls(variant.metadata?.imageUrls);
-  const metadataImage = readMetadataImageUrl(variant.metadata?.imageUrl);
-  const relationImages = (variant.images ?? [])
-    .map((image) => normalizeMedusaAssetUrl(image.url))
-    .filter(Boolean);
+function getVariantImages(product: InventoryProduct, variant: InventoryVariant) {
+  const urls = [
+    ...(variant.imageUrls ?? []),
+    variant.imageUrl,
+    ...readInventoryImageValues(variant.images),
+  ];
 
-  return Array.from(
-    new Set([
-      ...metadataImages,
-      ...(metadataImage ? [metadataImage] : []),
-      ...relationImages,
-    ]),
-  );
-}
-
-function readMetadataImageUrls(value: unknown) {
-  if (!Array.isArray(value)) {
-    return [];
-  }
-
-  return value
-    .map(readMetadataImageUrl)
-    .filter((url): url is string => Boolean(url));
-}
-
-function readMetadataImageUrl(value: unknown) {
-  return typeof value === "string" && value.trim()
-    ? normalizeMedusaAssetUrl(value.trim())
-    : undefined;
+  return dedupeStrings(urls.map(readImageUrl).filter(Boolean));
 }
 
 function splitOptionValue(value: string) {
@@ -341,44 +253,27 @@ function splitOptionValue(value: string) {
     .filter(Boolean);
 }
 
-function getMetadataValue(product: MedusaProduct, key: string) {
-  return product.metadata?.[key] ?? product.variants?.[0]?.metadata?.[key];
-}
-
-function getVariantMetadataValue(variant: MedusaVariant, ...keys: string[]) {
-  for (const key of keys) {
-    const value = variant.metadata?.[key];
-
-    if (value !== undefined && value !== null) {
-      return value;
-    }
-  }
-
-  return undefined;
+function getMetadataValue(product: InventoryProduct, key: string) {
+  return (
+    product.metadata?.[key] ??
+    product.variants?.[0]?.metadata?.[
+      key as keyof InventoryVariant["metadata"]
+    ]
+  );
 }
 
 function getVariantInventoryState(
-  variant: MedusaVariant,
+  variant: InventoryVariant,
 ): InventoryLocationState | undefined {
-  const value = getVariantMetadataValue(
-    variant,
-    "inventoryState",
-    "inventory_state",
-  );
+  const value = variant.metadata?.inventoryState;
 
   return value === "ON_VEHICLE" || value === "IN_WAREHOUSE"
     ? value
     : undefined;
 }
 
-function getVariantAvailableQuantity(variant: MedusaVariant) {
-  const value = getVariantMetadataValue(
-    variant,
-    "availableQuantity",
-    "available_quantity",
-  );
-
-  return normalizeInventoryQuantity(value);
+function getVariantAvailableQuantity(variant: InventoryVariant) {
+  return normalizeInventoryQuantity(variant.metadata?.availableQuantity);
 }
 
 function normalizeInventoryQuantity(value: unknown) {
@@ -394,7 +289,7 @@ function normalizeInventoryQuantity(value: unknown) {
   return Number.isInteger(quantity) && quantity >= 0 ? quantity : undefined;
 }
 
-function getBrand(product: MedusaProduct) {
+function getBrand(product: InventoryProduct) {
   const metadataBrand = getMetadataValue(product, "brand");
 
   if (typeof metadataBrand === "string" && metadataBrand.trim()) {
@@ -404,7 +299,7 @@ function getBrand(product: MedusaProduct) {
   return knownProductCopy[product.handle]?.brand ?? "";
 }
 
-function getMetadataSpecs(product: MedusaProduct) {
+function getMetadataSpecs(product: InventoryProduct) {
   const specs: [string, string][] = [];
 
   metadataSpecFields.forEach(({ key, label }) => {
@@ -418,54 +313,31 @@ function getMetadataSpecs(product: MedusaProduct) {
   return specs;
 }
 
-function getCanonicalStorefrontCategories(product: MedusaProduct) {
+function getCanonicalStorefrontCategories(product: InventoryProduct) {
   const metadataCategory = getMetadataValue(product, "inventoryCategory");
+  const rawName =
+    typeof metadataCategory === "string" && metadataCategory.trim()
+      ? metadataCategory.trim()
+      : product.category?.trim() || defaultStorefrontCategory.name;
+  const bucket = getStorefrontCategoryBucket(rawName);
+  const name = bucket?.name ?? rawName;
 
-  if (typeof metadataCategory === "string" && metadataCategory.trim()) {
-    const name = metadataCategory.trim();
-
-    return [
-      {
-        name,
-        handle: toCategoryHandle(name),
-      },
-    ];
-  }
-
-  const medusaCategories = (product.categories ?? []).flatMap((category) => {
-    const name = category.name?.trim();
-
-    if (!name) {
-      return [];
-    }
-
-    return [
-      {
-        name,
-        handle: category.handle?.trim() || toCategoryHandle(name),
-      },
-    ];
-  });
-
-  if (medusaCategories.length) {
-    return dedupeStorefrontCategories(medusaCategories);
-  }
-
-  return [defaultStorefrontCategory];
+  return [
+    {
+      name,
+      handle: bucket?.handle ?? toCategoryHandle(name),
+    },
+  ];
 }
 
-function dedupeStorefrontCategories(categories: { name: string; handle: string }[]) {
-  const seen = new Set<string>();
+function getStorefrontCategoryBucket(categoryName: string) {
+  const normalized = toCategoryHandle(categoryName);
 
-  return categories.filter((category) => {
-    const key = category.handle || toCategoryHandle(category.name);
-
-    if (seen.has(key)) {
-      return false;
-    }
-
-    seen.add(key);
-    return true;
+  return storefrontCategoryBuckets.find((bucket) => {
+    return (
+      bucket.handle === normalized ||
+      bucket.terms.some((term) => normalized.includes(term))
+    );
   });
 }
 
@@ -477,17 +349,13 @@ function toCategoryHandle(categoryName: string) {
     .replace(/^-+|-+$/g, "");
 }
 
-function toStorefrontProduct(product: MedusaProduct): StorefrontProduct {
+function toStorefrontProduct(product: InventoryProduct): StorefrontProduct {
   const firstVariant = product.variants?.[0];
   const variants = getStorefrontVariants(product);
-  const price = firstVariant?.calculated_price;
+  const priceCents = firstVariant?.priceCents;
   const knownCopy = knownProductCopy[product.handle];
   const metadataSpecs = getMetadataSpecs(product);
-  const images = product.images?.length
-    ? product.images.map((image) => normalizeMedusaAssetUrl(image.url))
-    : [product.thumbnail]
-        .filter((image): image is string => Boolean(image))
-        .map(normalizeMedusaAssetUrl);
+  const images = getProductImages(product);
   const categories = getCanonicalStorefrontCategories(product);
 
   return {
@@ -503,11 +371,11 @@ function toStorefrontProduct(product: MedusaProduct): StorefrontProduct {
       : undefined,
     sku: firstVariant?.sku ?? "",
     brand: getBrand(product),
-    collectionTitle: product.collection?.title ?? categories[0]?.name ?? "",
+    collectionTitle: product.collectionTitle ?? categories[0]?.name ?? "",
     categories,
-    originalPrice: getOriginalPrice(price),
-    salePrice: formatPrice(price) || "Price unavailable",
-    saleBadge: getSaleBadge(price),
+    originalPrice: getOriginalPrice(),
+    salePrice: formatPrice(priceCents) || "Price unavailable",
+    saleBadge: getSaleBadge(),
     images: images.map((src, index) => ({
       src,
       alt:
@@ -517,173 +385,140 @@ function toStorefrontProduct(product: MedusaProduct): StorefrontProduct {
     })),
     flavors: getFlavorValues(product),
     variants,
-    details: knownCopy?.details ?? [product.description ?? product.subtitle ?? ""],
+    details: knownCopy?.details ?? [product.description ?? ""],
     specs: metadataSpecs.length ? metadataSpecs : placeholderSpecs,
   };
 }
 
-function toShopProductItem(product: MedusaProduct): ShopProductItem {
+function getProductImages(product: InventoryProduct) {
+  const urls = [
+    ...(product.imageUrls ?? []),
+    product.imageUrl,
+    product.thumbnail,
+    ...readInventoryImageValues(product.images),
+    ...readInventoryImageValues(product.productImages),
+  ];
+
+  return dedupeStrings(urls.map(readImageUrl).filter(Boolean));
+}
+
+function readInventoryImageValues(
+  images?: Array<string | InventoryProductImage>,
+) {
+  return (images ?? []).flatMap((image) => {
+    if (typeof image === "string") {
+      return [image];
+    }
+
+    return image.url ? [image.url] : [];
+  });
+}
+
+function readImageUrl(value: unknown) {
+  return typeof value === "string" && value.trim()
+    ? normalizeInventoryAssetUrl(value.trim())
+    : "";
+}
+
+function dedupeStrings(values: string[]) {
+  return Array.from(new Set(values));
+}
+
+function toShopProductItem(product: InventoryProduct): ShopProductItem {
   const storefrontProduct = toStorefrontProduct(product);
-  const price = product.variants?.[0]?.calculated_price;
-  const formattedPrice = formatPrice(price) || "Price unavailable";
+  const priceCents = product.variants?.[0]?.priceCents;
+  const formattedPrice = formatPrice(priceCents) || "Price unavailable";
 
   return {
     name: product.title,
     image: storefrontProduct.images[0]?.src ?? "",
     href: `/product/${product.handle}`,
     categories: storefrontProduct.categories.map((category) => category.name),
-    originalPrice: getOriginalPrice(price),
+    originalPrice: getOriginalPrice(),
     salePrice: formattedPrice,
     price: formattedPrice,
-    sortPrice: price?.calculated_amount ?? Number.MAX_SAFE_INTEGER,
+    sortPrice: priceCents ?? Number.MAX_SAFE_INTEGER,
     action: "Select options",
-    isSale: hasSalePrice(price),
+    isSale: hasSalePrice(),
     description:
       product.description ??
-      product.subtitle ??
       storefrontProduct.details.find(Boolean) ??
       "BayBlaze product available for local delivery.",
   };
 }
 
 function toProductPreviewItem(
-  product: MedusaProduct,
+  product: InventoryProduct,
   index: number,
 ): ProductPreviewItem {
-  const price = product.variants?.[0]?.calculated_price;
-  const image = normalizeMedusaAssetUrl(
-    product.thumbnail ?? product.images?.[0]?.url ?? "",
-  );
+  const priceCents = product.variants?.[0]?.priceCents;
+  const image = getProductImages(product)[0] ?? "";
   const positions = ["left", "center", "right"];
 
   return {
     name: product.title,
     image,
     href: `/product/${product.handle}`,
-    originalPrice: getOriginalPrice(price),
-    salePrice: formatPrice(price) || "Price unavailable",
+    originalPrice: getOriginalPrice(),
+    salePrice: formatPrice(priceCents) || "Price unavailable",
     position: positions[index % positions.length],
-    isSale: hasSalePrice(price),
+    isSale: hasSalePrice(),
   };
 }
 
-function getCategoryIdsWithChildren(category: MedusaProductCategory): string[] {
-  const childIds: string[] =
-    category.category_children?.flatMap(getCategoryIdsWithChildren) ?? [];
+async function getPublishedInventoryProducts() {
+  const snapshot = await fetchInventorySnapshot();
 
-  return [category.id, ...childIds];
+  return snapshot.products.filter((product) => product.status === "published");
 }
 
-async function getAllProductCategories() {
-  const categoryParams = new URLSearchParams({
-    limit: "100",
-    fields: "id,parent_category_id,mpath,*category_children",
+async function fetchInventorySnapshot() {
+  await connection();
+
+  const bayblazeApiUrl =
+    process.env.BAYBLAZE_API_URL?.trim().replace(/\/$/, "") ??
+    "https://api.bayblaze.net";
+  const bayblazeApiToken =
+    process.env.BAYBLAZE_API_SERVICE_TOKEN?.trim() ?? "";
+
+  if (!bayblazeApiToken) {
+    return { products: [] } satisfies InventorySnapshot;
+  }
+
+  const response = await fetch(`${bayblazeApiUrl}/v1/inventory`, {
+    headers: {
+      Authorization: `Bearer ${bayblazeApiToken}`,
+      "x-bayblaze-api-token": bayblazeApiToken,
+    },
+    cache: "no-store",
   });
-  let categoryResponse: Response;
 
-  try {
-    categoryResponse = await fetch(
-      `${backendUrl}/store/product-categories?${categoryParams.toString()}`,
-      {
-        headers: getHeaders(),
-        cache: "no-store",
-      },
+  if (!response.ok) {
+    throw new Error(
+      `Unable to load inventory from BayBlaze API: HTTP ${response.status}.`,
     );
-  } catch {
-    return [];
   }
 
-  if (!categoryResponse.ok) {
-    return [];
-  }
-
-  const categoryData =
-    (await categoryResponse.json()) as MedusaProductCategoriesResponse;
-
-  return categoryData.product_categories;
-}
-
-async function getCategoryIdsWithDescendants(category: MedusaProductCategory) {
-  const allCategories = await getAllProductCategories();
-
-  if (!allCategories.length) {
-    return getCategoryIdsWithChildren(category);
-  }
-
-  return allCategories
-    .filter((candidate) => {
-      return (
-        candidate.id === category.id ||
-        candidate.parent_category_id === category.id ||
-        candidate.mpath?.split(".").includes(category.id)
-      );
-    })
-    .map((candidate) => candidate.id);
+  return (await response.json()) as InventorySnapshot;
 }
 
 export async function getProductByStorefrontHandle(handle: string) {
-  const regionId = await getDefaultRegionId();
-  const searchParams = new URLSearchParams({
-    handle,
-    fields:
-      "*variants.calculated_price,*variants,*variants.metadata,*variants.options,*variants.images,*options,*options.values,*images,*categories,*collection,*metadata",
-  });
-
-  if (regionId) {
-    searchParams.set("region_id", regionId);
-  }
-
-  const response = await fetch(
-    `${backendUrl}/store/products?${searchParams.toString()}`,
-    {
-      headers: getHeaders(),
-      cache: "no-store",
-    },
-  );
-
-  if (!response.ok) {
-    throw new Error(`Unable to load product "${handle}" from Medusa.`);
-  }
-
-  const data = (await response.json()) as MedusaProductsResponse;
-  const product = data.products[0];
+  const products = await getPublishedInventoryProducts();
+  const product = products.find((item) => item.handle === handle);
 
   return product ? toStorefrontProduct(product) : undefined;
 }
 
 export async function getShopProducts() {
-  const regionId = await getDefaultRegionId();
-  const productParams = new URLSearchParams({
-    limit: "100",
-    fields:
-      "title,handle,subtitle,description,thumbnail,*variants.calculated_price,*variants,*variants.metadata,*variants.options,*variants.images,*options,*options.values,*images,*categories,*collection,*metadata",
-  });
-
-  if (regionId) {
-    productParams.set("region_id", regionId);
-  }
-
-  let productResponse: Response;
+  let products: InventoryProduct[];
 
   try {
-    productResponse = await fetch(
-      `${backendUrl}/store/products?${productParams.toString()}`,
-      {
-        headers: getHeaders(),
-        cache: "no-store",
-      },
-    );
+    products = await getPublishedInventoryProducts();
   } catch {
     return [];
   }
 
-  if (!productResponse.ok) {
-    return [];
-  }
-
-  const data = (await productResponse.json()) as MedusaProductsResponse;
-
-  return data.products.map(toShopProductItem).filter((product) => {
+  return products.map(toShopProductItem).filter((product) => {
     return Boolean(product.image);
   });
 }
@@ -691,73 +526,23 @@ export async function getShopProducts() {
 export async function getProductPreviewsByCategoryHandle(
   categoryHandle: string,
 ) {
-  const categoryParams = new URLSearchParams({
-    handle: categoryHandle,
-    limit: "1",
-  });
-  let categoryResponse: Response;
+  let products: InventoryProduct[];
 
   try {
-    categoryResponse = await fetch(
-      `${backendUrl}/store/product-categories?${categoryParams.toString()}`,
-      {
-        headers: getHeaders(),
-        cache: "no-store",
-      },
-    );
+    products = await getPublishedInventoryProducts();
   } catch {
     return [];
   }
 
-  if (!categoryResponse.ok) {
-    return [];
-  }
-
-  const categoryData =
-    (await categoryResponse.json()) as MedusaProductCategoriesResponse;
-  const category = categoryData.product_categories[0];
-
-  if (!category) {
-    return [];
-  }
-
-  const categoryIds = await getCategoryIdsWithDescendants(category);
-
-  const regionId = await getDefaultRegionId();
-  const productParams = new URLSearchParams({
-    limit: "12",
-    fields: "title,handle,thumbnail,*images,*variants.calculated_price",
-  });
-
-  categoryIds.forEach((categoryId) => {
-    productParams.append("category_id[]", categoryId);
-  });
-
-  if (regionId) {
-    productParams.set("region_id", regionId);
-  }
-
-  let productResponse: Response;
-
-  try {
-    productResponse = await fetch(
-      `${backendUrl}/store/products?${productParams.toString()}`,
-      {
-        headers: getHeaders(),
-        cache: "no-store",
-      },
-    );
-  } catch {
-    return [];
-  }
-
-  if (!productResponse.ok) {
-    return [];
-  }
-
-  const data = (await productResponse.json()) as MedusaProductsResponse;
-
-  return data.products.map(toProductPreviewItem).filter((product) => {
-    return Boolean(product.image);
-  });
+  return products
+    .filter((product) => {
+      return getCanonicalStorefrontCategories(product).some(
+        (category) => category.handle === categoryHandle,
+      );
+    })
+    .slice(0, 12)
+    .map(toProductPreviewItem)
+    .filter((product) => {
+      return Boolean(product.image);
+    });
 }
