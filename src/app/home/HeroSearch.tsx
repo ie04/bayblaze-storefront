@@ -87,13 +87,9 @@ export default function HeroSearch() {
           Search products
         </label>
 
-        <button
-          type="submit"
-          className={styles.submit}
-          aria-label="Search"
-        >
+        <div className={styles.iconBlock} aria-hidden="true">
           <SearchIcon />
-        </button>
+        </div>
 
         <div className={styles.field}>
           <input
@@ -120,6 +116,10 @@ export default function HeroSearch() {
             <span className={styles.caret} />
           </span>
         </div>
+
+        <button type="submit" className={styles.submit}>
+          Search
+        </button>
       </form>
     </div>
   );
