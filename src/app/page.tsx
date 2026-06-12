@@ -4,19 +4,17 @@ import HomeContact from "@/app/home/HomeContact";
 import HomeExploreProducts from "@/app/home/HomeExploreProducts";
 import HomeFooter from "@/app/home/HomeFooter";
 import HomeHero from "@/app/home/HomeHero";
-import HomeShopByCategory from "@/app/home/HomeShopByCategory";
-import { getProductPreviewsByCategoryHandle } from "@/app/lib/medusa-products";
+import { getFastDeliveryProductPreviews } from "@/app/lib/medusa-products";
 
 export default async function Home() {
-  const vapeProducts = await getProductPreviewsByCategoryHandle("vapes");
+  const fastDeliveryProducts = await getFastDeliveryProductPreviews();
 
   return (
     <main className="relative">
       <Header />
       <HomeHero />
-      <HomeShopByCategory />
       <HomeExploreProducts
-        vapeProducts={vapeProducts}
+        fastDeliveryProducts={fastDeliveryProducts}
       />
       <HomeAbout />
       <HomeContact />

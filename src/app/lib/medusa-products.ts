@@ -94,6 +94,8 @@ export type ProductPreviewItem = {
 
 export type ShopProductItem = {
   name: string;
+  inventoryState?: InventoryLocationState;
+  availableQuantity?: number;
   image: string;
   href: string;
   categories: string[];
@@ -431,6 +433,8 @@ function toShopProductItem(product: InventoryProduct): ShopProductItem {
 
   return {
     name: product.title,
+    inventoryState: storefrontProduct.inventoryState,
+    availableQuantity: storefrontProduct.availableQuantity,
     image: storefrontProduct.images[0]?.src ?? "",
     href: `/product/${product.handle}`,
     categories: storefrontProduct.categories.map((category) => category.name),
@@ -445,6 +449,15 @@ function toShopProductItem(product: InventoryProduct): ShopProductItem {
       storefrontProduct.details.find(Boolean) ??
       "BayBlaze product available for local delivery.",
   };
+}
+
+function hasFastDeliveryInventory(product: InventoryProduct) {
+  return product.variants.some((variant) => {
+    return (
+      getVariantInventoryState(variant) === "ON_VEHICLE" &&
+      (getVariantAvailableQuantity(variant) ?? 0) > 0
+    );
+  });
 }
 
 function toProductPreviewItem(
@@ -507,6 +520,20 @@ export async function getProductByStorefrontHandle(handle: string) {
   const product = products.find((item) => item.handle === handle);
 
   return product ? toStorefrontProduct(product) : undefined;
+}
+
+export async function getFastDeliveryProductPreviews() {
+  let products: InventoryProduct[];
+
+  try {
+    products = await getPublishedInventoryProducts();
+  } catch {
+    return [];
+  }
+
+  return products
+    .filter(hasFastDeliveryInventory)
+    .map((product, index) => toProductPreviewItem(product, index));
 }
 
 export async function getShopProducts() {

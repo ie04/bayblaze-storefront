@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
 
 import type { ShopProductItem } from "@/app/lib/medusa-products";
@@ -26,6 +26,9 @@ export default function ShopPageClient({
   initialSearchQuery?: string;
   products: ShopProductItem[];
 }) {
+  const searchParams = useSearchParams();
+  const availabilityFilter = searchParams.get("availability");
+
   const categories = useMemo(() => {
     const productCategories = Array.from(
       new Set(products.flatMap((product) => product.categories)),
@@ -56,8 +59,18 @@ export default function ShopPageClient({
             product.categories.includes(selectedCategory),
           );
 
+    const availabilityFiltered: ShopProductItem[] =
+      availabilityFilter === "fast"
+        ? categoryFiltered.filter((product) => {
+            return (
+              product.inventoryState === "ON_VEHICLE" &&
+              (product.availableQuantity ?? 0) > 0
+            );
+          })
+        : categoryFiltered;
+
     const searchFiltered = normalizedSearchQuery
-      ? categoryFiltered.filter((product) => {
+      ? availabilityFiltered.filter((product) => {
           const searchableText = [
             product.name,
             product.description,
@@ -85,7 +98,7 @@ export default function ShopPageClient({
 
       return products.indexOf(a) - products.indexOf(b);
     });
-  }, [normalizedSearchQuery, products, selectedCategory, sortBy]);
+  }, [availabilityFilter, normalizedSearchQuery, products, selectedCategory, sortBy]);
 
   function handleQuickAdd(product: ShopProductItem) {
     setNotice(`${product.name} added.`);
@@ -144,6 +157,7 @@ export default function ShopPageClient({
             {visibleProducts.length} result
             {visibleProducts.length === 1 ? "" : "s"}
             {searchQuery ? ` for "${searchQuery}"` : ""}
+            {availabilityFilter === "fast" ? " marked for fast delivery" : ""}
           </p>
 
           <label className="flex w-full flex-col gap-2 text-[14px] font-semibold text-black sm:w-auto sm:min-w-[270px]">
