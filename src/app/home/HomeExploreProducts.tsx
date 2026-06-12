@@ -24,8 +24,7 @@ export default function HomeExploreProducts({
             </h2>
 
             <p className="mt-3 max-w-[620px] text-[16px] font-medium leading-[1.55] text-[#585858] sm:text-[18px]">
-              Fresh picks loaded up and ready to head your way in the BayBlaze
-              delivery zone.
+              Fresh picks loaded up and ready to head your way
             </p>
           </div>
 
