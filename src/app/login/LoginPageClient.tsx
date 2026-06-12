@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { FormEvent, useMemo, useState } from "react";
+import { type FormEvent, useMemo, useState } from "react";
 
 type AuthMode = "login" | "register";
 
@@ -31,6 +31,7 @@ export default function LoginPageClient() {
   const [notice, setNotice] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [verificationEmail, setVerificationEmail] = useState("");
+
   const isVerifyingRegistration = mode === "register" && Boolean(verificationEmail);
 
   const redirectTo = useMemo(() => {
@@ -42,6 +43,7 @@ export default function LoginPageClient() {
 
     return "/account";
   }, [searchParams]);
+
   const googleOAuthHref = `/api/auth/oauth/google/start?redirect=${encodeURIComponent(
     redirectTo,
   )}`;
@@ -50,10 +52,14 @@ export default function LoginPageClient() {
     setForm((current) => ({ ...current, [field]: value }));
   }
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  function resetMessages() {
     setError("");
     setNotice("");
+  }
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    resetMessages();
     setIsSubmitting(true);
 
     const endpoint =
@@ -62,6 +68,7 @@ export default function LoginPageClient() {
         : isVerifyingRegistration
           ? "/api/auth/register"
           : "/api/auth/register/start";
+
     const payload =
       mode === "login"
         ? {
@@ -112,14 +119,14 @@ export default function LoginPageClient() {
   }
 
   return (
-    <div className="bayblaze-auth-page bayblaze-login-page min-h-screen pb-14 pt-[92px] sm:pb-20 sm:pt-[112px]">
-      <div className="mx-auto w-full max-w-[1180px] px-4 sm:px-5">
+    <div className="px-4 py-10 sm:px-6 sm:py-16">
+      <div className="mx-auto w-full max-w-5xl">
         <nav
           aria-label="Breadcrumb"
-          className="mb-6 flex flex-wrap items-center gap-2 text-[14px] leading-none text-[#7a7a7a]"
+          className="mb-5 flex flex-wrap items-center gap-2 text-[13px] font-bold uppercase tracking-widest text-[#585858]"
         >
           <Link
-            className="text-black transition-colors hover:text-[var(--ast-global-color-0)]"
+            className="text-black no-underline transition-colors hover:text-[var(--ast-global-color-0)]"
             href="/"
           >
             Home
@@ -130,217 +137,210 @@ export default function LoginPageClient() {
 
         <section
           aria-labelledby="bayblaze-auth-heading"
-          className="bayblaze-login-pattern-field relative isolate mx-auto flex min-h-[560px] w-full items-center justify-center py-4 sm:py-8"
+          className="grid min-h-[560px] border-2 border-black bg-white lg:grid-cols-[0.42fr_0.58fr]"
         >
-          <h1 id="bayblaze-auth-heading" className="sr-only">
-            Bayblaze Account
-          </h1>
+          <div className="flex flex-col justify-between border-b-2 border-black bg-[var(--ast-global-color-4)] p-6 sm:p-8 lg:border-b-0 lg:border-r-2">
+            <div>
+              <p className="text-[13px] font-extrabold uppercase tracking-[0.16em] text-[var(--ast-global-color-1)]">
+                BayBlaze account
+              </p>
 
-          <div className="bayblaze-login-card relative z-10 w-full max-w-[560px] p-5 sm:p-8">
-            {!isVerifyingRegistration ? (
-              <div className="mb-6 grid grid-cols-2 gap-1 rounded-full border border-[#d8e2d2] bg-white p-1 sm:mb-7">
-                <button
-                  type="button"
-                  aria-pressed={mode === "login"}
-                  className={`h-12 rounded-full text-[15px] font-semibold transition-colors ${
-                    mode === "login"
-                      ? "bg-[var(--ast-global-color-1)] text-white shadow-[0_8px_18px_rgba(44,84,29,0.16)]"
-                      : "text-black hover:bg-[#f6f8f5]"
-                  }`}
-                  onClick={() => {
-                    setMode("login");
-                    setError("");
-                    setNotice("");
-                    setVerificationEmail("");
-                  }}
-                >
-                  Login
-                </button>
-                <button
-                  type="button"
-                  aria-pressed={mode === "register"}
-                  className={`h-12 rounded-full text-[15px] font-semibold transition-colors ${
-                    mode === "register"
-                      ? "bg-[var(--ast-global-color-1)] text-white shadow-[0_8px_18px_rgba(44,84,29,0.16)]"
-                      : "text-black hover:bg-[#f6f8f5]"
-                  }`}
-                  onClick={() => {
-                    setMode("register");
-                    setError("");
-                    setNotice("");
-                  }}
-                >
-                  Register
-                </button>
-              </div>
-            ) : null}
+              <h1
+                id="bayblaze-auth-heading"
+                className="mt-2 text-4xl font-black uppercase leading-none sm:text-5xl"
+              >
+                Sign in for faster checkout.
+              </h1>
 
-            {!isVerifyingRegistration ? (
-              <>
-                <a
-                  href={googleOAuthHref}
-                  className="bayblaze-login-oauth-button mb-5 flex h-12 w-full items-center justify-center gap-3 px-4 text-center text-[15px] font-semibold text-black transition-colors hover:border-black hover:bg-white"
-                >
-                  <GoogleIcon />
-                  Continue with Google
-                </a>
+              <p className="mt-4 text-base font-medium leading-[1.6] text-[#585858]">
+                Save your delivery details, view active orders, and keep your Tampa local delivery experience sharp.
+              </p>
+            </div>
 
-                <div className="mb-5 flex items-center gap-3 text-[12px] font-semibold uppercase tracking-[0.14em] text-[#7a7a7a]">
-                  <span className="h-px flex-1 bg-[#d8e2d2]" />
-                  <span>Email</span>
-                  <span className="h-px flex-1 bg-[#d8e2d2]" />
-                </div>
-              </>
-            ) : null}
+            <div className="mt-8 grid border-2 border-black bg-white">
+              <InfoCell title="21+" body="Valid ID required at delivery." />
+              <InfoCell title="Local" body="Built around Tampa delivery." />
+              <InfoCell title="Fast" body="Inventory-first ordering flow." last />
+            </div>
+          </div>
 
-            <form className="space-y-5" onSubmit={handleSubmit}>
-              {isVerifyingRegistration ? (
-                <div className="space-y-5">
-                  <div>
-                    <p className="text-[13px] font-semibold uppercase tracking-[0.18em] text-[var(--ast-global-color-1)]">
-                      Verify email
-                    </p>
-                    <h2 className="mt-2 text-[24px] font-semibold leading-tight text-black sm:text-[28px]">
-                      Enter your code
-                    </h2>
-                    <p className="mt-3 text-[15px] leading-[1.6] text-[#585858] sm:text-[16px]">
-                      We sent a 6-digit code to{" "}
-                      <span className="font-semibold text-black">
-                        {verificationEmail}
-                      </span>
-                      .
-                    </p>
-                  </div>
-
-                  <label className="block text-[14px] font-semibold text-black">
-                    Verification code
-                    <input
-                      required
-                      inputMode="numeric"
-                      maxLength={6}
-                      pattern="[0-9]{6}"
-                      value={form.code}
-                      className="bayblaze-sharp-input mt-2 h-12 w-full px-4 text-center text-[18px] font-semibold tracking-[0.2em] text-black outline-none"
-                      onChange={(event) =>
-                        updateField(
-                          "code",
-                          event.target.value.replace(/\D/g, "").slice(0, 6),
-                        )
-                      }
-                    />
-                  </label>
+          <div className="p-5 sm:p-8">
+            <div className="mx-auto w-full max-w-[520px]">
+              {!isVerifyingRegistration ? (
+                <div className="mb-6 grid grid-cols-2 border-2 border-black bg-white">
+                  <button
+                    type="button"
+                    aria-pressed={mode === "login"}
+                    className={`h-12 border-r-2 border-black text-[14px] font-extrabold uppercase tracking-widest transition-colors ${
+                      mode === "login"
+                        ? "bg-black text-white"
+                        : "bg-white text-black hover:bg-[var(--ast-global-color-4)]"
+                    }`}
+                    onClick={() => {
+                      setMode("login");
+                      resetMessages();
+                      setVerificationEmail("");
+                    }}
+                  >
+                    Login
+                  </button>
 
                   <button
                     type="button"
-                    className="text-[13px] font-semibold uppercase tracking-[0.12em] text-[#585858] transition-colors hover:text-black"
+                    aria-pressed={mode === "register"}
+                    className={`h-12 text-[14px] font-extrabold uppercase tracking-widest transition-colors ${
+                      mode === "register"
+                        ? "bg-black text-white"
+                        : "bg-white text-black hover:bg-[var(--ast-global-color-4)]"
+                    }`}
                     onClick={() => {
-                      setVerificationEmail("");
-                      setForm((current) => ({ ...current, code: "" }));
-                      setError("");
-                      setNotice("");
+                      setMode("register");
+                      resetMessages();
                     }}
                   >
-                    Change email
+                    Register
                   </button>
                 </div>
-              ) : (
+              ) : null}
+
+              {!isVerifyingRegistration ? (
                 <>
-                  {mode === "register" && (
-                    <div className="grid gap-4 sm:grid-cols-2">
-                      <label className="block text-[14px] font-semibold text-black">
-                        First name
-                        <input
-                          required
+                  <a
+                    href={googleOAuthHref}
+                    className="mb-5 flex h-12 w-full items-center justify-center gap-3 border-2 border-black bg-white px-4 text-center text-[14px] font-extrabold uppercase tracking-wider text-black no-underline transition-colors hover:bg-black hover:text-white"
+                  >
+                    <GoogleIcon />
+                    Continue with Google
+                  </a>
+
+                  <div className="mb-5 flex items-center gap-3 text-[12px] font-extrabold uppercase tracking-[0.16em] text-[#585858]">
+                    <span className="h-0.5 flex-1 bg-black" />
+                    <span>Email</span>
+                    <span className="h-0.5 flex-1 bg-black" />
+                  </div>
+                </>
+              ) : null}
+
+              <form className="space-y-5" onSubmit={handleSubmit}>
+                {isVerifyingRegistration ? (
+                  <div className="space-y-5">
+                    <div className="border-2 border-black bg-[var(--ast-global-color-4)] p-5">
+                      <p className="text-[13px] font-extrabold uppercase tracking-[0.16em] text-[var(--ast-global-color-1)]">
+                        Verify email
+                      </p>
+                      <h2 className="mt-2 text-3xl font-black uppercase leading-none text-black">
+                        Enter your code
+                      </h2>
+                      <p className="mt-3 text-[15px] font-medium leading-[1.6] text-[#585858]">
+                        We sent a 6-digit code to{" "}
+                        <span className="font-bold text-black">{verificationEmail}</span>.
+                      </p>
+                    </div>
+
+                    <label className="block text-[13px] font-extrabold uppercase tracking-widest text-black">
+                      Verification code
+                      <input
+                        required
+                        inputMode="numeric"
+                        maxLength={6}
+                        pattern="[0-9]{6}"
+                        value={form.code}
+                        className="bayblaze-sharp-input mt-2 h-12 text-center text-[18px] font-bold tracking-[0.2em]"
+                        onChange={(event) =>
+                          updateField(
+                            "code",
+                            event.target.value.replace(/\D/g, "").slice(0, 6),
+                          )
+                        }
+                      />
+                    </label>
+
+                    <button
+                      type="button"
+                      className="text-[13px] font-extrabold uppercase tracking-widest text-[#585858] transition-colors hover:text-black"
+                      onClick={() => {
+                        setVerificationEmail("");
+                        setForm((current) => ({ ...current, code: "" }));
+                        resetMessages();
+                      }}
+                    >
+                      Change email
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    {mode === "register" ? (
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <AuthInput
+                          label="First name"
                           autoComplete="given-name"
                           value={form.firstName}
-                          className="bayblaze-sharp-input mt-2 h-12 w-full px-4 text-[16px] font-normal text-black outline-none"
-                          onChange={(event) =>
-                            updateField("firstName", event.target.value)
-                          }
+                          onChange={(value) => updateField("firstName", value)}
                         />
-                      </label>
 
-                      <label className="block text-[14px] font-semibold text-black">
-                        Last name
-                        <input
-                          required
+                        <AuthInput
+                          label="Last name"
                           autoComplete="family-name"
                           value={form.lastName}
-                          className="bayblaze-sharp-input mt-2 h-12 w-full px-4 text-[16px] font-normal text-black outline-none"
-                          onChange={(event) =>
-                            updateField("lastName", event.target.value)
-                          }
+                          onChange={(value) => updateField("lastName", value)}
                         />
-                      </label>
-                    </div>
-                  )}
+                      </div>
+                    ) : null}
 
-                  <label className="block text-[14px] font-semibold text-black">
-                    Email
-                    <input
-                      required
+                    <AuthInput
+                      label="Email"
                       type="email"
                       autoComplete="email"
                       value={form.email}
-                      className="bayblaze-sharp-input mt-2 h-12 w-full px-4 text-[16px] font-normal text-black outline-none"
-                      onChange={(event) =>
-                        updateField("email", event.target.value)
-                      }
+                      onChange={(value) => updateField("email", value)}
                     />
-                  </label>
 
-                  <label className="block text-[14px] font-semibold text-black">
-                    Password
-                    <input
-                      required
+                    <AuthInput
+                      label="Password"
                       type="password"
                       minLength={6}
-                      autoComplete={
-                        mode === "login" ? "current-password" : "new-password"
-                      }
+                      autoComplete={mode === "login" ? "current-password" : "new-password"}
                       value={form.password}
-                      className="bayblaze-sharp-input mt-2 h-12 w-full px-4 text-[16px] font-normal text-black outline-none"
-                      onChange={(event) =>
-                        updateField("password", event.target.value)
-                      }
+                      onChange={(value) => updateField("password", value)}
                     />
-                  </label>
-                </>
-              )}
+                  </>
+                )}
 
-              <p
-                aria-live="polite"
-                className="min-h-6 text-[14px] font-semibold text-red-700"
-              >
-                {error}
-              </p>
-              {notice ? (
                 <p
                   aria-live="polite"
-                  className="-mt-3 text-[14px] font-semibold text-[var(--ast-global-color-1)]"
+                  className="min-h-6 border-2 border-transparent text-[14px] font-bold text-red-700"
                 >
-                  {notice}
+                  {error}
                 </p>
-              ) : null}
 
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="bayblaze-hero-button bayblaze-sharp-button bayblaze-sharp-button--outline bayblaze-sharp-button bayblaze-sharp-button--primary flex h-[50px] w-full items-center justify-center px-5 text-center disabled:cursor-not-allowed disabled:opacity-70 sm:h-[52px] sm:px-7"
-              >
-                {isSubmitting
-                  ? mode === "login"
-                    ? "Signing in..."
-                    : verificationEmail
-                      ? "Verifying..."
-                      : "Sending code..."
-                  : mode === "login"
-                    ? "SIGN IN"
-                    : verificationEmail
-                      ? "VERIFY & CREATE ACCOUNT"
-                      : "CREATE ACCOUNT"}
-              </button>
-            </form>
+                {notice ? (
+                  <p
+                    aria-live="polite"
+                    className="-mt-3 border-2 border-black bg-[var(--ast-global-color-4)] px-3 py-2 text-[14px] font-bold text-[var(--ast-global-color-1)]"
+                  >
+                    {notice}
+                  </p>
+                ) : null}
+
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="bayblaze-sharp-button bayblaze-sharp-button--primary flex h-[52px] w-full items-center justify-center text-center disabled:cursor-not-allowed disabled:opacity-70"
+                >
+                  {isSubmitting
+                    ? mode === "login"
+                      ? "Signing in..."
+                      : verificationEmail
+                        ? "Verifying..."
+                        : "Sending code..."
+                    : mode === "login"
+                      ? "Sign in"
+                      : verificationEmail
+                        ? "Verify & create account"
+                        : "Create account"}
+                </button>
+              </form>
+            </div>
           </div>
         </section>
       </div>
@@ -348,30 +348,70 @@ export default function LoginPageClient() {
   );
 }
 
+function AuthInput({
+  label,
+  type = "text",
+  autoComplete,
+  minLength,
+  value,
+  onChange,
+}: {
+  label: string;
+  type?: string;
+  autoComplete?: string;
+  minLength?: number;
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <label className="block text-[13px] font-extrabold uppercase tracking-widest text-black">
+      {label}
+      <input
+        required
+        type={type}
+        autoComplete={autoComplete}
+        minLength={minLength}
+        value={value}
+        className="bayblaze-sharp-input mt-2 h-12 text-[16px] font-medium normal-case tracking-normal"
+        onChange={(event) => onChange(event.target.value)}
+      />
+    </label>
+  );
+}
+
+function InfoCell({
+  title,
+  body,
+  last,
+}: {
+  title: string;
+  body: string;
+  last?: boolean;
+}) {
+  return (
+    <div
+      className={[
+        "p-4",
+        last ? "" : "border-b-2 border-black",
+      ].join(" ")}
+    >
+      <div className="text-xs font-extrabold uppercase tracking-widest text-[#585858]">
+        {title}
+      </div>
+      <div className="mt-1 text-sm font-bold leading-[1.45] text-black">
+        {body}
+      </div>
+    </div>
+  );
+}
+
 function GoogleIcon() {
   return (
-    <svg
+    <span
       aria-hidden="true"
-      className="size-5"
-      viewBox="0 0 24 24"
-      xmlns="http://www.w3.org/2000/svg"
+      className="grid size-5 place-items-center border-2 border-black bg-white text-[12px] font-black leading-none text-black"
     >
-      <path
-        d="M21.6 12.23c0-.74-.07-1.46-.19-2.14H12v4.05h5.38a4.6 4.6 0 0 1-1.99 3.02v2.51h3.23c1.89-1.74 2.98-4.31 2.98-7.44Z"
-        fill="#4285F4"
-      />
-      <path
-        d="M12 22c2.7 0 4.96-.89 6.62-2.42l-3.23-2.51c-.9.6-2.04.95-3.39.95-2.6 0-4.81-1.76-5.6-4.13H3.06v2.59A10 10 0 0 0 12 22Z"
-        fill="#34A853"
-      />
-      <path
-        d="M6.4 13.89a6.02 6.02 0 0 1 0-3.78V7.52H3.06a10 10 0 0 0 0 8.96l3.34-2.59Z"
-        fill="#FBBC05"
-      />
-      <path
-        d="M12 5.98c1.47 0 2.78.5 3.82 1.49l2.87-2.87C16.95 2.99 14.7 2 12 2a10 10 0 0 0-8.94 5.52l3.34 2.59c.79-2.37 3-4.13 5.6-4.13Z"
-        fill="#EA4335"
-      />
-    </svg>
+      G
+    </span>
   );
 }
