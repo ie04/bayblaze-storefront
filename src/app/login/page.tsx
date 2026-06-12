@@ -17,14 +17,7 @@ export default function Page() {
       <Suspense
         fallback={
           <div className="px-4 py-10 sm:px-6 sm:py-16">
-            <div className="mx-auto w-full max-w-5xl">
-              <div className="grid min-h-[560px] border-2 border-black bg-white lg:grid-cols-[0.42fr_0.58fr]">
-                <div className="hidden border-r-2 border-black bg-[var(--ast-global-color-4)] lg:block" />
-                <div className="p-6 sm:p-8">
-                  <div className="h-full border-2 border-black bg-[var(--ast-global-color-4)]" />
-                </div>
-              </div>
-            </div>
+            <div className="mx-auto h-[520px] w-full max-w-[520px] border-2 border-black bg-white" />
           </div>
         }
       >
