@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useMemo, useState } from "react";
 
 import { useCart } from "@/app/components/cart/CartContext";
 import type { StorefrontProduct } from "@/app/lib/medusa-products";
@@ -28,7 +28,6 @@ export default function ProductPage({
   const [quantity, setQuantity] = useState(1);
   const [cartNotice, setCartNotice] = useState("");
 
-  const currentImage = product.images[activeImage] ?? product.images[0];
   const primaryCategory = product.categories[0];
   const selectedVariantId = useMemo(() => {
     if (!flavor) {
@@ -44,8 +43,14 @@ export default function ProductPage({
   const selectedVariant = useMemo(() => {
     return product.variants.find((variant) => variant.id === selectedVariantId);
   }, [product.variants, selectedVariantId]);
-
   const hasMultipleVariants = product.variants.length > 1;
+  const shouldUseVariantGallery = !hasMultipleVariants || Boolean(flavor);
+  const galleryImages =
+    shouldUseVariantGallery && selectedVariant?.images.length ? selectedVariant.images : product.images;
+  const safeActiveImage =
+    galleryImages.length > 0 ? Math.min(activeImage, galleryImages.length - 1) : 0;
+  const currentImage = galleryImages[safeActiveImage] ?? galleryImages[0];
+
   const shouldShowStockStatus = !hasMultipleVariants || Boolean(flavor);
   const selectedAvailableQuantity =
     selectedVariant?.availableQuantity ?? product.availableQuantity;
@@ -68,6 +73,7 @@ export default function ProductPage({
     remainingAvailableQuantity === undefined
       ? 12
       : Math.max(1, Math.min(12, remainingAvailableQuantity));
+  const selectedQuantity = Math.min(quantity, quantityLimit);
   const canAddSelectedVariant =
     selectedAvailableQuantity !== undefined &&
     Boolean(selectedInventoryState) &&
@@ -75,19 +81,13 @@ export default function ProductPage({
     remainingAvailableQuantity !== undefined &&
     remainingAvailableQuantity > 0;
 
-  useEffect(() => {
-    if (quantity > quantityLimit) {
-      setQuantity(quantityLimit);
-    }
-  }, [quantity, quantityLimit]);
-
   const selectedSummary = useMemo(() => {
     if (!flavor) {
       return "";
     }
 
-    return `${quantity} x ${product.name} - ${flavor}`;
-  }, [flavor, product.name, quantity]);
+    return `${selectedQuantity} x ${product.name} - ${flavor}`;
+  }, [flavor, product.name, selectedQuantity]);
 
   function updateQuantity(nextQuantity: number) {
     setQuantity(Math.min(Math.max(nextQuantity, 1), quantityLimit));
@@ -138,7 +138,7 @@ export default function ProductPage({
       return;
     }
 
-    if (quantity > availableToAdd) {
+    if (selectedQuantity > availableToAdd) {
       setCartNotice(
         `${product.name} has only ${availableToAdd} left available.`,
       );
@@ -154,12 +154,12 @@ export default function ProductPage({
       inventoryState: selectedInventoryState,
       name: product.name,
       flavor: flavor || undefined,
-      image: product.images[0]?.src,
+      image: galleryImages[0]?.src,
       price: product.salePrice,
-      quantity,
+      quantity: selectedQuantity,
     });
 
-    setCartNotice(`${selectedSummary || `${quantity} x ${product.name}`} added.`);
+    setCartNotice(`${selectedSummary || `${selectedQuantity} x ${product.name}`} added.`);
   }
 
   return (
@@ -192,17 +192,17 @@ export default function ProductPage({
         <section className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(390px,0.82fr)] lg:gap-14">
           <div className="grid gap-4 sm:grid-cols-[84px_minmax(0,1fr)]">
             <div className="order-2 flex gap-3 sm:order-1 sm:flex-col">
-              {product.images.map((image, index) => (
+              {galleryImages.map((image, index) => (
                 <button
-                  key={image.src}
+                  key={`${selectedVariantId}-${image.src}`}
                   type="button"
                   className={`relative size-20 shrink-0 border bg-white transition ${
-                    activeImage === index
+                    safeActiveImage === index
                       ? "border-black"
                       : "border-[#e4e4e4] hover:border-[var(--ast-global-color-0)]"
                   }`}
                   aria-label={`View product image ${index + 1}`}
-                  aria-pressed={activeImage === index}
+                  aria-pressed={safeActiveImage === index}
                   onClick={() => setActiveImage(index)}
                 >
                   <Image
@@ -312,6 +312,7 @@ export default function ProductPage({
                     className="h-12 w-full border border-[#d6d6d6] bg-white px-4 text-[16px] text-black outline-none transition focus:border-black"
                     onChange={(event) => {
                       setFlavor(event.target.value);
+                      setActiveImage(0);
                       setCartNotice("");
                     }}
                   >
@@ -344,7 +345,7 @@ export default function ProductPage({
                     min={1}
                     max={quantityLimit}
                     type="number"
-                    value={quantity}
+                    value={selectedQuantity}
                     onChange={(event) =>
                       updateQuantity(Number(event.target.value) || 1)
                     }

@@ -38,6 +38,7 @@ type MedusaVariant = {
   id: string;
   title: string;
   sku?: string | null;
+  images?: MedusaImage[];
   metadata?: Record<string, unknown> | null;
   options?: MedusaVariantOption[];
   calculated_price?: MedusaCalculatedPrice;
@@ -98,6 +99,7 @@ export type StorefrontProduct = {
     flavor?: string;
     inventoryState?: InventoryLocationState;
     availableQuantity?: number;
+    images: { src: string; alt: string }[];
     optionValues: string[];
   }[];
   details: string[];
@@ -279,6 +281,7 @@ function getStorefrontVariants(product: MedusaProduct) {
     const flavor = getVariantFlavor(variant);
     const inventoryState = getVariantInventoryState(variant);
     const availableQuantity = getVariantAvailableQuantity(variant);
+    const variantImages = getVariantImages(product, variant);
 
     return {
       id: variant.id,
@@ -287,9 +290,48 @@ function getStorefrontVariants(product: MedusaProduct) {
       flavor,
       inventoryState,
       availableQuantity,
+      images: variantImages.map((src, index) => ({
+        src,
+        alt:
+          index === 0
+            ? `${product.title} ${variant.title} image`
+            : `${product.title} ${variant.title} image ${index + 1}`,
+      })),
       optionValues: flavor ? splitOptionValue(flavor) : [],
     };
   });
+}
+
+function getVariantImages(product: MedusaProduct, variant: MedusaVariant) {
+  const metadataImages = readMetadataImageUrls(variant.metadata?.imageUrls);
+  const metadataImage = readMetadataImageUrl(variant.metadata?.imageUrl);
+  const relationImages = (variant.images ?? [])
+    .map((image) => normalizeMedusaAssetUrl(image.url))
+    .filter(Boolean);
+
+  return Array.from(
+    new Set([
+      ...metadataImages,
+      ...(metadataImage ? [metadataImage] : []),
+      ...relationImages,
+    ]),
+  );
+}
+
+function readMetadataImageUrls(value: unknown) {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .map(readMetadataImageUrl)
+    .filter((url): url is string => Boolean(url));
+}
+
+function readMetadataImageUrl(value: unknown) {
+  return typeof value === "string" && value.trim()
+    ? normalizeMedusaAssetUrl(value.trim())
+    : undefined;
 }
 
 function splitOptionValue(value: string) {
@@ -584,7 +626,7 @@ export async function getProductByStorefrontHandle(handle: string) {
   const searchParams = new URLSearchParams({
     handle,
     fields:
-      "*variants.calculated_price,*variants,*variants.metadata,*variants.options,*options,*options.values,*images,*categories,*collection,*metadata",
+      "*variants.calculated_price,*variants,*variants.metadata,*variants.options,*variants.images,*options,*options.values,*images,*categories,*collection,*metadata",
   });
 
   if (regionId) {
@@ -614,7 +656,7 @@ export async function getShopProducts() {
   const productParams = new URLSearchParams({
     limit: "100",
     fields:
-      "title,handle,subtitle,description,thumbnail,*variants.calculated_price,*variants,*variants.metadata,*variants.options,*options,*options.values,*images,*categories,*collection,*metadata",
+      "title,handle,subtitle,description,thumbnail,*variants.calculated_price,*variants,*variants.metadata,*variants.options,*variants.images,*options,*options.values,*images,*categories,*collection,*metadata",
   });
 
   if (regionId) {
