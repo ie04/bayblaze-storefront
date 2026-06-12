@@ -84,6 +84,7 @@ export type StorefrontProduct = {
 
 export type ProductPreviewItem = {
   name: string;
+  brand: string;
   image: string;
   href: string;
   originalPrice?: string;
@@ -470,6 +471,7 @@ function toProductPreviewItem(
 
   return {
     name: product.title,
+    brand: getBrand(product) || "BayBlaze",
     image,
     href: `/product/${product.handle}`,
     originalPrice: getOriginalPrice(),

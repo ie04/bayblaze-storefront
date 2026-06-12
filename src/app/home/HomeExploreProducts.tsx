@@ -101,7 +101,7 @@ function FastDeliveryProductCard({
 
       <div className="flex flex-1 flex-col p-3 text-left sm:p-4">
         <div className="mb-2 text-[10px] font-extrabold uppercase tracking-[0.14em] text-[var(--ast-global-color-1)]">
-          On Vehicle
+          {product.brand}
         </div>
 
         <Link
