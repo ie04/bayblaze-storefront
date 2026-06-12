@@ -16,11 +16,11 @@ export default function HomeHero() {
       />
 
       <div className="relative z-20 mx-auto flex min-h-[720px] w-full max-w-[1150px] flex-col items-center px-4 text-center sm:min-h-screen sm:px-5">
-        <div className="hidden sm:block">
+        <div className="hidden w-full shrink-0 overflow-visible sm:block">
           <HeroRibbon />
         </div>
 
-        <div className="h-[178px] shrink-0 sm:h-[calc(32vh+43px)]" />
+        <div className="h-[178px] shrink-0 sm:h-[calc(27vh+24px)]" />
 
         <h1 className="bayblaze-hero-title">
           BAYBLAZE

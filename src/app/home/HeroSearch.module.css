@@ -144,10 +144,10 @@
   margin-inline: calc(50% - 50vw);
   max-width: none;
   overflow: hidden;
-  padding: 0.62rem 0;
-  position: absolute;
-  top: 139.5px;
-  transform: translateY(-50%);
+  padding: 0.72rem 0;
+  position: relative;
+  top: auto;
+  transform: none;
   width: 100vw;
 }
 
