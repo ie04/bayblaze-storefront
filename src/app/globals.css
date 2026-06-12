@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
+  --background: #f6f8f5;
   --foreground: #000000;
   --ast-global-color-0: #74a84a;
   --ast-global-color-1: #2c541d;
@@ -82,11 +82,16 @@ textarea {
 body {
   margin: 0;
   background: var(--background);
-  color: #808285;
+  color: #000000;
   font-style: normal;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+main {
+  background: var(--background);
+}
+
 
 @media (max-width: 767px) {
   html,

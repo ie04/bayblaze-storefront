@@ -105,7 +105,7 @@ export default function ShopPageClient({
   }
 
   return (
-    <div className="bayblaze-shop-page bg-white pb-14 pt-[92px] sm:pb-20 sm:pt-[112px]">
+    <div className="bayblaze-shop-page bg-[var(--ast-global-color-4)] pb-14 pt-[92px] sm:pb-20 sm:pt-[112px]">
       <div className="mx-auto w-full max-w-[1180px] px-4 sm:px-5">
         <nav
           aria-label="Breadcrumb"

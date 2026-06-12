@@ -41,7 +41,7 @@ const needCards = [
 
 export default function HomeShopByNeed() {
   return (
-    <section className="border-b-2 border-black bg-white">
+    <section className="border-b-2 border-black bg-[var(--ast-global-color-4)]">
       <div className="mx-auto w-full max-w-[1240px] px-4 py-12 sm:px-5 sm:py-16">
         <div className="mb-6 border-b-2 border-black pb-5 sm:mb-8">
           <p className="mb-2 text-[13px] font-extrabold uppercase tracking-[0.16em] text-[var(--ast-global-color-1)]">
