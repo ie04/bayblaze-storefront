@@ -4,7 +4,7 @@
   flex-direction: column;
   margin-top: 33px;
   max-width: min(600px, calc(100vw - 2rem));
-  width: 100%;
+  width: calc(100% - 1.55rem);
 }
 
 .search {
@@ -77,7 +77,7 @@
   display: flex;
   flex: 1;
   min-width: 0;
-  padding: 0 0.9rem 0 1.25rem;
+  padding: 0 0.9rem 0 1.55rem;
   position: relative;
 }
 
@@ -102,7 +102,7 @@
   font-family: var(--font-jost), Jost, Arial, sans-serif;
   font-size: 1.03rem;
   font-weight: 500;
-  inset: 50% auto auto 0;
+  inset: 50% auto auto 1.55rem;
   line-height: 1.25;
   overflow: hidden;
   pointer-events: none;
@@ -253,7 +253,7 @@
   }
 
   .field {
-    padding: 0 0.75rem 0 1rem;
+    padding: 0 0.75rem 0 1.25rem;
   }
 
   .input {
@@ -263,6 +263,8 @@
 
   .placeholder {
     font-size: 0.95rem;
+    inset: 50% auto auto 1.25rem;
+    width: calc(100% - 1.25rem);
   }
 }
 
