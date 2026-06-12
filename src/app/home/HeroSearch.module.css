@@ -2,7 +2,7 @@
   align-items: center;
   display: flex;
   flex-direction: column;
-  margin-top: 0;
+  margin-top: 24px;
   max-width: min(600px, calc(100vw - 2rem));
   width: 100%;
 }

@@ -64,7 +64,7 @@ export default function HomeIntentOrbit() {
   const [rotation, setRotation] = useState(0);
   const [activeIndex, setActiveIndex] = useState(0);
   const [isReducedMotion, setIsReducedMotion] = useState(false);
-  const [radius, setRadius] = useState({ x: 100, y: 122 });
+  const [radius, setRadius] = useState({ x: 94, y: 128 });
   const dragRef = useRef({
     dragging: false,
     moved: false,
@@ -88,16 +88,16 @@ export default function HomeIntentOrbit() {
       const width = window.innerWidth;
 
       if (width >= 768) {
-        setRadius({ x: 218, y: 206 });
+        setRadius({ x: 230, y: 196 });
         return;
       }
 
       if (width <= 390) {
-        setRadius({ x: 74, y: 114 });
+        setRadius({ x: 70, y: 128 });
         return;
       }
 
-      setRadius({ x: 82, y: 122 });
+      setRadius({ x: 78, y: 132 });
     }
 
     updateRadius();
@@ -209,8 +209,9 @@ export default function HomeIntentOrbit() {
         <div className="bayblaze-intent-orbit-track" aria-hidden="true" />
 
         <div className="bayblaze-intent-orbit-center">
-          <h1>BAYBLAZE</h1>
-          <p>Tampa smoke shop delivery</p>
+          <Link href="/shop" className="bayblaze-intent-shop-all">
+            Shop All
+          </Link>
         </div>
 
         {orbitItems.map(({ intent, index, x, y }) => {
