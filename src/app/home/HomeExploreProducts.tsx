@@ -15,7 +15,7 @@ export default function HomeExploreProducts({
       <div className="mx-auto w-full max-w-[1240px] px-4 py-12 sm:px-5 sm:py-16">
         <div className="mb-6 flex flex-col gap-4 border-b-2 border-black pb-5 sm:mb-8 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="mb-2 text-[11px] font-extrabold uppercase tracking-[0.18em] text-[var(--ast-global-color-1)]">
+            <p className="mb-2 text-[13px] font-extrabold uppercase tracking-[0.16em] text-[var(--ast-global-color-1)]">
               In stock now
             </p>
 
@@ -93,7 +93,7 @@ function FastDeliveryProductCard({
             className="object-contain p-4 transition-transform duration-300 group-hover:scale-[1.03] sm:p-5"
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center px-4 text-center text-[11px] font-bold uppercase tracking-[0.12em] text-[#777]">
+          <div className="flex h-full w-full items-center justify-center px-4 text-center text-[13px] font-bold uppercase tracking-[0.12em] text-[#777]">
             Image coming soon
           </div>
         )}
