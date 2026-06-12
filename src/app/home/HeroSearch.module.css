@@ -237,34 +237,45 @@
 
 
 @media (max-width: 544px) {
+  .searchStack {
+    margin-top: 24px;
+    max-width: min(390px, calc(100vw - 2.75rem));
+    width: calc(100% - 2.75rem);
+  }
+
   .search {
-    min-height: 52px;
+    min-height: 46px;
   }
 
   .iconBlock {
-    flex-basis: 48px;
-    min-height: 52px;
+    flex-basis: 42px;
+    min-height: 46px;
   }
 
   .submit {
-    font-size: 0.7rem;
-    min-height: 52px;
-    padding-inline: 0.75rem;
+    font-size: 0.64rem;
+    min-height: 46px;
+    padding-inline: 0.62rem;
   }
 
   .field {
-    padding: 0 0.75rem 0 1.25rem;
+    padding: 0 0.6rem 0 0.9rem;
   }
 
   .input {
-    font-size: 0.95rem;
-    min-height: 50px;
+    font-size: 0.86rem;
+    min-height: 44px;
   }
 
   .placeholder {
-    font-size: 0.95rem;
-    inset: 50% auto auto 1.25rem;
-    width: calc(100% - 1.25rem);
+    font-size: 0.86rem;
+    inset: 50% auto auto 0.9rem;
+    width: calc(100% - 0.9rem);
+  }
+
+  .icon {
+    height: 19px;
+    width: 19px;
   }
 }
 
