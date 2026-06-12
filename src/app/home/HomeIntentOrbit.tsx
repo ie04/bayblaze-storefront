@@ -17,41 +17,48 @@ type Intent = {
   href: string;
   caption: string;
   cta: string;
+  slug: string;
 };
 
 const intents: Intent[] = [
   {
     label: "Vapes",
+    slug: "vapes",
     href: "/shop?q=Vapes",
     caption: "Disposable favorites, new drops, and everyday flavors.",
     cta: "Shop Vapes",
   },
   {
     label: "Nicotine",
+    slug: "nicotine",
     href: "/shop?q=Nicotine",
     caption: "Nicotine essentials ready when the day asks for them.",
     cta: "Shop Nicotine",
   },
   {
     label: "Wraps",
+    slug: "wraps",
     href: "/shop?q=Cones%20%26%20Wraps",
     caption: "Cones, wraps, and rolling staples for the next session.",
     cta: "Shop Wraps",
   },
   {
     label: "Accessories",
+    slug: "accessories",
     href: "/shop?q=Smoking%20Accessories",
     caption: "Lighters, tools, and add-ons that keep the order complete.",
     cta: "Shop Accessories",
   },
   {
     label: "Deals",
+    slug: "deals",
     href: "/shop?q=Deals",
     caption: "Promos and sharp picks worth checking before checkout.",
     cta: "Shop Deals",
   },
   {
     label: "Fast Delivery",
+    slug: "fast-delivery",
     href: "/shop?availability=fast",
     caption: "Local smoke shop essentials available for fast Tampa delivery.",
     cta: "Shop Fast Delivery",
@@ -64,6 +71,7 @@ export default function HomeIntentOrbit() {
   const [rotation, setRotation] = useState(0);
   const [activeIndex, setActiveIndex] = useState(0);
   const [isReducedMotion, setIsReducedMotion] = useState(false);
+  const [isCompactLayout, setIsCompactLayout] = useState(false);
   const [radius, setRadius] = useState({ x: 94, y: 128 });
   const dragRef = useRef({
     dragging: false,
@@ -86,6 +94,9 @@ export default function HomeIntentOrbit() {
   useEffect(() => {
     function updateRadius() {
       const width = window.innerWidth;
+      const isCompact = width < 768;
+
+      setIsCompactLayout(isCompact);
 
       if (width >= 768) {
         setRadius({ x: 230, y: 196 });
@@ -128,7 +139,7 @@ export default function HomeIntentOrbit() {
   }
 
   function handleWheel(event: ReactWheelEvent<HTMLDivElement>) {
-    if (isReducedMotion) {
+    if (isReducedMotion || isCompactLayout) {
       return;
     }
 
@@ -141,7 +152,7 @@ export default function HomeIntentOrbit() {
   }
 
   function handlePointerDown(event: ReactPointerEvent<HTMLDivElement>) {
-    if (isReducedMotion) {
+    if (isReducedMotion || isCompactLayout) {
       return;
     }
 
@@ -156,7 +167,7 @@ export default function HomeIntentOrbit() {
   }
 
   function handlePointerMove(event: ReactPointerEvent<HTMLDivElement>) {
-    if (isReducedMotion || !dragRef.current.dragging) {
+    if (isReducedMotion || isCompactLayout || !dragRef.current.dragging) {
       return;
     }
 
@@ -199,6 +210,7 @@ export default function HomeIntentOrbit() {
       <div
         className="bayblaze-intent-orbit"
         data-reduced-motion={isReducedMotion ? "true" : "false"}
+        data-compact-layout={isCompactLayout ? "true" : "false"}
         aria-label="Shop by intent"
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
@@ -224,6 +236,7 @@ export default function HomeIntentOrbit() {
               aria-label={`${intent.label}: ${intent.caption}`}
               className="bayblaze-intent-card"
               data-active={isActive ? "true" : "false"}
+              data-intent={intent.slug}
               style={{
                 left: `calc(50% + ${x})`,
                 top: `calc(50% + ${y})`,

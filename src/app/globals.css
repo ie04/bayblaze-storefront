@@ -404,8 +404,87 @@ body {
 }
 
 @media (max-width: 767px) {
+  .bayblaze-intent-orbit-shell {
+    max-width: 358px;
+    width: calc(100vw - 2rem);
+  }
+
+  .bayblaze-intent-orbit {
+    block-size: auto;
+    cursor: default;
+    display: grid;
+    gap: 0.55rem;
+    grid-template-areas:
+      "vapes vapes"
+      "fast nicotine"
+      "shop shop"
+      "deals wraps"
+      "accessories accessories";
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    inline-size: 100%;
+    max-width: 358px;
+    touch-action: auto;
+  }
+
+  .bayblaze-intent-orbit:active {
+    cursor: default;
+  }
+
+  .bayblaze-intent-orbit-track {
+    display: none;
+  }
+
+  .bayblaze-intent-orbit-center {
+    grid-area: shop;
+    inset: auto;
+    position: relative;
+    transform: none;
+  }
+
+  .bayblaze-intent-shop-all {
+    inline-size: 100%;
+    min-block-size: 54px;
+  }
+
+  .bayblaze-intent-card {
+    inline-size: 100%;
+    left: auto !important;
+    min-block-size: 58px;
+    position: relative;
+    top: auto !important;
+    transform: none;
+  }
+
+  .bayblaze-intent-card[data-active="true"] {
+    transform: none;
+  }
+
+  .bayblaze-intent-card[data-intent="vapes"] {
+    grid-area: vapes;
+  }
+
+  .bayblaze-intent-card[data-intent="fast-delivery"] {
+    grid-area: fast;
+  }
+
+  .bayblaze-intent-card[data-intent="nicotine"] {
+    grid-area: nicotine;
+  }
+
+  .bayblaze-intent-card[data-intent="deals"] {
+    grid-area: deals;
+  }
+
+  .bayblaze-intent-card[data-intent="wraps"] {
+    grid-area: wraps;
+  }
+
+  .bayblaze-intent-card[data-intent="accessories"] {
+    grid-area: accessories;
+  }
+
   .bayblaze-intent-caption {
-    max-width: 320px;
+    max-width: 340px;
   }
 }
 

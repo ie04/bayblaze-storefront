@@ -216,6 +216,16 @@
 }
 
 @media (max-width: 544px) {
+  .searchStack {
+    max-width: 358px;
+    width: calc(100vw - 2rem);
+  }
+
+  .search {
+    max-width: 100%;
+    width: 100%;
+  }
+
   .ribbonItem {
     font-size: 0.68rem;
     letter-spacing: 0.055em;
