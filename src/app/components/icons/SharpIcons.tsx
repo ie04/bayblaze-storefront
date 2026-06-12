@@ -31,6 +31,15 @@ export function TruckLineIcon({ className = "h-5 w-5" }: IconProps) {
   );
 }
 
+export function UserLineIcon({ className = "h-5 w-5" }: IconProps) {
+  return (
+    <svg aria-hidden="true" className={className} fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24">
+      <circle cx="12" cy="8" r="4" />
+      <path d="M4 21c1.4-4 4-6 8-6s6.6 2 8 6" />
+    </svg>
+  );
+}
+
 export function MapPinLineIcon({ className = "h-5 w-5" }: IconProps) {
   return (
     <svg aria-hidden="true" className={className} fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24">

@@ -9,14 +9,6 @@ type IsoChronosTrackingResponse = {
   tracking?: unknown;
 };
 
-const isochronosBaseUrl =
-  process.env.ISOCHRONOS_BASE_URL?.replace(/\/$/, "") ||
-  process.env.ISOCHRONOS_API_URL?.replace(/\/$/, "") ||
-  "";
-
-const isochronosAdminToken = process.env.ISOCHRONOS_ADMIN_TOKEN?.trim() || "";
-const isochronosTrackingPath =
-  process.env.ISOCHRONOS_ORDER_TRACKING_PATH ?? "/orders/live-tracking";
 const bayblazeApiUrl = process.env.BAYBLAZE_API_URL?.replace(/\/$/, "") || "";
 const bayblazeApiToken = process.env.BAYBLAZE_API_SERVICE_TOKEN?.trim() || "";
 
@@ -39,7 +31,7 @@ export async function GET(
   const customerLocation = getCustomerLocation(order);
   const customerAddress = getCustomerAddress(order);
 
-  if ((!bayblazeApiUrl || !bayblazeApiToken) && (!isochronosBaseUrl || !isochronosAdminToken)) {
+  if (!bayblazeApiUrl || !bayblazeApiToken) {
     return Response.json({
       tracking: {
         orderId: order.id,
@@ -65,25 +57,15 @@ export async function GET(
       : undefined,
     customerAddress,
   };
-  const response = bayblazeApiUrl && bayblazeApiToken
-    ? await fetch(`${bayblazeApiUrl}/v1/orders/live-tracking`, {
-        method: "POST",
-        headers: {
-          authorization: `Bearer ${bayblazeApiToken}`,
-          "content-type": "application/json",
-        },
-        body: JSON.stringify(trackingPayload),
-        cache: "no-store",
-      })
-    : await fetch(new URL(isochronosTrackingPath, isochronosBaseUrl), {
-        method: "POST",
-        headers: {
-          authorization: `Bearer ${isochronosAdminToken}`,
-          "content-type": "application/json",
-        },
-        body: JSON.stringify(trackingPayload),
-        cache: "no-store",
-      });
+  const response = await fetch(`${bayblazeApiUrl}/v1/orders/live-tracking`, {
+    method: "POST",
+    headers: {
+      authorization: `Bearer ${bayblazeApiToken}`,
+      "content-type": "application/json",
+    },
+    body: JSON.stringify(trackingPayload),
+    cache: "no-store",
+  });
 
   if (!response.ok) {
     return Response.json({

@@ -66,13 +66,12 @@ the current operating model.
 
 ### IsoChronos Integration
 
-IsoChronos lives in the sibling repository `bayblaze-isochronos`. Treat it as
-BayBlaze's backend-only delivery intelligence service and not as a frontend app.
+IsoChronos-derived delivery intelligence now lives behind `bayblaze-api` for
+storefront workflows. Treat `bayblaze-isochronos` as legacy rollback/reference
+code, not an app-facing dependency.
 
-- The storefront should consume delivery intelligence from IsoChronos through
-  backend/API boundaries; IsoChronos remains the authority for delivery
-  feasibility, routing, ETA, driver positioning, route sequencing, and Google
-  Maps cost controls for routing.
+- The storefront must consume delivery intelligence through `bayblaze-api`.
+  Do not add direct storefront calls to the standalone IsoChronos service.
 - Checkout address entry is the one intentional storefront-side Google Maps UI
   exception: the browser may load Places Autocomplete with
   `NEXT_PUBLIC_GOOGLE_MAPS_BROWSER_KEY`, restricted to allowed website referrers
@@ -80,38 +79,34 @@ BayBlaze's backend-only delivery intelligence service and not as a frontend app.
 - Raw address validation should happen server-side in the storefront checkout
   API through Google Address Validation, using a server-only key. Do not put the
   Address Validation key in client components.
-- Storefront live delivery UI should prefer IsoChronos ETA snapshots and
+- Storefront live delivery UI should prefer API-provided ETA snapshots and
   interpolation-friendly data instead of triggering frequent paid route
   refreshes.
 - Public order tracking pages render live delivery maps through
   `src/app/orders/OrderLiveMap.tsx`. The client map only receives display-safe
   tracking JSON from `/api/orders/[orderId]/tracking`; server code retrieves the
   Medusa order, extracts assigned driver metadata and geocoded destination
-  metadata, then prefers `bayblaze-api` `POST /v1/orders/live-tracking` with
-  server-only `BAYBLAZE_API_URL` and `BAYBLAZE_API_SERVICE_TOKEN`. Direct
-  IsoChronos `POST /orders/live-tracking` through `ISOCHRONOS_BASE_URL`/
-  `ISOCHRONOS_API_URL` and `ISOCHRONOS_ADMIN_TOKEN` remains a rollout fallback.
+  metadata, then calls `bayblaze-api` `POST /v1/orders/live-tracking` with
+  server-only `BAYBLAZE_API_URL` and `BAYBLAZE_API_SERVICE_TOKEN`.
 - Keep order and delivery UI display rules in the storefront domain layer, but
   keep delivery intelligence, routing cache behavior, and routing-related Google
   Maps spend out of page components.
-- Checkout must run IsoChronos Routing's pre-checkout delivery eligibility
-  evaluation before triggering AgeChecker.Net or creating/finalizing a Medusa
-  order. Rejected evaluations should show customer-facing coverage/inventory
-  copy and must not spend an AgeChecker verification.
+- Checkout must run `bayblaze-api` pre-checkout delivery eligibility before
+  triggering AgeChecker.Net or creating/finalizing a Medusa order. Rejected
+  evaluations should show customer-facing coverage/inventory copy and must not
+  spend an AgeChecker verification.
 - Accepted or conditionally accepted routing evaluations should show the
   customer confirmation modal first. Only the `I Confirm` action should trigger
   AgeChecker.Net, and only successful AgeChecker verification should call the
   Medusa order creation route.
 - The storefront signs short-lived routing evaluation checkout tokens and the
-  Medusa order route verifies them when IsoChronos is configured. Required
-  server env for production routing now prefers `BAYBLAZE_API_URL`,
+  Medusa order route verifies them when `bayblaze-api` routing is configured.
+  Required server env for production routing is `BAYBLAZE_API_URL`,
   `BAYBLAZE_API_SERVICE_TOKEN`, and a signing secret via
   `ROUTING_EVALUATION_TOKEN_SECRET` or the existing verification secret
-  fallback. `ISOCHRONOS_BASE_URL`/`ISOCHRONOS_API_URL` and
-  `ISOCHRONOS_ADMIN_TOKEN` remain supported as direct fallback env during the
-  migration.
-- Cart items sent to IsoChronos must be normalized to variant-level sellable
-  units and must carry explicit Medusa-owned `productId`, `variantId`,
+  fallback.
+- Cart items sent to `bayblaze-api` routing must be normalized to variant-level
+  sellable units and must carry explicit Medusa-owned `productId`, `variantId`,
   `inventoryState`, `availableQuantity`, and requested `quantity`. Do not infer
   missing inventory state or quantity in storefront code.
 
@@ -144,9 +139,9 @@ storefront checkout flow, not IsoChronos.
 - The address-validation helper should accept address-shaped payloads, not only
   full checkout customer payloads, because Google Places selections do not
   include checkout-only fields such as delivery notes.
-- IsoChronos should receive already-normalized address/coordinate inputs for
-  feasibility/routing. It should not own the checkout Places widget or raw
-  customer address form UX.
+- `bayblaze-api` should receive already-normalized address/coordinate inputs for
+  feasibility/routing. Routing modules should not own the checkout Places widget
+  or raw customer address form UX.
 
 ### AgeChecker.Net Integration
 
@@ -189,7 +184,7 @@ storefront availability metadata.
   as missing metadata.
 - Every cart item must carry Medusa-owned `productId`, `variantId`,
   `inventoryState`, `availableQuantity`, and requested `quantity` so checkout and
-  IsoChronos can verify availability at the variant level.
+  `bayblaze-api` routing can verify availability at the variant level.
 - Product pages should show stock status only after a customer selects a variant
   for multi-variant products. Single-variant products may show stock status
   immediately.
@@ -250,7 +245,7 @@ components.
 Checkout should preserve a clear, low-friction customer sequence:
 
 1. Validate/canonicalize the delivery address.
-2. Run IsoChronos pre-checkout delivery eligibility.
+2. Run `bayblaze-api` pre-checkout delivery eligibility.
 3. Show the delivery details confirmation modal.
 4. Only after `I Confirm`, run AgeChecker if needed.
 5. Only after successful age verification/reuse, create the Medusa order.
@@ -371,8 +366,9 @@ display and data-shaping rules inside page components.
   Delivered; `cancelled`/`canceled` marks canceled.
 - The customer map at `/orders/[orderId]` should treat `awaiting_assignment` as a
   resolver/data issue when the order already appears in the driver app. Debug the
-  full chain: Medusa order reference -> storefront tracking route -> IsoChronos
-  `/orders/live-tracking` -> driver Firestore `driver_delivery_queues`.
+  full chain: Medusa order reference -> storefront tracking route ->
+  `bayblaze-api` `/v1/orders/live-tracking` -> unified Firestore
+  `driver_delivery_queues`.
 - Failed, ignored, or ineligible promo/discount state must not block order
   placement unless a discount was actually applied and invalidates the cart.
   Promo errors should degrade to metadata/copy, not checkout failure.

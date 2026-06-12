@@ -41,8 +41,8 @@ const defaultRoutingTokenTtlMinutes = 30;
 
 export function isPreCheckoutRoutingConfigured() {
   return Boolean(
-    process.env.ISOCHRONOS_BASE_URL?.trim() ||
-      process.env.ISOCHRONOS_API_URL?.trim(),
+    process.env.BAYBLAZE_API_URL?.trim() &&
+      process.env.BAYBLAZE_API_SERVICE_TOKEN?.trim(),
   );
 }
 
@@ -218,7 +218,7 @@ function getRoutingTokenSecret() {
 
   if (!secret) {
     throw new Error(
-      "ROUTING_EVALUATION_TOKEN_SECRET, AGE_VERIFICATION_TOKEN_SECRET, or EMAIL_VERIFICATION_SECRET is required when IsoChronos routing is enabled.",
+      "ROUTING_EVALUATION_TOKEN_SECRET, AGE_VERIFICATION_TOKEN_SECRET, or EMAIL_VERIFICATION_SECRET is required when BayBlaze API routing is enabled.",
     );
   }
 

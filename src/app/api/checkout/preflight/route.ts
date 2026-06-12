@@ -25,11 +25,6 @@ type PreflightRequestBody = {
   items?: Parameters<typeof normalizePreCheckoutRoutingItems>[0];
 };
 
-const isochronosBaseUrl =
-  (process.env.ISOCHRONOS_BASE_URL ?? process.env.ISOCHRONOS_API_URL ?? "")
-    .trim()
-    .replace(/\/$/, "");
-const isochronosAdminToken = process.env.ISOCHRONOS_ADMIN_TOKEN?.trim();
 const bayblazeApiUrl = process.env.BAYBLAZE_API_URL?.trim().replace(/\/$/, "");
 const bayblazeApiToken = process.env.BAYBLAZE_API_SERVICE_TOKEN?.trim();
 
@@ -44,7 +39,8 @@ export async function POST(request: Request) {
 
   if (
     !isPreCheckoutRoutingConfigured() ||
-    ((!bayblazeApiUrl || !bayblazeApiToken) && !isochronosBaseUrl)
+    !bayblazeApiUrl ||
+    !bayblazeApiToken
   ) {
     return jsonError(
       "Delivery eligibility checks are not configured yet. Please try again soon.",
@@ -156,7 +152,7 @@ async function evaluateDeliveryEligibility({
     return evaluateWithBayblazeApi(payload);
   }
 
-  return evaluateWithIsoChronos(payload);
+  throw new Error("BayBlaze API routing is not configured.");
 }
 
 async function evaluateWithBayblazeApi(payload: Record<string, unknown>) {
@@ -171,28 +167,6 @@ async function evaluateWithBayblazeApi(payload: Record<string, unknown>) {
   });
 
   return readEligibilityResponse(response, "BayBlaze API routing failed.");
-}
-
-async function evaluateWithIsoChronos(payload: Record<string, unknown>) {
-  const headers = new Headers({
-    "content-type": "application/json",
-  });
-
-  if (isochronosAdminToken) {
-    headers.set("authorization", `Bearer ${isochronosAdminToken}`);
-  }
-
-  const response = await fetch(
-    `${isochronosBaseUrl}/routing/pre-checkout/eligibility`,
-    {
-      method: "POST",
-      headers,
-      body: JSON.stringify(payload),
-      cache: "no-store",
-    },
-  );
-
-  return readEligibilityResponse(response, "IsoChronos routing failed.");
 }
 
 async function readEligibilityResponse(response: Response, fallbackMessage: string) {
