@@ -67,9 +67,9 @@ export function getBestSellersCarousel(
 ): HomeCarouselDefinition<ProductPreviewItem> {
   return {
     id: "best-sellers",
-    title: "Best Sellers",
-    href: "/shop?q=Vapes",
-    linkLabel: "Shop All",
+    title: "Available for Fast Delivery",
+    href: "/shop?availability=fast",
+    linkLabel: "Shop Fast Delivery",
     items: products,
     emptyText: "Products will appear here once the catalog is connected.",
     previousLabel: "Previous product",

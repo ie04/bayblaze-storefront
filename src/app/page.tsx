@@ -5,7 +5,6 @@ import HomeExploreProducts from "@/app/home/HomeExploreProducts";
 import HomeFooter from "@/app/home/HomeFooter";
 import HomeHero from "@/app/home/HomeHero";
 import HomeInfoStrip from "@/app/home/HomeInfoStrip";
-import HomeShopByCategory from "@/app/home/HomeShopByCategory";
 import { getProductPreviewsByCategoryHandle } from "@/app/lib/medusa-products";
 
 export default async function Home() {
@@ -16,7 +15,6 @@ export default async function Home() {
       <Header />
       <HomeHero />
       <HomeInfoStrip />
-      <HomeShopByCategory />
       <HomeExploreProducts
         vapeProducts={vapeProducts}
       />
