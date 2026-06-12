@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import HeroSearch, { HeroRibbon } from "@/app/home/HeroSearch";
 
 export default function HomeHero() {
@@ -30,6 +32,7 @@ export default function HomeHero() {
 
         <HeroSearch />
         <HomeHeroInfoStrip />
+        <HomeHeroActions />
       </div>
     </section>
   );
@@ -64,6 +67,27 @@ function HomeHeroInfoStrip() {
           Your order
         </div>
       </div>
+    </div>
+  );
+}
+
+
+function HomeHeroActions() {
+  return (
+    <div className="mx-auto mt-5 grid w-full max-w-[430px] grid-cols-2 gap-4 font-[var(--font-jost)] sm:mt-7 sm:max-w-[520px] sm:gap-6">
+      <Link
+        href="/shop"
+        className="bayblaze-sharp-button bayblaze-sharp-button--primary flex h-12 items-center justify-center px-3 text-center text-[12px] sm:h-14 sm:text-sm"
+      >
+        Shop
+      </Link>
+
+      <Link
+        href="/how-it-works"
+        className="bayblaze-sharp-button bayblaze-sharp-button--outline flex h-12 items-center justify-center px-3 text-center text-[12px] sm:h-14 sm:text-sm"
+      >
+        How It Works
+      </Link>
     </div>
   );
 }
