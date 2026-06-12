@@ -131,6 +131,18 @@ main {
   font-family: var(--font-jost), Jost, Arial, sans-serif !important;
 }
 
+
+/* Homepage section dividers */
+.bayblaze-home-page > section,
+.bayblaze-home-page > footer {
+  border-bottom: 2px solid #000000;
+}
+
+.bayblaze-home-page > section:last-child,
+.bayblaze-home-page > footer:last-child {
+  border-bottom: 0;
+}
+
 .bayblaze-header-logo {
   font-family: var(--font-jost), Jost, Arial, sans-serif;
   font-size: 30px;
