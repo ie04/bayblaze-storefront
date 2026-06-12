@@ -1,17 +1,17 @@
 .actions {
   align-items: center;
   display: flex;
-  gap: 13px;
+  gap: 0.5rem;
   justify-content: flex-end;
   min-width: 0;
 }
 
 .fulfillment {
   align-items: center;
-  background: rgba(250, 247, 242, 0.68);
-  border: 1px solid #e8e2d8;
-  border-radius: 999px;
-  color: var(--ast-global-color-1);
+  background: #ffffff;
+  border: 2px solid #000000;
+  border-radius: 0;
+  color: #000000;
   display: none;
   font-family: var(--font-jost), Jost, Arial, sans-serif;
   font-size: 0.92rem;
@@ -32,11 +32,11 @@
 
 .fulfillment:hover,
 .fulfillment:focus-visible {
-  background: rgba(255, 255, 255, 0.86);
-  border-color: var(--ast-global-color-1);
-  box-shadow: 0 5px 14px rgba(27, 58, 45, 0.07);
-  color: var(--ast-global-color-1);
-  transform: translateY(-1px);
+  background: #000000;
+  border-color: #000000;
+  box-shadow: none;
+  color: #ffffff;
+  transform: none;
 }
 
 .fulfillment:focus-visible,
@@ -54,7 +54,8 @@
 
 .searchTrigger {
   align-items: center;
-  border-radius: 999px;
+  border: 2px solid #000000;
+  border-radius: 0;
   color: #000000;
   display: flex;
   height: 44px;
@@ -67,9 +68,9 @@
 }
 
 .searchTrigger:hover {
-  background: rgba(250, 247, 242, 0.78);
-  color: var(--ast-global-color-1);
-  transform: translateY(-1px);
+  background: #000000;
+  color: #ffffff;
+  transform: none;
 }
 
 .searchIcon {
@@ -97,11 +98,9 @@
 .searchPanel {
   animation: search-panel-enter 220ms ease-out both;
   background: #ffffff;
-  border: 1px solid rgba(0, 0, 0, 0.04);
-  border-radius: 20px;
-  box-shadow:
-    0 24px 80px rgba(0, 0, 0, 0.18),
-    0 0 0 1px rgba(0, 0, 0, 0.04);
+  border: 2px solid #000000;
+  border-radius: 0;
+  box-shadow: 8px 8px 0 #000000;
   display: flex;
   flex-direction: column;
   max-height: calc(100vh - 5rem);
@@ -113,7 +112,7 @@
 
 .searchOverlayForm {
   align-items: center;
-  border-bottom: 1px solid #e8e2d8;
+  border-bottom: 2px solid #000000;
   display: flex;
   gap: 0.75rem;
   min-height: 74px;
@@ -188,9 +187,9 @@
 }
 
 .searchSuggestion {
-  background: #faf7f2;
-  border: 1px solid #e8e2d8;
-  border-radius: 999px;
+  background: var(--ast-global-color-4);
+  border: 2px solid #000000;
+  border-radius: 0;
   color: #2d6149;
   font-family: var(--font-jost), Jost, Arial, sans-serif;
   font-size: 0.9rem;

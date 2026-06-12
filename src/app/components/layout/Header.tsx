@@ -11,6 +11,7 @@ import {
 } from "react";
 
 import { useCart } from "@/app/components/cart/CartContext";
+import { ZapLineIcon } from "@/app/components/icons/SharpIcons";
 import styles from "./Header.module.css";
 
 type HeaderProps = {
@@ -83,21 +84,49 @@ export default function Header({
   }, [isSearchOverlayOpen]);
 
   return (
-    <header
-      className={`absolute inset-x-0 top-0 z-50 text-black ${
-        surface === "solid" ? "bg-white" : "bg-transparent"
-      }`}
-    >
-      <div className="flex h-[68px] items-center justify-between gap-3 pl-[var(--bayblaze-header-x)] pr-[var(--bayblaze-header-x)] md:h-[80px] md:gap-4 md:pr-[29px]">
+    <header className="sticky top-0 z-50 border-b-2 border-black bg-white text-black">
+      <div className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-4 px-4 sm:h-16 sm:px-6">
         <Link
           href="/"
-          className="bayblaze-header-logo shrink-0 text-black transition-colors hover:text-[var(--ast-global-color-0)]"
+          className="bayblaze-brand-wordmark shrink-0 text-xl text-black no-underline transition-colors hover:text-[var(--ast-global-color-0)] sm:text-2xl"
           aria-label="Bayblaze home"
         >
           BAYBLAZE
         </Link>
 
+        <nav className="hidden items-center gap-8 md:flex">
+          <Link
+            href="/shop"
+            className="text-sm font-semibold uppercase tracking-wider text-black no-underline hover:text-[var(--ast-global-color-0)]"
+          >
+            Shop
+          </Link>
+          <Link
+            href="/shop?q=Deals"
+            className="text-sm font-semibold uppercase tracking-wider text-black no-underline hover:text-[var(--ast-global-color-0)]"
+          >
+            Deals
+          </Link>
+          <Link
+            href="/how-it-works"
+            className="text-sm font-semibold uppercase tracking-wider text-black no-underline hover:text-[var(--ast-global-color-0)]"
+          >
+            How it works
+          </Link>
+          <Link
+            href="/contact"
+            className="text-sm font-semibold uppercase tracking-wider text-black no-underline hover:text-[var(--ast-global-color-0)]"
+          >
+            Contact
+          </Link>
+        </nav>
+
         <div className={styles.actions}>
+          <span className="hidden items-center gap-1.5 border-2 border-black bg-[var(--ast-global-color-4)] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider sm:inline-flex">
+            <ZapLineIcon className="h-3 w-3 text-[var(--ast-global-color-0)]" />
+            Tampa · Live
+          </span>
+
           <Link
             href="/orders"
             className={styles.fulfillment}
@@ -120,17 +149,18 @@ export default function Header({
 
           <button
             type="button"
-            className="relative flex h-[42px] w-[42px] shrink-0 items-center justify-center text-black transition-colors hover:text-[var(--ast-global-color-0)] md:h-[43px] md:w-[46px]"
+            className="relative inline-flex h-10 shrink-0 items-center gap-2 border-2 border-black bg-white px-3 font-semibold uppercase tracking-wider text-black transition-colors hover:bg-black hover:text-white"
             aria-expanded={isCartOpen}
             aria-label={`Open shopping cart, ${cartCount} item${
               cartCount === 1 ? "" : "s"
             }`}
             onClick={openCart}
           >
-            <CartIcon className="size-[27px] md:size-[30px]" />
+            <CartIcon className="size-4" />
+            <span className="hidden text-sm sm:inline">Cart</span>
 
             {cartCount > 0 ? (
-              <span className="absolute -right-1 -top-1 flex size-5 items-center justify-center rounded-full bg-[var(--ast-global-color-0)] text-[11px] font-semibold leading-none text-white">
+              <span className="ml-1 inline-flex h-5 min-w-[1.25rem] items-center justify-center border-2 border-black bg-[var(--ast-global-color-0)] px-1 text-[11px] font-bold leading-none text-white">
                 {cartCount}
               </span>
             ) : null}
