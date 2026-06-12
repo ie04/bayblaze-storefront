@@ -41,7 +41,7 @@ const needCards = [
 
 export default function HomeShopByNeed() {
   return (
-    <section className="border-b-2 border-black bg-[var(--ast-global-color-4)]">
+    <section className="border-b-2 border-black bg-[var(--ast-global-color-4)] font-[var(--font-jost)]">
       <div className="mx-auto w-full max-w-[1240px] px-4 py-12 sm:px-5 sm:py-16">
         <div className="mb-6 border-b-2 border-black pb-5 sm:mb-8">
           <p className="mb-2 text-[13px] font-extrabold uppercase tracking-[0.16em] text-[var(--ast-global-color-1)]">
@@ -62,7 +62,7 @@ export default function HomeShopByNeed() {
             <Link
               key={card.key}
               href={card.href}
-              className="group flex items-center gap-4 border-2 border-black bg-white p-4 text-black no-underline transition-colors hover:bg-black hover:text-white sm:p-5"
+              className="group flex items-center gap-4 border-2 border-black bg-white p-4 font-[var(--font-jost)] text-black no-underline transition-colors hover:bg-black hover:text-white sm:p-5"
             >
               <div className="grid h-14 w-14 shrink-0 place-items-center border-2 border-black bg-[var(--ast-global-color-4)] text-2xl transition-colors group-hover:bg-[var(--ast-global-color-0)]">
                 {card.icon}
