@@ -11,7 +11,6 @@ import {
 } from "react";
 
 import { useCart } from "@/app/components/cart/CartContext";
-import { ZapLineIcon } from "@/app/components/icons/SharpIcons";
 import styles from "./Header.module.css";
 
 type HeaderProps = {
@@ -122,10 +121,6 @@ export default function Header({
         </nav>
 
         <div className={styles.actions}>
-          <span className="hidden items-center gap-1.5 border-2 border-black bg-[var(--ast-global-color-4)] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider sm:inline-flex">
-            <ZapLineIcon className="h-3 w-3 text-[var(--ast-global-color-0)]" />
-            Tampa · Live
-          </span>
 
           <Link
             href="/orders"
