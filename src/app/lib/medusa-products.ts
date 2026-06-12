@@ -158,12 +158,6 @@ const metadataSpecFields: { key: string; label: string }[] = [
   { key: "spec_nicotine", label: "Nicotine" },
 ];
 
-const placeholderSpecs: [string, string][] = [
-  ["Placeholder fact", "Add spec_puffs metadata"],
-  ["Placeholder detail", "Add spec_capacity metadata"],
-  ["Placeholder spec", "Add spec_battery metadata"],
-];
-
 function normalizeInventoryAssetUrl(url: string) {
   if (!url) {
     return url;
@@ -389,7 +383,7 @@ function toStorefrontProduct(product: InventoryProduct): StorefrontProduct {
     flavors: getFlavorValues(product),
     variants,
     details: knownCopy?.details ?? [product.description ?? ""],
-    specs: metadataSpecs.length ? metadataSpecs : placeholderSpecs,
+    specs: metadataSpecs,
   };
 }
 

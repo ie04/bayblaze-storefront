@@ -240,6 +240,10 @@ components.
   buckets as `/shop`.
 - Product page breadcrumbs should route customers back to `/shop?q=...` for the
   canonical storefront bucket rather than old `/product-category/...` paths.
+- Product-page specification rows such as puffs, capacity, and battery are
+  optional Medusa product metadata. Render only metadata that is present; do not
+  show placeholder spec rows or require vape-specific attributes for wraps,
+  cones, accessories, or products that do not have those specs.
 
 ### Checkout Flow and UI Rules
 

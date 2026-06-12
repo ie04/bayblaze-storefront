@@ -444,6 +444,24 @@ export default function ProductPage({
               </ul>
             </div>
 
+            {product.specs.length > 0 ? (
+              <div className="mt-5 border-2 border-black bg-white p-4">
+                <div className="text-xs font-bold uppercase tracking-widest text-[var(--ast-global-color-1)]">
+                  Specifications
+                </div>
+                <dl className="mt-3 grid gap-2 text-sm sm:grid-cols-3">
+                  {product.specs.map(([label, value]) => (
+                    <div key={label} className="border-2 border-black bg-[var(--ast-global-color-4)] p-3">
+                      <dt className="text-[0.68rem] font-bold uppercase tracking-widest text-[#585858]">
+                        {label}
+                      </dt>
+                      <dd className="mt-1 font-black text-black">{value}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </div>
+            ) : null}
+
             <div className="mt-5 border-2 border-black bg-white p-4 text-sm leading-[1.8]">
               <p>
                 <span className="font-bold text-black">SKU:</span> {selectedVariant?.sku || product.sku}
