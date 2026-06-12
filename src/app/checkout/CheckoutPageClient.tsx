@@ -2,6 +2,7 @@
 
 import type { FormEvent, ReactNode } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -932,9 +933,11 @@ export default function CheckoutPageClient({
                     className="flex gap-4 border-b border-[#e7e7e7] pb-4"
                   >
                     {item.image ? (
-                      <img
+                      <Image
                         src={item.image}
                         alt={item.name}
+                        width={80}
+                        height={80}
                         className="size-20 shrink-0 border border-[#e7e7e7] bg-white object-contain p-2"
                       />
                     ) : (
