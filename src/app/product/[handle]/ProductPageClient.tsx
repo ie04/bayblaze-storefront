@@ -220,7 +220,7 @@ export default function ProductPage({
                   fill
                   priority
                   sizes="(max-width: 1024px) 92vw, 620px"
-                  className="object-contain p-5 sm:p-8 lg:p-10"
+                  className="object-contain"
                 />
               ) : (
                 <div className="grid h-full place-items-center px-6 text-center text-sm font-extrabold uppercase tracking-widest text-[#585858]">
@@ -250,7 +250,7 @@ export default function ProductPage({
                       alt=""
                       fill
                       sizes="160px"
-                      className="object-contain p-2"
+                      className="object-contain scale-[1.12]"
                     />
                   </button>
                 ))}

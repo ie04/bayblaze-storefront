@@ -236,7 +236,7 @@ function ProductCard({
           alt={product.name}
           fill
           sizes="(max-width: 640px) 90vw, (max-width: 1024px) 45vw, 260px"
-          className="object-contain p-4 transition-transform duration-300 group-hover:scale-[1.03] sm:p-5"
+          className="object-contain scale-[1.18] transition-transform duration-300 group-hover:scale-[1.24]"
         />
       </Link>
 
