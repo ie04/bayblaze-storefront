@@ -109,12 +109,15 @@ export default function AccountOrdersSection({
   return (
     <article
       id="orders"
-      className="bayblaze-sharp-card bayblaze-sharp-card bayblaze-sharp-card--cream scroll-mt-[112px] p-5 sm:p-6"
+      className="bayblaze-sharp-card scroll-mt-[112px] bg-white p-5 sm:p-6"
     >
       <div className="mb-4 flex items-start justify-between gap-4 sm:mb-5">
         <div>
-          <h2 className="text-[21px] font-semibold leading-tight text-black sm:text-[24px]">
+          <p className="text-xs font-bold uppercase tracking-widest text-[var(--ast-global-color-1)]">
             Orders
+          </p>
+          <h2 className="mt-1 text-3xl font-black uppercase leading-none text-black sm:text-4xl">
+            Order history
           </h2>
           {orders.length ? (
             <p className="mt-2 text-[14px] leading-[1.45] text-[#6a6a6a]">
@@ -153,17 +156,17 @@ export default function AccountOrdersSection({
               <li
                 key={order.id}
                 className={[
-                  "rounded-[8px] border bg-white transition-colors",
+                  "border-2 bg-white transition-colors",
                   isHighlighted
                     ? "border-[var(--ast-global-color-1)]"
-                    : "border-[#e7e7e7]",
+                    : "border-black",
                 ].join(" ")}
               >
                 <button
                   type="button"
                   aria-controls={panelId}
                   aria-expanded={isOpen}
-                  className="w-full rounded-[8px] px-4 py-4 text-left transition-colors hover:bg-[#f7f6f2]"
+                  className="w-full px-4 py-4 text-left transition-colors hover:bg-[var(--ast-global-color-4)]"
                   onClick={() => {
                     setOpenOrderId(isOpen ? "" : order.id);
                   }}
@@ -257,15 +260,15 @@ function OrderItemRow({
   const itemTotal = getOrderItemTotal(item);
 
   return (
-    <li className="flex gap-3 rounded-[8px] border border-[#eeeeee] bg-[#f7f6f2] p-3">
+    <li className="flex gap-3 border-2 border-black bg-[var(--ast-global-color-4)] p-3">
       {thumbnail ? (
         <img
           src={thumbnail}
           alt={getOrderItemTitle(item)}
-          className="size-14 shrink-0 rounded-[8px] border border-[#e3ded5] bg-white object-contain p-1"
+          className="size-14 shrink-0 border-2 border-black bg-white object-contain"
         />
       ) : (
-        <div className="flex size-14 shrink-0 items-center justify-center rounded-[8px] border border-[#e3ded5] bg-white text-[10px] font-semibold uppercase tracking-[0.08em] text-[#8a8a8a]">
+        <div className="flex size-14 shrink-0 items-center justify-center border-2 border-black bg-white text-[10px] font-bold uppercase tracking-[0.08em] text-[#8a8a8a]">
           Item
         </div>
       )}
