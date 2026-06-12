@@ -11,7 +11,7 @@ export default async function Home() {
   const fastDeliveryProducts = await getFastDeliveryProductPreviews();
 
   return (
-    <main className="relative">
+    <main className="bayblaze-home-page relative">
       <Header />
       <HomeHero />
       <HomeShopByNeed />

@@ -121,6 +121,16 @@ main {
   }
 }
 
+
+.bayblaze-home-page,
+.bayblaze-home-page *,
+.bayblaze-home-page button,
+.bayblaze-home-page input,
+.bayblaze-home-page select,
+.bayblaze-home-page textarea {
+  font-family: var(--font-jost), Jost, Arial, sans-serif !important;
+}
+
 .bayblaze-header-logo {
   font-family: var(--font-jost), Jost, Arial, sans-serif;
   font-size: 30px;
