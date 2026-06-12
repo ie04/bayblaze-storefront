@@ -22,7 +22,7 @@ export default function LogoutButton() {
     <button
       type="button"
       disabled={isLoggingOut}
-      className="bayblaze-soft-button w-full px-5 py-3 text-[15px] font-semibold leading-none disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto"
+      className="bayblaze-sharp-button bayblaze-sharp-button--outline w-full px-5 py-3 text-[15px] font-semibold leading-none disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto"
       onClick={handleLogout}
     >
       {isLoggingOut ? "Signing out..." : "Sign Out"}

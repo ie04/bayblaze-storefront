@@ -6,6 +6,42 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## Project Memory
 
+### BayBlaze Sharp Storefront UI System
+
+The customer storefront uses a single sitewide visual language: sharp edges,
+strong black borders, rectangular controls, Jost typography, BayBlaze green
+action states, and minimal soft shadows.
+
+- Treat the sharp black-border style as the source of truth for all customer UI.
+- Prefer reusable classes from `src/app/globals.css`:
+  - `bayblaze-sharp-card`
+  - `bayblaze-sharp-card--cream`
+  - `bayblaze-sharp-panel`
+  - `bayblaze-sharp-panel-header`
+  - `bayblaze-sharp-button`
+  - `bayblaze-sharp-button--primary`
+  - `bayblaze-sharp-button--dark`
+  - `bayblaze-sharp-button--outline`
+  - `bayblaze-sharp-input`
+  - `bayblaze-sharp-badge`
+  - `bayblaze-sharp-badge--green`
+  - `bayblaze-sharp-divider`
+  - `bayblaze-brand-wordmark`
+- Do not introduce new soft/rounded design primitives for storefront UI.
+- Avoid `rounded-full`, large `rounded-2xl`/`rounded-3xl` cards, pale tan borders,
+  glassy cards, and soft floating shadows unless there is a specific functional
+  reason such as a native browser/third-party widget constraint.
+- Existing `bayblaze-soft-*` classes are compatibility shims only. New or touched
+  UI should migrate toward `bayblaze-sharp-*` classes instead of expanding the
+  soft system.
+- Buttons, inputs, selects, chips, product cards, cart drawer surfaces, checkout
+  panels, auth panels, and homepage cards should all use the sharp system.
+- Preserve accessibility: visible focus states, strong contrast, readable text,
+  and mobile tap targets of roughly 44px or larger.
+- Do not change Medusa, cart, checkout, AgeChecker, Google Places, routing, or
+  order logic merely to restyle UI. Visual refactors must preserve production
+  behavior.
+
 When code changes are complete, automatically commit and push the changes unless
 the user explicitly says not to. Use a concise commit message that reflects the
 completed work.

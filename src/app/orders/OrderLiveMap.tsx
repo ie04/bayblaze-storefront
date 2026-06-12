@@ -182,7 +182,7 @@ export default function OrderLiveMap({
   const distanceCopy = getDistanceCopy(tracking?.route?.distanceMeters);
 
   return (
-    <section className="bayblaze-soft-card overflow-hidden bg-[#eef2e9]">
+    <section className="bayblaze-sharp-card overflow-hidden bg-[#eef2e9]">
       <div className="flex flex-col gap-2 border-b border-[#e8e2d8] bg-white px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-[20px] font-semibold leading-tight text-black">

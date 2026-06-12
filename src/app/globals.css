@@ -1240,3 +1240,324 @@ gmp-place-autocomplete.bayblaze-google-place-autocomplete:focus-within {
   border-color: var(--bayblaze-checkout-field-focus-border);
 }
 
+
+
+/* BAYBLAZE SHARP UI SYSTEM
+   Sitewide design language:
+   - black/strong borders
+   - square or near-square edges
+   - rectangular buttons/inputs/chips
+   - minimal shadows
+   - BayBlaze green as primary action color
+*/
+
+:root {
+  --bayblaze-sharp-border: #000000;
+  --bayblaze-sharp-border-muted: #989898;
+  --bayblaze-sharp-bg: #ffffff;
+  --bayblaze-sharp-bg-alt: #f6f8f5;
+  --bayblaze-sharp-fg: #000000;
+  --bayblaze-sharp-muted: #585858;
+  --bayblaze-sharp-green: var(--ast-global-color-0);
+  --bayblaze-sharp-green-dark: var(--ast-global-color-1);
+  --bayblaze-sharp-radius: 0;
+  --bayblaze-sharp-border-width: 2px;
+
+  /* Make checkout fields inherit the sitewide sharp language. */
+  --bayblaze-checkout-field-border: var(--bayblaze-sharp-border);
+  --bayblaze-checkout-field-focus-border: var(--bayblaze-sharp-green);
+}
+
+/* Reusable sharp primitives */
+
+.bayblaze-sharp-card {
+  background: var(--bayblaze-sharp-bg);
+  border: var(--bayblaze-sharp-border-width) solid var(--bayblaze-sharp-border);
+  border-radius: var(--bayblaze-sharp-radius);
+  box-shadow: none;
+  color: var(--bayblaze-sharp-fg);
+}
+
+.bayblaze-sharp-card--cream {
+  background: var(--bayblaze-sharp-bg-alt);
+}
+
+.bayblaze-sharp-panel {
+  background: var(--bayblaze-sharp-bg);
+  border: var(--bayblaze-sharp-border-width) solid var(--bayblaze-sharp-border);
+  border-radius: var(--bayblaze-sharp-radius);
+  box-shadow: none;
+  color: var(--bayblaze-sharp-fg);
+}
+
+.bayblaze-sharp-panel-header {
+  align-items: center;
+  background: var(--bayblaze-sharp-bg-alt);
+  border-bottom: var(--bayblaze-sharp-border-width) solid var(--bayblaze-sharp-border);
+  display: flex;
+  gap: 0.65rem;
+  padding: 0.85rem 1rem;
+}
+
+.bayblaze-sharp-button,
+.bayblaze-sharp-button:where(a, button),
+a.bayblaze-sharp-button,
+button.bayblaze-sharp-button {
+  align-items: center;
+  background: var(--bayblaze-sharp-bg);
+  border: var(--bayblaze-sharp-border-width) solid var(--bayblaze-sharp-border);
+  border-radius: var(--bayblaze-sharp-radius);
+  color: var(--bayblaze-sharp-fg);
+  cursor: pointer;
+  display: inline-flex;
+  font-family: var(--font-jost), Jost, Arial, sans-serif;
+  font-size: 0.88rem;
+  font-weight: 700;
+  gap: 0.5rem;
+  justify-content: center;
+  letter-spacing: 0.06em;
+  line-height: 1;
+  min-height: 2.75rem;
+  padding: 0.8rem 1.15rem;
+  text-decoration: none;
+  text-transform: uppercase;
+  transition:
+    background-color 140ms ease,
+    border-color 140ms ease,
+    color 140ms ease,
+    transform 80ms ease;
+  user-select: none;
+}
+
+.bayblaze-sharp-button:hover,
+a.bayblaze-sharp-button:hover,
+button.bayblaze-sharp-button:hover {
+  background: var(--bayblaze-sharp-border);
+  border-color: var(--bayblaze-sharp-border);
+  color: #ffffff;
+}
+
+.bayblaze-sharp-button:active {
+  transform: translateY(1px);
+}
+
+.bayblaze-sharp-button:disabled,
+.bayblaze-sharp-button[aria-disabled="true"] {
+  cursor: not-allowed;
+  opacity: 0.55;
+  transform: none;
+}
+
+.bayblaze-sharp-button--primary,
+.bayblaze-sharp-button--primary:where(a, button),
+a.bayblaze-sharp-button--primary,
+button.bayblaze-sharp-button--primary {
+  background: var(--bayblaze-sharp-green);
+  border-color: var(--bayblaze-sharp-border);
+  color: #ffffff;
+}
+
+.bayblaze-sharp-button--primary:hover,
+a.bayblaze-sharp-button--primary:hover,
+button.bayblaze-sharp-button--primary:hover {
+  background: var(--bayblaze-sharp-green-dark);
+  border-color: var(--bayblaze-sharp-border);
+  color: #ffffff;
+}
+
+.bayblaze-sharp-button--dark,
+.bayblaze-sharp-button--dark:where(a, button),
+a.bayblaze-sharp-button--dark,
+button.bayblaze-sharp-button--dark {
+  background: var(--bayblaze-sharp-border);
+  border-color: var(--bayblaze-sharp-border);
+  color: #ffffff;
+}
+
+.bayblaze-sharp-button--dark:hover,
+a.bayblaze-sharp-button--dark:hover,
+button.bayblaze-sharp-button--dark:hover {
+  background: var(--bayblaze-sharp-green);
+  border-color: var(--bayblaze-sharp-border);
+  color: #ffffff;
+}
+
+.bayblaze-sharp-button--outline,
+.bayblaze-sharp-button--outline:where(a, button),
+a.bayblaze-sharp-button--outline,
+button.bayblaze-sharp-button--outline {
+  background: var(--bayblaze-sharp-bg);
+  border-color: var(--bayblaze-sharp-border);
+  color: var(--bayblaze-sharp-fg);
+}
+
+.bayblaze-sharp-button--outline:hover,
+a.bayblaze-sharp-button--outline:hover,
+button.bayblaze-sharp-button--outline:hover {
+  background: var(--bayblaze-sharp-border);
+  border-color: var(--bayblaze-sharp-border);
+  color: #ffffff;
+}
+
+.bayblaze-sharp-input,
+input.bayblaze-sharp-input,
+select.bayblaze-sharp-input,
+textarea.bayblaze-sharp-input {
+  background: var(--bayblaze-sharp-bg);
+  border: var(--bayblaze-sharp-border-width) solid var(--bayblaze-sharp-border);
+  border-radius: var(--bayblaze-sharp-radius);
+  box-shadow: none;
+  color: var(--bayblaze-sharp-fg);
+  font-family: var(--font-jost), Jost, Arial, sans-serif;
+  font-size: 1rem;
+  line-height: 1.2;
+  min-height: 2.9rem;
+  outline: none;
+  padding: 0.75rem 0.9rem;
+  width: 100%;
+}
+
+.bayblaze-sharp-input::placeholder {
+  color: var(--bayblaze-sharp-muted);
+}
+
+.bayblaze-sharp-input:focus,
+input.bayblaze-sharp-input:focus,
+select.bayblaze-sharp-input:focus,
+textarea.bayblaze-sharp-input:focus {
+  border-color: var(--bayblaze-sharp-border);
+  box-shadow: inset 0 0 0 2px var(--bayblaze-sharp-green);
+}
+
+.bayblaze-sharp-badge {
+  align-items: center;
+  background: var(--bayblaze-sharp-bg);
+  border: 1.5px solid var(--bayblaze-sharp-border);
+  border-radius: var(--bayblaze-sharp-radius);
+  color: var(--bayblaze-sharp-fg);
+  display: inline-flex;
+  font-family: var(--font-jost), Jost, Arial, sans-serif;
+  font-size: 0.72rem;
+  font-weight: 800;
+  gap: 0.28rem;
+  letter-spacing: 0.06em;
+  line-height: 1;
+  padding: 0.25rem 0.55rem;
+  text-transform: uppercase;
+}
+
+.bayblaze-sharp-badge--green {
+  background: var(--bayblaze-sharp-green);
+  border-color: var(--bayblaze-sharp-border);
+  color: #ffffff;
+}
+
+.bayblaze-sharp-divider {
+  border-top: var(--bayblaze-sharp-border-width) solid var(--bayblaze-sharp-border);
+}
+
+.bayblaze-brand-wordmark {
+  font-family: var(--font-jost), Jost, Arial, sans-serif;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+/* Compatibility bridge:
+   Existing pages/components that still use bayblaze-soft-* immediately render sharp.
+   Future work should migrate JSX to bayblaze-sharp-* names, but these overrides
+   prevent mixed visual systems while that migration happens.
+*/
+
+.bayblaze-soft-card,
+.bayblaze-soft-card--tint,
+.bayblaze-auth-section,
+.bayblaze-login-card {
+  background: var(--bayblaze-sharp-bg) !important;
+  border: var(--bayblaze-sharp-border-width) solid var(--bayblaze-sharp-border) !important;
+  border-radius: var(--bayblaze-sharp-radius) !important;
+  box-shadow: none !important;
+}
+
+.bayblaze-soft-card--tint {
+  background: var(--bayblaze-sharp-bg-alt) !important;
+}
+
+.bayblaze-soft-button,
+.bayblaze-login-oauth-button {
+  background: var(--bayblaze-sharp-bg) !important;
+  border: var(--bayblaze-sharp-border-width) solid var(--bayblaze-sharp-border) !important;
+  border-radius: var(--bayblaze-sharp-radius) !important;
+  box-shadow: none !important;
+  color: var(--bayblaze-sharp-fg) !important;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.bayblaze-soft-button:hover,
+.bayblaze-login-oauth-button:hover {
+  background: var(--bayblaze-sharp-border) !important;
+  border-color: var(--bayblaze-sharp-border) !important;
+  color: #ffffff !important;
+  transform: none !important;
+}
+
+.bayblaze-soft-button--primary {
+  background: var(--bayblaze-sharp-green) !important;
+  border-color: var(--bayblaze-sharp-border) !important;
+  color: #ffffff !important;
+}
+
+.bayblaze-soft-button--primary:hover {
+  background: var(--bayblaze-sharp-green-dark) !important;
+  border-color: var(--bayblaze-sharp-border) !important;
+  color: #ffffff !important;
+}
+
+.bayblaze-soft-input {
+  background: var(--bayblaze-sharp-bg) !important;
+  border: var(--bayblaze-sharp-border-width) solid var(--bayblaze-sharp-border) !important;
+  border-radius: var(--bayblaze-sharp-radius) !important;
+  box-shadow: none !important;
+}
+
+.bayblaze-soft-input:focus {
+  border-color: var(--bayblaze-sharp-border) !important;
+  box-shadow: inset 0 0 0 2px var(--bayblaze-sharp-green) !important;
+}
+
+.bayblaze-soft-chip {
+  background: var(--bayblaze-sharp-bg-alt) !important;
+  border: 1.5px solid var(--bayblaze-sharp-border) !important;
+  border-radius: var(--bayblaze-sharp-radius) !important;
+  color: var(--bayblaze-sharp-fg) !important;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.bayblaze-soft-alert {
+  background: #fff5f3 !important;
+  border: var(--bayblaze-sharp-border-width) solid #b42318 !important;
+  border-radius: var(--bayblaze-sharp-radius) !important;
+}
+
+/* Sitewide focus ring for BayBlaze sharp UI controls. */
+.bayblaze-sharp-card:focus-within,
+.bayblaze-sharp-button:focus-visible,
+.bayblaze-sharp-input:focus-visible,
+.bayblaze-sharp-badge:focus-visible,
+.bayblaze-soft-button:focus-visible,
+.bayblaze-login-oauth-button:focus-visible {
+  outline: 2px solid var(--bayblaze-sharp-green);
+  outline-offset: 2px;
+}
+
+@media (max-width: 767px) {
+  .bayblaze-sharp-button,
+  .bayblaze-sharp-button:where(a, button),
+  a.bayblaze-sharp-button,
+  button.bayblaze-sharp-button {
+    min-height: 3rem;
+  }
+}

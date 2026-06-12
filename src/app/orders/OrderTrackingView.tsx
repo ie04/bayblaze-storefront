@@ -31,7 +31,7 @@ export default function OrderTrackingView({
   return (
     <section
       className={[
-        "bayblaze-soft-card overflow-hidden text-[#585858]",
+        "bayblaze-sharp-card overflow-hidden text-[#585858]",
         mode === "modal"
           ? "max-h-[calc(100vh-48px)] overflow-y-auto"
           : "",
@@ -51,13 +51,13 @@ export default function OrderTrackingView({
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          <span className="bayblaze-soft-chip bg-white px-3 py-2 text-[12px] font-semibold uppercase tracking-[0.1em]">
+          <span className="bayblaze-sharp-badge bg-white px-3 py-2 text-[12px] font-semibold uppercase tracking-[0.1em]">
             {isComplete ? formatOrderStatus(lifecycleStatus) : "Pending"}
           </span>
           {onClose ? (
             <button
               type="button"
-              className="bayblaze-soft-button px-4 py-2 text-[12px] font-semibold uppercase tracking-[0.1em]"
+              className="bayblaze-sharp-button bayblaze-sharp-button--outline px-4 py-2 text-[12px] font-semibold uppercase tracking-[0.1em]"
               onClick={onClose}
             >
               Close
@@ -86,7 +86,7 @@ function OrderSummary({ order }: { order: CustomerOrder }) {
   const scheduledDelivery = getScheduledDeliveryDisplay(order);
 
   return (
-    <section className="bayblaze-soft-card bayblaze-soft-card--tint p-5">
+    <section className="bayblaze-sharp-card bayblaze-sharp-card bayblaze-sharp-card--cream p-5">
       <h2 className="text-[20px] font-semibold leading-tight text-black">
         Summary
       </h2>
@@ -134,7 +134,7 @@ function OrderProgress({ order }: { order: CustomerOrder }) {
   const activeIndex = steps.findIndex((step) => step.key === currentStep);
 
   return (
-    <section className="bayblaze-soft-card p-5">
+    <section className="bayblaze-sharp-card p-5">
       <h2 className="text-[20px] font-semibold leading-tight text-black">
         Delivery timeline
       </h2>
@@ -179,7 +179,7 @@ function DriverMap({ order }: { order: CustomerOrder }) {
 
 function DriverChat() {
   return (
-    <section className="bayblaze-soft-card p-5">
+    <section className="bayblaze-sharp-card p-5">
       <h2 className="text-[20px] font-semibold leading-tight text-black">
         Driver chat
       </h2>
@@ -193,14 +193,14 @@ function DriverChat() {
         <div className="flex gap-2">
           <input
             id="driver-chat-message"
-            className="bayblaze-soft-input h-11 min-w-0 flex-1 px-3 text-[14px] outline-none"
+            className="bayblaze-sharp-input h-11 min-w-0 flex-1 px-3 text-[14px] outline-none"
             disabled
             placeholder="Message driver"
             type="text"
           />
           <button
             type="button"
-            className="bayblaze-soft-button px-3 text-[12px] font-semibold uppercase tracking-[0.1em] text-[#777]"
+            className="bayblaze-sharp-button bayblaze-sharp-button--outline px-3 text-[12px] font-semibold uppercase tracking-[0.1em] text-[#777]"
             disabled
           >
             Send
@@ -213,7 +213,7 @@ function DriverChat() {
 
 function OrderItems({ order }: { order: CustomerOrder }) {
   return (
-    <section className="bayblaze-soft-card p-5">
+    <section className="bayblaze-sharp-card p-5">
       <h2 className="text-[20px] font-semibold leading-tight text-black">
         Items
       </h2>

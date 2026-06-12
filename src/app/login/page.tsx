@@ -17,7 +17,7 @@ export default function Page() {
         fallback={
           <div className="bayblaze-auth-page pb-20 pt-[112px]">
             <div className="mx-auto w-full max-w-[1180px] px-5">
-              <div className="bayblaze-soft-card h-[560px]" />
+              <div className="bayblaze-sharp-card h-[560px]" />
             </div>
           </div>
         }

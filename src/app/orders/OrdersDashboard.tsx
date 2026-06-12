@@ -97,7 +97,7 @@ function OrderGroup({
 }) {
   return (
     <details
-      className="bayblaze-soft-card bayblaze-soft-card--tint overflow-hidden"
+      className="bayblaze-sharp-card bayblaze-sharp-card bayblaze-sharp-card--cream overflow-hidden"
       open
     >
       <summary className="flex cursor-pointer list-none items-center justify-between border-b border-[#e8e2d8] px-5 py-4 text-[21px] font-semibold leading-tight text-black sm:text-[24px]">
@@ -126,7 +126,7 @@ function OrderGroup({
                       {formatOrderDate(order.created_at)}
                     </span>
                   </span>
-                  <span className="bayblaze-soft-chip shrink-0 px-2.5 py-1 text-[12px] font-semibold uppercase tracking-[0.1em]">
+                  <span className="bayblaze-sharp-badge shrink-0 px-2.5 py-1 text-[12px] font-semibold uppercase tracking-[0.1em]">
                     {formatOrderStatus(getOrderLifecycleStatus(order))}
                   </span>
                 </span>

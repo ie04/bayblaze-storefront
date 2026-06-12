@@ -109,7 +109,7 @@ export default function AccountOrdersSection({
   return (
     <article
       id="orders"
-      className="bayblaze-soft-card bayblaze-soft-card--tint scroll-mt-[112px] p-5 sm:p-6"
+      className="bayblaze-sharp-card bayblaze-sharp-card bayblaze-sharp-card--cream scroll-mt-[112px] p-5 sm:p-6"
     >
       <div className="mb-4 flex items-start justify-between gap-4 sm:mb-5">
         <div>
@@ -125,7 +125,7 @@ export default function AccountOrdersSection({
 
         <button
           type="button"
-          className="bayblaze-soft-button shrink-0 px-3 py-2 text-[12px] font-semibold uppercase tracking-[0.1em] disabled:cursor-wait disabled:opacity-60"
+          className="bayblaze-sharp-button bayblaze-sharp-button--outline shrink-0 px-3 py-2 text-[12px] font-semibold uppercase tracking-[0.1em] disabled:cursor-wait disabled:opacity-60"
           disabled={isRefreshing}
           onClick={() => {
             void refreshOrders();
@@ -136,7 +136,7 @@ export default function AccountOrdersSection({
       </div>
 
       {error ? (
-        <p className="bayblaze-soft-alert mb-4 px-3 py-2 text-[14px] font-medium leading-[1.45] text-red-700">
+        <p className="bayblaze-sharp-panel mb-4 px-3 py-2 text-[14px] font-medium leading-[1.45] text-red-700">
           {error}
         </p>
       ) : null}
@@ -179,7 +179,7 @@ export default function AccountOrdersSection({
                     </span>
 
                     <span className="flex shrink-0 flex-col items-end gap-2">
-                      <span className="bayblaze-soft-chip px-2.5 py-1 text-[12px] font-semibold uppercase tracking-[0.1em]">
+                      <span className="bayblaze-sharp-badge px-2.5 py-1 text-[12px] font-semibold uppercase tracking-[0.1em]">
                         {formatOrderStatus(getOrderLifecycleStatus(order))}
                       </span>
                       {isHighlighted ? (

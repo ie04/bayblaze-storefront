@@ -75,7 +75,7 @@ export default async function Page() {
             </div>
 
             <div className="grid gap-6 lg:grid-cols-3">
-              <article className="bayblaze-soft-card bayblaze-soft-card--tint p-5 sm:p-6">
+              <article className="bayblaze-sharp-card bayblaze-sharp-card bayblaze-sharp-card--cream p-5 sm:p-6">
                 <h2 className="mb-4 text-[21px] font-semibold leading-tight text-black sm:mb-5 sm:text-[24px]">
                   Profile
                 </h2>
@@ -101,7 +101,7 @@ export default async function Page() {
 
               <AccountOrdersSection initialOrders={orders} />
 
-              <article className="bayblaze-soft-card bayblaze-soft-card--tint p-5 sm:p-6">
+              <article className="bayblaze-sharp-card bayblaze-sharp-card bayblaze-sharp-card--cream p-5 sm:p-6">
                 <h2 className="mb-4 text-[21px] font-semibold leading-tight text-black sm:mb-5 sm:text-[24px]">
                   Delivery
                 </h2>

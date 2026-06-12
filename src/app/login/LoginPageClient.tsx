@@ -220,7 +220,7 @@ export default function LoginPageClient() {
                       maxLength={6}
                       pattern="[0-9]{6}"
                       value={form.code}
-                      className="bayblaze-soft-input mt-2 h-12 w-full px-4 text-center text-[18px] font-semibold tracking-[0.2em] text-black outline-none"
+                      className="bayblaze-sharp-input mt-2 h-12 w-full px-4 text-center text-[18px] font-semibold tracking-[0.2em] text-black outline-none"
                       onChange={(event) =>
                         updateField(
                           "code",
@@ -253,7 +253,7 @@ export default function LoginPageClient() {
                           required
                           autoComplete="given-name"
                           value={form.firstName}
-                          className="bayblaze-soft-input mt-2 h-12 w-full px-4 text-[16px] font-normal text-black outline-none"
+                          className="bayblaze-sharp-input mt-2 h-12 w-full px-4 text-[16px] font-normal text-black outline-none"
                           onChange={(event) =>
                             updateField("firstName", event.target.value)
                           }
@@ -266,7 +266,7 @@ export default function LoginPageClient() {
                           required
                           autoComplete="family-name"
                           value={form.lastName}
-                          className="bayblaze-soft-input mt-2 h-12 w-full px-4 text-[16px] font-normal text-black outline-none"
+                          className="bayblaze-sharp-input mt-2 h-12 w-full px-4 text-[16px] font-normal text-black outline-none"
                           onChange={(event) =>
                             updateField("lastName", event.target.value)
                           }
@@ -282,7 +282,7 @@ export default function LoginPageClient() {
                       type="email"
                       autoComplete="email"
                       value={form.email}
-                      className="bayblaze-soft-input mt-2 h-12 w-full px-4 text-[16px] font-normal text-black outline-none"
+                      className="bayblaze-sharp-input mt-2 h-12 w-full px-4 text-[16px] font-normal text-black outline-none"
                       onChange={(event) =>
                         updateField("email", event.target.value)
                       }
@@ -299,7 +299,7 @@ export default function LoginPageClient() {
                         mode === "login" ? "current-password" : "new-password"
                       }
                       value={form.password}
-                      className="bayblaze-soft-input mt-2 h-12 w-full px-4 text-[16px] font-normal text-black outline-none"
+                      className="bayblaze-sharp-input mt-2 h-12 w-full px-4 text-[16px] font-normal text-black outline-none"
                       onChange={(event) =>
                         updateField("password", event.target.value)
                       }
@@ -326,7 +326,7 @@ export default function LoginPageClient() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="bayblaze-hero-button bayblaze-soft-button bayblaze-soft-button--primary flex h-[50px] w-full items-center justify-center px-5 text-center disabled:cursor-not-allowed disabled:opacity-70 sm:h-[52px] sm:px-7"
+                className="bayblaze-hero-button bayblaze-sharp-button bayblaze-sharp-button--outline bayblaze-sharp-button bayblaze-sharp-button--primary flex h-[50px] w-full items-center justify-center px-5 text-center disabled:cursor-not-allowed disabled:opacity-70 sm:h-[52px] sm:px-7"
               >
                 {isSubmitting
                   ? mode === "login"
