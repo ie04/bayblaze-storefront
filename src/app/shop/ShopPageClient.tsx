@@ -76,6 +76,7 @@ export default function ShopPageClient({
       ? availabilityFiltered.filter((product) => {
           const searchableText = [
             product.name,
+            product.brand,
             product.description,
             ...product.categories,
           ]
@@ -162,7 +163,7 @@ export default function ShopPageClient({
                 setQuery(event.target.value);
                 setNotice("");
               }}
-              placeholder="Search vapes, wraps, pouches…"
+              placeholder="Search brand, product, category…"
               className="min-w-0 flex-1 bg-white px-3 py-3 text-sm font-medium text-black outline-none placeholder:text-[#7a7a7a]"
             />
           </form>
@@ -316,7 +317,7 @@ function ProductCard({
 
       <div className="flex flex-1 flex-col p-3 text-left sm:p-4">
         <p className="mb-2 text-[10px] font-extrabold uppercase tracking-[0.14em] text-[var(--ast-global-color-1)]">
-          {product.categories[0]}
+          {product.brand}
         </p>
 
         <Link
