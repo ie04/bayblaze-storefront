@@ -394,15 +394,18 @@ function toStorefrontProduct(product: InventoryProduct): StorefrontProduct {
 }
 
 function getProductImages(product: InventoryProduct) {
-  const urls = [
+  const fullResolutionUrls = [
     ...(product.imageUrls ?? []),
     product.imageUrl,
-    product.thumbnail,
     ...readInventoryImageValues(product.images),
     ...readInventoryImageValues(product.productImages),
   ];
 
-  return dedupeStrings(urls.map(readImageUrl).filter(Boolean));
+  const fallbackUrls = [product.thumbnail];
+
+  return dedupeStrings(
+    [...fullResolutionUrls, ...fallbackUrls].map(readImageUrl).filter(Boolean),
+  );
 }
 
 function readInventoryImageValues(
