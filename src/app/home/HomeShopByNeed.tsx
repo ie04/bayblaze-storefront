@@ -57,19 +57,19 @@ export default function HomeShopByNeed() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
           {needCards.map((card) => (
             <Link
               key={card.key}
               href={card.href}
-              className="group flex items-center gap-4 border-2 border-black bg-white p-4 font-[var(--font-jost)] text-black no-underline transition-colors hover:bg-black hover:text-white sm:p-5"
+              className="group flex min-h-[132px] flex-col items-center justify-center gap-3 border-2 border-black bg-white p-3 text-center font-[var(--font-jost)] text-black no-underline transition-colors hover:bg-black hover:text-white sm:min-h-0 sm:flex-row sm:justify-start sm:gap-4 sm:p-5 sm:text-left"
             >
-              <div className="grid h-14 w-14 shrink-0 place-items-center border-2 border-black bg-[var(--ast-global-color-4)] text-2xl transition-colors group-hover:bg-[var(--ast-global-color-0)]">
+              <div className="grid h-12 w-12 shrink-0 place-items-center border-2 border-black bg-[var(--ast-global-color-4)] text-2xl transition-colors group-hover:bg-[var(--ast-global-color-0)] sm:h-14 sm:w-14">
                 {card.icon}
               </div>
 
-              <div className="min-w-0 flex-1">
-                <div className="text-base font-bold uppercase tracking-wide sm:text-lg">
+              <div className="min-w-0 sm:flex-1">
+                <div className="text-center text-sm font-bold uppercase leading-tight tracking-wide sm:text-left sm:text-lg">
                   {card.title}
                 </div>
 
