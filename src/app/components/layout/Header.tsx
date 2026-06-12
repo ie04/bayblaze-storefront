@@ -88,7 +88,7 @@ export default function Header({
       <div className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-4 px-4 sm:h-16 sm:px-6">
         <Link
           href="/"
-          className="bayblaze-brand-wordmark shrink-0 text-xl text-black no-underline transition-colors hover:text-[var(--ast-global-color-0)] sm:text-2xl"
+          className="bayblaze-brand-wordmark shrink-0 !tracking-[0.04em] text-xl text-black no-underline transition-colors hover:text-[var(--ast-global-color-0)] sm:text-2xl"
           aria-label="Bayblaze home"
         >
           BAYBLAZE
