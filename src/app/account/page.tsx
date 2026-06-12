@@ -52,7 +52,7 @@ export default async function Page() {
     <main className="min-h-screen bg-[var(--ast-global-color-4)] font-[var(--font-jost)] text-black">
       <Header surface="solid" />
 
-      <div className="bayblaze-account-page pb-14 text-black sm:pb-20">
+      <div className="bayblaze-account-page pb-14 font-[var(--font-jost)] text-black sm:pb-20">
         <section className="border-b-2 border-black bg-white">
           <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-12">
             <nav

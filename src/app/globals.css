@@ -1445,3 +1445,12 @@ textarea.bayblaze-sharp-input:focus {
     min-height: 3rem;
   }
 }
+\n
+.bayblaze-account-page,
+.bayblaze-account-page *,
+.bayblaze-account-page button,
+.bayblaze-account-page input,
+.bayblaze-account-page select,
+.bayblaze-account-page textarea {
+  font-family: var(--font-jost), Jost, Arial, sans-serif !important;
+}
