@@ -31,9 +31,9 @@ export default function HomeAbout() {
       id="about"
       className="bayblaze-home-about bg-[var(--ast-global-color-4)] font-[var(--font-jost)]"
     >
-      <div className="mx-auto max-w-7xl px-0 py-0 sm:px-0">
-        <div className="grid gap-0 lg:grid-cols-[minmax(0,0.92fr)_minmax(320px,0.58fr)] lg:items-stretch">
-          <div className="border-x-0 border-y-0 border-black bg-white p-6 sm:border-l-2 sm:border-r-2 sm:p-8 lg:p-10">
+      <div className="mx-auto w-full max-w-[1240px] px-4 py-0 sm:px-5">
+        <div className="grid gap-0 border-x-2 border-black bg-white lg:grid-cols-[minmax(0,0.92fr)_minmax(320px,0.58fr)] lg:items-stretch">
+          <div className="bg-white p-6 sm:p-8 lg:border-r-2 lg:border-black lg:p-10">
             <p className="text-[11px] font-bold uppercase tracking-widest text-[var(--ast-global-color-1)]">
               About BayBlaze
             </p>
@@ -65,7 +65,7 @@ export default function HomeAbout() {
             </div>
           </div>
 
-          <aside className="grid border-x-0 border-y-2 border-black bg-white sm:border-r-2 lg:border-l-0">
+          <aside className="grid border-t-2 border-black bg-white lg:border-t-0">
             <div className="flex items-start gap-3 border-b-2 border-black p-5">
               <ClockLineIcon className="mt-0.5 h-5 w-5 shrink-0 text-[var(--ast-global-color-0)]" />
               <div>
