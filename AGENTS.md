@@ -176,8 +176,9 @@ deployments.
 
 ### Inventory and Cart Availability
 
-Medusa remains the source of truth for product variants and inventory-like
-storefront availability metadata.
+Embedded Medusa under `bayblaze-api/medusa` remains the source of truth for
+product variants and inventory-like storefront availability metadata. The old
+standalone `bayblaze-medusa` repo is retired.
 
 - Variant metadata may arrive from Medusa as numbers or numeric strings. Normalize
   `availableQuantity` defensively, and treat `0` as a valid explicit value, not
