@@ -8,10 +8,10 @@ const needCards = [
     href: "/shop?q=Vapes",
   },
   {
-    key: "nicotine",
-    title: "Nicotine",
+    key: "zyns",
+    title: "ZYNs",
     icon: "❄️",
-    href: "/shop?q=Nicotine",
+    href: "/shop?q=ZYNs",
   },
   {
     key: "wraps",
@@ -32,10 +32,10 @@ const needCards = [
     href: "/shop?q=Deals",
   },
   {
-    key: "fast",
-    title: "Fast Delivery",
+    key: "check-delivery",
+    title: "Check Delivery",
     icon: "⚡",
-    href: "/shop?availability=fast",
+    href: "/orders",
   },
 ];
 
