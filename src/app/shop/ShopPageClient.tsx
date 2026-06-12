@@ -81,7 +81,7 @@ export default function ShopPageClient({
 
           return searchableText.includes(normalizedSearchQuery);
         })
-      : categoryFiltered;
+      : availabilityFiltered;
 
     return [...searchFiltered].sort((a, b) => {
       if (sortBy === "price-asc") {

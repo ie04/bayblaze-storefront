@@ -4,6 +4,7 @@ import HomeContact from "@/app/home/HomeContact";
 import HomeExploreProducts from "@/app/home/HomeExploreProducts";
 import HomeFooter from "@/app/home/HomeFooter";
 import HomeHero from "@/app/home/HomeHero";
+import HomeShopByNeed from "@/app/home/HomeShopByNeed";
 import { getFastDeliveryProductPreviews } from "@/app/lib/medusa-products";
 
 export default async function Home() {
@@ -13,6 +14,7 @@ export default async function Home() {
     <main className="relative">
       <Header />
       <HomeHero />
+      <HomeShopByNeed />
       <HomeExploreProducts
         fastDeliveryProducts={fastDeliveryProducts}
       />
