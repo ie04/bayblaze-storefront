@@ -27,7 +27,41 @@ export default function HomeHero() {
         </h2>
 
         <HeroSearch />
+        <HomeHeroInfoStrip />
       </div>
     </section>
+  );
+}
+
+function HomeHeroInfoStrip() {
+  return (
+    <div className="mx-auto mt-5 grid w-full max-w-md grid-cols-3 border-2 border-black bg-white text-center font-[var(--font-jost)] shadow-[6px_6px_0_#000] sm:mt-6">
+      <div className="border-r-2 border-black p-3 sm:p-4">
+        <div className="text-lg font-black leading-none text-black sm:text-xl">
+          30<span className="text-sm">min</span>
+        </div>
+        <div className="mt-1 text-[10px] font-bold uppercase leading-tight tracking-widest text-[#585858] sm:text-[11px]">
+          Avg delivery
+        </div>
+      </div>
+
+      <div className="border-r-2 border-black p-3 sm:p-4">
+        <div className="text-lg font-black leading-none text-black sm:text-xl">
+          10am–11pm
+        </div>
+        <div className="mt-1 text-[10px] font-bold uppercase leading-tight tracking-widest text-[#585858] sm:text-[11px]">
+          Store hours
+        </div>
+      </div>
+
+      <div className="p-3 sm:p-4">
+        <div className="text-lg font-black leading-none text-black sm:text-xl">
+          Schedule
+        </div>
+        <div className="mt-1 text-[10px] font-bold uppercase leading-tight tracking-widest text-[#585858] sm:text-[11px]">
+          Your order
+        </div>
+      </div>
+    </div>
   );
 }
