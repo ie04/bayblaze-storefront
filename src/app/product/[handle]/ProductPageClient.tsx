@@ -176,7 +176,7 @@ export default function ProductPage({
   }
 
   return (
-    <div className="bg-[var(--ast-global-color-4)] pb-14 text-black sm:pb-20">
+    <div className="bayblaze-product-page bg-[var(--ast-global-color-4)] pb-14 font-[var(--font-jost)] text-black sm:pb-20">
       <div className="border-b-2 border-black bg-white">
         <div className="mx-auto max-w-7xl px-4 py-3 text-xs font-bold uppercase tracking-widest sm:px-6">
           <Link href="/" className="text-[#585858] no-underline hover:text-black">
