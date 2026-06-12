@@ -197,7 +197,7 @@ export default function ProductPage({
       <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:py-12">
         <div className="grid gap-8 lg:grid-cols-2 lg:gap-12">
           <div>
-            <div className="relative aspect-square border-2 border-black bg-[var(--ast-global-color-4)]">
+            <div className="relative aspect-square overflow-hidden border-2 border-black bg-[var(--ast-global-color-4)]">
               <div className="absolute left-3 top-3 z-10 flex flex-col gap-1.5">
                 {product.saleBadge ? (
                   <span className="bayblaze-sharp-badge bayblaze-sharp-badge--green">
@@ -236,7 +236,7 @@ export default function ProductPage({
                     key={`${selectedVariantId}-${image.src}-${index}`}
                     type="button"
                     className={[
-                      "relative aspect-square border-2 bg-white transition-colors",
+                      "relative aspect-square overflow-hidden border-2 bg-white transition-colors",
                       safeActiveImage === index
                         ? "border-black"
                         : "border-black/45 hover:border-black",

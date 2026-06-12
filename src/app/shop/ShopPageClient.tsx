@@ -220,10 +220,10 @@ function ProductCard({
   }
 
   return (
-    <article className="group relative flex min-h-full flex-col border border-[#d0d0d0] bg-[var(--ast-global-color-4)]">
+    <article className="group relative flex min-h-full flex-col overflow-hidden border border-[#d0d0d0] bg-[var(--ast-global-color-4)]">
       <Link
         href={product.href}
-        className="relative block aspect-[1.08] overflow-hidden bg-[var(--ast-global-color-4)] sm:aspect-square"
+        className="relative block aspect-[1.08] overflow-hidden border-b border-[#d0d0d0] bg-[var(--ast-global-color-4)] sm:aspect-square"
         target={isInternal ? undefined : "_blank"}
       >
         {product.isSale && (

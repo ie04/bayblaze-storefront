@@ -71,7 +71,7 @@ function FastDeliveryProductCard({
     <article className="bayblaze-sharp-card group flex min-h-full flex-col overflow-hidden bg-white">
       <Link
         href={product.href}
-        className="relative block aspect-square border-b-2 border-black bg-[var(--ast-global-color-4)]"
+        className="relative block aspect-square overflow-hidden border-b-2 border-black bg-[var(--ast-global-color-4)]"
         aria-label={product.name}
       >
         {product.isSale ? (
