@@ -73,9 +73,6 @@ export default function HomeShopByNeed() {
                   {card.title}
                 </div>
 
-                <div className="text-xs font-bold uppercase tracking-widest text-[#777] transition-colors group-hover:text-white/70">
-                  Tap to start
-                </div>
               </div>
 
               <ArrowRightIcon />
