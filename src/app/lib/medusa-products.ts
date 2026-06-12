@@ -495,7 +495,7 @@ async function fetchInventorySnapshot() {
     process.env.BAYBLAZE_API_SERVICE_TOKEN?.trim() ?? "";
 
   if (!bayblazeApiToken) {
-    return { products: [] } satisfies InventorySnapshot;
+    throw new Error("BAYBLAZE_API_SERVICE_TOKEN is not configured for storefront inventory fetches.");
   }
 
   const response = await fetch(`${bayblazeApiUrl}/v1/inventory`, {
