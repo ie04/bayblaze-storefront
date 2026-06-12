@@ -32,7 +32,7 @@ export default function HomeExploreProducts({
             href="/shop?availability=fast"
             className="bayblaze-sharp-button bayblaze-sharp-button--outline shrink-0"
           >
-            View all fast delivery
+            View all
           </Link>
         </div>
 
