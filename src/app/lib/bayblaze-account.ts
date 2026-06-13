@@ -65,6 +65,7 @@ export async function createBayBlazeCustomerAccount(input: {
   email: string;
   firstName: string;
   lastName: string;
+  metadata?: Record<string, unknown>;
   password: string;
 }) {
   return bayblazeApiRequest<BayBlazeAccountSessionResponse>("/v1/customer/auth/accounts", {

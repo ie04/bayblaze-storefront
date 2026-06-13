@@ -13,7 +13,7 @@ import {
   getReferralOfferCustomerMetadata,
   getReferralOfferFromCookieHeader,
 } from "@/app/domain/referral-offers";
-import { CUSTOMER_TOKEN_COOKIE, registerCustomer } from "@/app/lib/medusa-auth";
+import { CUSTOMER_TOKEN_COOKIE } from "@/app/lib/medusa-auth";
 import {
   BAYBLAZE_ACCOUNT_TOKEN_COOKIE,
   createBayBlazeCustomerAccount,
@@ -121,16 +121,16 @@ export async function POST(request: Request) {
       firstName: normalizedFirstName,
       lastName: normalizedLastName,
       password: normalizedPassword,
-    });
-    const token = await registerCustomer({
-      email: normalizedEmail,
-      password: normalizedPassword,
-      firstName: normalizedFirstName,
-      lastName: normalizedLastName,
       metadata: getReferralOfferCustomerMetadata(
         getReferralOfferFromCookieHeader(request.headers.get("cookie")),
       ),
     });
+    const token = accountSession.commerce?.customerToken;
+
+    if (!token) {
+      throw new Error("BayBlaze could not create a storefront customer session.");
+    }
+
     const response = NextResponse.json({ success: true });
 
     response.cookies.set(BAYBLAZE_ACCOUNT_TOKEN_COOKIE, accountSession.session.token, {

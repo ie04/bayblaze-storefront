@@ -212,6 +212,9 @@ boundary.
   `bayblaze_account_token`. It still stores the Medusa customer token in
   `bayblaze_customer_token` for commerce reads such as customer profile and
   order history.
+- Customer signup must use the `commerce.customerToken` returned by
+  `bayblaze-api`; do not call native Medusa email/password registration from
+  the storefront route.
 - Account pages and checkout policy checks should require a valid BayBlaze
   account session when they are using account-owned settings.
 - Account records have `customer` or `employee` badges. Storefront access uses
