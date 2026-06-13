@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { type FormEvent, useMemo, useState } from "react";
 
 import { SearchLineIcon } from "@/app/components/icons/SharpIcons";
+import { useReferralOffer } from "@/app/components/referral/ReferralOfferProvider";
 import ReferralProductPrice from "@/app/components/products/ReferralProductPrice";
 import type { ShopProductItem } from "@/app/lib/medusa-products";
 
@@ -27,6 +28,7 @@ export default function ShopPageClient({
   initialSearchQuery?: string;
   products: ShopProductItem[];
 }) {
+  const { offer } = useReferralOffer();
   const searchParams = useSearchParams();
   const availabilityFilter = searchParams.get("availability");
 
@@ -257,6 +259,7 @@ export default function ShopPageClient({
                 <ProductCard
                   key={product.href}
                   product={product}
+                  hasActivePromo={Boolean(offer)}
                   onQuickAdd={handleQuickAdd}
                 />
               ))}
@@ -270,9 +273,11 @@ export default function ShopPageClient({
 
 function ProductCard({
   product,
+  hasActivePromo,
   onQuickAdd,
 }: {
   product: ShopProductItem;
+  hasActivePromo: boolean;
   onQuickAdd: (product: ShopProductItem) => void;
 }) {
   const isInternal = product.href.startsWith("/");
@@ -295,15 +300,9 @@ function ProductCard({
         target={isInternal ? undefined : "_blank"}
         aria-label={product.name}
       >
-        {product.isSale ? (
+        {product.isSale || hasActivePromo ? (
           <span className="bayblaze-sharp-badge bayblaze-sharp-badge--green absolute left-2 top-2 z-10">
             Sale
-          </span>
-        ) : null}
-
-        {product.inventoryState === "ON_VEHICLE" ? (
-          <span className="bayblaze-sharp-badge absolute right-2 top-2 z-10 bg-white">
-            Fast
           </span>
         ) : null}
 

@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 import ReferralProductPrice from "@/app/components/products/ReferralProductPrice";
+import { useReferralOffer } from "@/app/components/referral/ReferralOfferProvider";
 import type { ProductPreviewItem } from "@/app/lib/medusa-products";
 
 export default function HomeExploreProducts({
@@ -11,6 +12,8 @@ export default function HomeExploreProducts({
 }: {
   fastDeliveryProducts: ProductPreviewItem[];
 }) {
+  const { offer } = useReferralOffer();
+
   return (
     <section className="bayblaze-products-section border-b-2 border-black bg-[var(--ast-global-color-4)]">
       <div className="mx-auto w-full max-w-[1240px] px-4 py-12 sm:px-5 sm:py-16">
@@ -40,7 +43,11 @@ export default function HomeExploreProducts({
         {fastDeliveryProducts.length > 0 ? (
           <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4">
             {fastDeliveryProducts.map((product) => (
-              <FastDeliveryProductCard key={product.href} product={product} />
+              <FastDeliveryProductCard
+                key={product.href}
+                product={product}
+                hasActivePromo={Boolean(offer)}
+              />
             ))}
           </div>
         ) : (
@@ -65,8 +72,10 @@ export default function HomeExploreProducts({
 
 function FastDeliveryProductCard({
   product,
+  hasActivePromo,
 }: {
   product: ProductPreviewItem;
+  hasActivePromo: boolean;
 }) {
   return (
     <article className="bayblaze-sharp-card group flex min-h-full flex-col overflow-hidden bg-white">
@@ -75,15 +84,11 @@ function FastDeliveryProductCard({
         className="relative block aspect-square overflow-hidden border-b-2 border-black bg-[var(--ast-global-color-4)]"
         aria-label={product.name}
       >
-        {product.isSale ? (
+        {product.isSale || hasActivePromo ? (
           <span className="bayblaze-sharp-badge bayblaze-sharp-badge--green absolute left-2 top-2 z-10">
             Sale
           </span>
         ) : null}
-
-        <span className="bayblaze-sharp-badge absolute right-2 top-2 z-10 bg-white">
-          Fast
-        </span>
 
         {product.image ? (
           <Image
