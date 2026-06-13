@@ -174,9 +174,9 @@ export default function ShopPageClient({
       </section>
 
       <section className="sticky top-14 z-30 border-b-2 border-black bg-[var(--ast-global-color-4)] sm:top-16">
-        <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-3 sm:px-6">
-          <div className="-mx-4 flex-1 overflow-x-auto px-4 sm:mx-0 sm:px-0">
-            <div className="flex w-max gap-2">
+        <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:px-6">
+          <div className="w-full min-w-0 sm:flex-1 sm:overflow-x-auto">
+            <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-max">
               {categories.map((category) => {
                 const isActive = selectedCategory === category;
 
@@ -185,7 +185,7 @@ export default function ShopPageClient({
                     key={category}
                     type="button"
                     className={[
-                      "border-2 border-black px-3 py-2 text-xs font-bold uppercase tracking-wider transition-colors",
+                      "flex min-h-10 min-w-0 items-center justify-center border-2 border-black px-2 py-2 text-center text-[11px] font-bold uppercase leading-tight tracking-wide transition-colors sm:min-h-0 sm:shrink-0 sm:px-3 sm:text-xs sm:tracking-wider",
                       isActive
                         ? "bg-black text-white"
                         : "bg-white text-black hover:bg-black hover:text-white",
@@ -196,20 +196,25 @@ export default function ShopPageClient({
                       setNotice("");
                     }}
                   >
-                    {category}
+                    <span className="min-w-0 break-words">
+                      {category}
+                    </span>
                   </button>
                 );
               })}
             </div>
           </div>
 
-          <label className="relative shrink-0">
+          <label className="relative block w-full shrink-0 sm:w-auto">
             <span className="sr-only">Sort products</span>
+
             <select
               value={sortBy}
               aria-label="Sort products"
-              className="h-9 appearance-none border-2 border-black bg-white py-0 pl-3 pr-8 text-xs font-bold uppercase tracking-wider text-black outline-none"
-              onChange={(event) => setSortBy(event.target.value as SortValue)}
+              className="h-10 w-full appearance-none border-2 border-black bg-white py-0 pl-3 pr-9 text-xs font-bold uppercase tracking-wider text-black outline-none sm:h-9 sm:w-auto"
+              onChange={(event) =>
+                setSortBy(event.target.value as SortValue)
+              }
             >
               {sortOptions.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -217,9 +222,10 @@ export default function ShopPageClient({
                 </option>
               ))}
             </select>
+
             <span
               aria-hidden="true"
-              className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-xs font-black"
+              className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-black"
             >
               ▾
             </span>
