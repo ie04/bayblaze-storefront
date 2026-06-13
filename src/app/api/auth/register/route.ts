@@ -14,6 +14,10 @@ import {
   getReferralOfferFromCookieHeader,
 } from "@/app/domain/referral-offers";
 import { CUSTOMER_TOKEN_COOKIE, registerCustomer } from "@/app/lib/medusa-auth";
+import {
+  BAYBLAZE_ACCOUNT_TOKEN_COOKIE,
+  createBayBlazeCustomerAccount,
+} from "@/app/lib/bayblaze-account";
 
 const cookieMaxAge = 60 * 60 * 24 * 30;
 
@@ -112,6 +116,12 @@ export async function POST(request: Request) {
       return response;
     }
 
+    const accountSession = await createBayBlazeCustomerAccount({
+      email: normalizedEmail,
+      firstName: normalizedFirstName,
+      lastName: normalizedLastName,
+      password: normalizedPassword,
+    });
     const token = await registerCustomer({
       email: normalizedEmail,
       password: normalizedPassword,
@@ -123,6 +133,13 @@ export async function POST(request: Request) {
     });
     const response = NextResponse.json({ success: true });
 
+    response.cookies.set(BAYBLAZE_ACCOUNT_TOKEN_COOKIE, accountSession.session.token, {
+      httpOnly: true,
+      maxAge: cookieMaxAge,
+      path: "/",
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+    });
     response.cookies.set(CUSTOMER_TOKEN_COOKIE, token, {
       httpOnly: true,
       maxAge: cookieMaxAge,

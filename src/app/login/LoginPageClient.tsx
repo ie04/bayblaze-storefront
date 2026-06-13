@@ -44,10 +44,6 @@ export default function LoginPageClient() {
     return "/account";
   }, [searchParams]);
 
-  const googleOAuthHref = `/api/auth/oauth/google/start?redirect=${encodeURIComponent(
-    redirectTo,
-  )}`;
-
   function updateField(field: keyof FormState, value: string) {
     setForm((current) => ({ ...current, [field]: value }));
   }
@@ -181,24 +177,6 @@ export default function LoginPageClient() {
                 Register
               </button>
             </div>
-          ) : null}
-
-          {!isVerifyingRegistration ? (
-            <>
-              <a
-                href={googleOAuthHref}
-                className="mb-5 flex h-12 w-full items-center justify-center gap-3 border-2 border-black bg-white px-4 text-center text-[14px] font-extrabold uppercase tracking-wider text-black no-underline transition-colors hover:bg-black hover:text-white"
-              >
-                <GoogleIcon />
-                Continue with Google
-              </a>
-
-              <div className="mb-5 flex items-center gap-3 text-[12px] font-extrabold uppercase tracking-[0.16em] text-[#585858]">
-                <span className="h-0.5 flex-1 bg-black" />
-                <span>Email</span>
-                <span className="h-0.5 flex-1 bg-black" />
-              </div>
-            </>
           ) : null}
 
           <form className="space-y-5" onSubmit={handleSubmit}>
@@ -354,16 +332,5 @@ function AuthInput({
         onChange={(event) => onChange(event.target.value)}
       />
     </label>
-  );
-}
-
-function GoogleIcon() {
-  return (
-    <span
-      aria-hidden="true"
-      className="grid size-5 place-items-center border-2 border-black bg-white text-[12px] font-black leading-none text-black"
-    >
-      G
-    </span>
   );
 }

@@ -8,7 +8,10 @@ import {
   TruckLineIcon,
   UserLineIcon,
 } from "@/app/components/icons/SharpIcons";
-import { getCustomerToken } from "@/app/lib/customer-session";
+import {
+  getBayBlazeAccountFromSession,
+  getCustomerToken,
+} from "@/app/lib/customer-session";
 import {
   retrieveCustomer,
   retrieveCustomerOrders,
@@ -24,9 +27,12 @@ export const metadata: Metadata = {
 };
 
 export default async function Page() {
-  const token = await getCustomerToken();
+  const [account, token] = await Promise.all([
+    getBayBlazeAccountFromSession(),
+    getCustomerToken(),
+  ]);
 
-  if (!token) {
+  if (!account || !token) {
     redirect("/login?redirect=/account");
   }
 
@@ -107,7 +113,7 @@ export default async function Page() {
                       {displayName}
                     </h2>
                     <p className="mt-1 break-words text-sm font-medium leading-[1.45] text-[#585858]">
-                      {customer.email}
+                      {account.email}
                     </p>
                   </div>
                 </div>
@@ -134,6 +140,15 @@ export default async function Page() {
                     </dt>
                     <dd className="mt-1 break-words font-medium text-[#585858]">
                       {customer.email}
+                    </dd>
+                  </div>
+
+                  <div className={customer.phone ? "border-b-2 border-black pb-3" : ""}>
+                    <dt className="font-bold uppercase tracking-wider text-black">
+                      Account
+                    </dt>
+                    <dd className="mt-1 font-medium text-[#585858]">
+                      {formatAccountBadges(account.badges)}
                     </dd>
                   </div>
 
@@ -186,4 +201,10 @@ export default async function Page() {
       </div>
     </main>
   );
+}
+
+function formatAccountBadges(badges: string[]) {
+  return badges.length
+    ? badges.map((badge) => badge[0]?.toUpperCase() + badge.slice(1)).join(", ")
+    : "Customer";
 }

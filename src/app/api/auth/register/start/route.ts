@@ -31,9 +31,17 @@ export async function POST(request: Request) {
       );
     }
 
-    if (normalizedPassword.length < 6) {
+    if (
+      normalizedPassword.length < 12 ||
+      !/[a-z]/i.test(normalizedPassword) ||
+      !/\d/.test(normalizedPassword) ||
+      !/[^a-z0-9]/i.test(normalizedPassword)
+    ) {
       return NextResponse.json(
-        { message: "Password must be at least 6 characters." },
+        {
+          message:
+            "Password must be at least 12 characters and include letters, numbers, and a symbol.",
+        },
         { status: 400 },
       );
     }

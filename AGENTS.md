@@ -199,6 +199,32 @@ standalone `bayblaze-medusa` repo is retired.
   `inventoryState` or `availableQuantity` should be treated as a data/config
   problem that must be fixed in Medusa or the inventory app.
 
+### Centralized BayBlaze Accounts
+
+The customer storefront uses the universal account system provided by
+`bayblaze-api`. Firebase Auth remains behind the API, but the browser and
+Next.js routes should treat `bayblaze-api` account routes as the identity
+boundary.
+
+- Customer signup/login should call `bayblaze-api`
+  `POST /v1/customer/auth/accounts` and `POST /v1/customer/auth/login`.
+- The storefront stores the BayBlaze account session in
+  `bayblaze_account_token`. It still stores the Medusa customer token in
+  `bayblaze_customer_token` for commerce reads such as customer profile and
+  order history.
+- Account pages and checkout policy checks should require a valid BayBlaze
+  account session when they are using account-owned settings.
+- Account records have `customer` or `employee` badges. Storefront access uses
+  the `customer` badge. Employee accounts can be granted `driver`, `inventory`,
+  and/or `admin` roles in `bayblaze-admin`.
+- Legacy Medusa Google OAuth is disabled because it cannot currently mint a
+  BayBlaze API account session. Do not restore OAuth without adding a
+  `bayblaze-api` account-session exchange for that provider.
+- `settings.ageVerificationDisabled` is controlled from the admin dashboard and
+  allows a matching signed-in customer email to bypass AgeChecker for testing.
+  Keep the final bypass check in server-side checkout order code, not only in
+  client UI.
+
 ### Catalog, Categories, and Shop Data
 
 The storefront catalog must stay Medusa-owned. Do not reintroduce static `/shop`

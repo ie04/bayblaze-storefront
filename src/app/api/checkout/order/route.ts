@@ -1,4 +1,7 @@
-import { getCustomerToken } from "@/app/lib/customer-session";
+import {
+  getBayBlazeAccountFromSession,
+  getCustomerToken,
+} from "@/app/lib/customer-session";
 import { verifyCheckoutAddressValidation } from "@/app/domain/address-validation";
 import {
   formatScheduledDelivery,
@@ -196,9 +199,10 @@ export async function POST(request: Request) {
   }
 
   const customerToken = await getCustomerToken();
-  const accountCustomer = customerToken
-    ? await retrieveAuthenticatedCustomer(customerToken).catch(() => null)
-    : null;
+  const [bayBlazeAccount, accountCustomer] = await Promise.all([
+    getBayBlazeAccountFromSession(),
+    customerToken ? retrieveAuthenticatedCustomer(customerToken).catch(() => null) : null,
+  ]);
   const cachedAgeVerification = getAccountAgeVerificationMetadata(
     accountCustomer,
     customer,
@@ -212,11 +216,20 @@ export async function POST(request: Request) {
     return jsonError(addressValidation.error, 403);
   }
 
-  const ageVerification = verifyCheckoutAgeVerification(
-    body.age_verification,
+  const accountAgeVerificationBypass = getAccountAgeVerificationBypassMetadata(
+    bayBlazeAccount,
     customer,
-    cachedAgeVerification,
   );
+  const ageVerification = accountAgeVerificationBypass
+    ? {
+        error: undefined,
+        metadata: accountAgeVerificationBypass,
+      }
+    : verifyCheckoutAgeVerification(
+        body.age_verification,
+        customer,
+        cachedAgeVerification,
+      );
 
   if (ageVerification.error) {
     return jsonError(ageVerification.error, 403);
@@ -644,6 +657,29 @@ function getAccountAgeVerificationMetadata(
     ...metadata,
     age_verification_source: "account" as const,
     age_verified_account_id: accountCustomer.id,
+    age_verified_email: accountEmail,
+  };
+}
+
+function getAccountAgeVerificationBypassMetadata(
+  account: Awaited<ReturnType<typeof getBayBlazeAccountFromSession>>,
+  checkoutCustomer: CheckoutCustomer,
+) {
+  const normalizedCustomer = normalizeAgeVerificationCustomer(checkoutCustomer);
+  const accountEmail = account?.email.trim().toLowerCase();
+
+  if (
+    account?.settings.ageVerificationDisabled !== true ||
+    !accountEmail ||
+    normalizedCustomer?.email !== accountEmail
+  ) {
+    return null;
+  }
+
+  return {
+    age_verification_source: "account" as const,
+    age_verified_account_id: account.uid,
+    age_verified_at: new Date().toISOString(),
     age_verified_email: accountEmail,
   };
 }

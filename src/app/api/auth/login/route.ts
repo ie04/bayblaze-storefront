@@ -4,6 +4,10 @@ import {
   authenticateCustomer,
   CUSTOMER_TOKEN_COOKIE,
 } from "@/app/lib/medusa-auth";
+import {
+  BAYBLAZE_ACCOUNT_TOKEN_COOKIE,
+  loginBayBlazeCustomerAccount,
+} from "@/app/lib/bayblaze-account";
 
 const cookieMaxAge = 60 * 60 * 24 * 30;
 
@@ -20,9 +24,20 @@ export async function POST(request: Request) {
       );
     }
 
+    const accountSession = await loginBayBlazeCustomerAccount(
+      normalizedEmail,
+      normalizedPassword,
+    );
     const token = await authenticateCustomer(normalizedEmail, normalizedPassword);
     const response = NextResponse.json({ success: true });
 
+    response.cookies.set(BAYBLAZE_ACCOUNT_TOKEN_COOKIE, accountSession.session.token, {
+      httpOnly: true,
+      maxAge: cookieMaxAge,
+      path: "/",
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+    });
     response.cookies.set(CUSTOMER_TOKEN_COOKIE, token, {
       httpOnly: true,
       maxAge: cookieMaxAge,

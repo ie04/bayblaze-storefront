@@ -143,8 +143,12 @@ const googleMapsBrowserKey =
   "";
 
 export default function CheckoutPageClient({
+  accountAgeVerificationDisabled = false,
+  accountEmail,
   customer,
 }: {
+  accountAgeVerificationDisabled?: boolean;
+  accountEmail?: string;
   customer?: Customer;
 }) {
   const router = useRouter();
@@ -472,7 +476,9 @@ export default function CheckoutPageClient({
 
     try {
       const ageVerification = await verifyAgeIfNeeded({
+        accountAgeVerificationDisabled,
         accountCustomer: customer,
+        accountEmail,
         customer: checkoutCustomer,
         key: ageCheckerPublicKey,
         setIsAgeVerifying,
@@ -1057,24 +1063,55 @@ function canUseSavedAgeVerification(
   return !metadataEmail || metadataEmail === accountEmail;
 }
 
+function canUseAccountAgeVerificationBypass({
+  accountAgeVerificationDisabled,
+  accountEmail,
+  checkoutCustomer,
+}: {
+  accountAgeVerificationDisabled: boolean;
+  accountEmail?: string;
+  checkoutCustomer: CheckoutCustomerPayload;
+}) {
+  return (
+    accountAgeVerificationDisabled &&
+    Boolean(normalizeEmail(accountEmail)) &&
+    normalizeEmail(accountEmail) === normalizeEmail(checkoutCustomer.email)
+  );
+}
+
 function normalizeEmail(value: unknown) {
   return typeof value === "string" ? value.trim().toLowerCase() : "";
 }
 
 async function verifyAgeIfNeeded({
+  accountAgeVerificationDisabled,
   accountCustomer,
+  accountEmail,
   customer,
   key,
   setIsAgeVerifying,
   setMessage,
 }: {
+  accountAgeVerificationDisabled: boolean;
   accountCustomer?: Customer;
+  accountEmail?: string;
   customer: CheckoutCustomerPayload;
   key: string;
   setIsAgeVerifying: (isVerifying: boolean) => void;
   setMessage: (message: string) => void;
 }): Promise<{ error?: string; token?: string }> {
   if (!key) {
+    return {};
+  }
+
+  if (
+    canUseAccountAgeVerificationBypass({
+      accountAgeVerificationDisabled,
+      accountEmail,
+      checkoutCustomer: customer,
+    })
+  ) {
+    setMessage("Age verification is disabled for this BayBlaze account.");
     return {};
   }
 
