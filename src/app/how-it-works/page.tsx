@@ -20,21 +20,21 @@ export const metadata: Metadata = {
 const steps = [
   {
     n: "01",
-    title: "Order online",
-    desc: "Browse, pick variants, and place your BayBlaze order from your phone.",
+    title: "Place your order",
+    desc: "Choose what you need, enter your delivery details, and submit your order.",
     icon: <SearchLineIcon className="h-5 w-5" />,
   },
   {
     n: "02",
-    title: "We confirm availability",
-    desc: "BayBlaze confirms local stock before dispatching your driver.",
-    icon: <ShieldCheckLineIcon className="h-5 w-5" />,
+    title: "We deliver it",
+    desc: "A BayBlaze driver brings your order directly to your delivery address.",
+    icon: <TruckLineIcon className="h-5 w-5" />,
   },
   {
     n: "03",
-    title: "Driver verifies 21+ ID",
-    desc: "Your local driver checks your government-issued ID at delivery.",
-    icon: <TruckLineIcon className="h-5 w-5" />,
+    title: "Pay at the door",
+    desc: "Show your valid 21+ ID and pay the driver when your order arrives.",
+    icon: <ShieldCheckLineIcon className="h-5 w-5" />,
   },
 ];
 
