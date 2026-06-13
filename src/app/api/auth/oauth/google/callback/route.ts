@@ -40,6 +40,15 @@ export async function GET(request: NextRequest) {
       code,
       state,
     });
+
+    if (!accountSession.account.badges.includes("customer")) {
+      throw new Error("This BayBlaze account is not enabled for storefront access.");
+    }
+
+    if (!accountSession.commerce?.customerToken) {
+      throw new Error("BayBlaze could not create a storefront customer session.");
+    }
+
     const response = NextResponse.redirect(
       new URL(getSafeRedirect(accountSession.redirectTo), request.nextUrl.origin),
     );
@@ -52,15 +61,13 @@ export async function GET(request: NextRequest) {
       secure: process.env.NODE_ENV === "production",
     });
 
-    if (accountSession.commerce?.customerToken) {
-      response.cookies.set(CUSTOMER_TOKEN_COOKIE, accountSession.commerce.customerToken, {
-        httpOnly: true,
-        maxAge: cookieMaxAge,
-        path: "/",
-        sameSite: "lax",
-        secure: process.env.NODE_ENV === "production",
-      });
-    }
+    response.cookies.set(CUSTOMER_TOKEN_COOKIE, accountSession.commerce.customerToken, {
+      httpOnly: true,
+      maxAge: cookieMaxAge,
+      path: "/",
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+    });
 
     return response;
   } catch (error) {

@@ -80,8 +80,11 @@ export async function startBayBlazeGoogleOAuth(input: {
   return bayblazeApiRequest<{
     authorizationUrl: string;
     expiresInSeconds: number;
-  }>("/v1/customer/auth/google/start", {
-    body: input,
+  }>("/v1/auth/google/start", {
+    body: {
+      ...input,
+      commerce: "storefront",
+    },
     method: "POST",
   });
 }
@@ -91,7 +94,7 @@ export async function completeBayBlazeGoogleOAuth(input: {
   code: string;
   state: string;
 }) {
-  return bayblazeApiRequest<BayBlazeAccountSessionResponse>("/v1/customer/auth/google/callback", {
+  return bayblazeApiRequest<BayBlazeAccountSessionResponse>("/v1/auth/google/callback", {
     body: input,
     method: "POST",
   });

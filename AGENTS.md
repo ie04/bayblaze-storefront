@@ -219,10 +219,11 @@ boundary.
   and/or `admin` roles in `bayblaze-admin`.
 - Google OAuth must route through `bayblaze-api`, not Medusa OAuth. The
   storefront start/callback routes call `bayblaze-api`
-  `/v1/customer/auth/google/start` and `/v1/customer/auth/google/callback`,
-  then set both `bayblaze_account_token` and the Medusa
-  `bayblaze_customer_token` returned by the API's Medusa customer-session
-  bridge.
+  universal `/v1/auth/google/start` and `/v1/auth/google/callback` routes,
+  passing `commerce: "storefront"` during start. The storefront callback must
+  require the returned account to have the `customer` badge, then set both
+  `bayblaze_account_token` and the Medusa `bayblaze_customer_token` returned by
+  the API's Medusa customer-session bridge.
 - `settings.ageVerificationDisabled` is controlled from the admin dashboard and
   allows a matching signed-in customer email to bypass AgeChecker for testing.
   Keep the final bypass check in server-side checkout order code, not only in
