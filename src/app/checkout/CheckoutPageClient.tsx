@@ -1713,8 +1713,11 @@ function CheckoutPanel({
   title: string;
 }) {
   return (
-    <section className="border border-[#d0d0d0] bg-[var(--ast-global-color-4)] p-4 sm:p-6">
-      <h2 className="mb-4 text-[21px] font-medium leading-tight text-black sm:mb-5 sm:text-[24px]">
+    <section className="bayblaze-sharp-card bg-white p-4 sm:p-6">
+      <p className="text-[11px] font-bold uppercase tracking-widest text-[var(--ast-global-color-1)]">
+        Checkout step
+      </p>
+      <h2 className="mb-4 mt-1 text-2xl font-black uppercase leading-none text-black sm:mb-5 sm:text-3xl">
         {title}
       </h2>
       {children}
@@ -1738,7 +1741,7 @@ function CheckoutField({
   type?: string;
 }) {
   return (
-    <label className="grid gap-2 text-[15px] font-semibold text-black sm:text-[16px]">
+    <label className="grid gap-2 text-xs font-bold uppercase tracking-widest text-black">
       <span>
         {label}
         {required ? (
@@ -1752,7 +1755,7 @@ function CheckoutField({
         ) : null}
       </span>
       <input
-        className="h-[50px] w-full min-w-0 border border-[#d6d6d6] bg-white px-4 text-[16px] font-normal text-black outline-none transition focus:border-black sm:h-[52px] sm:text-[17px]"
+        className="h-12 w-full min-w-0 border-2 border-black bg-white px-4 text-base font-semibold text-black outline-none transition focus:shadow-[inset_0_0_0_2px_var(--ast-global-color-0)]"
         defaultValue={defaultValue}
         inputMode={inputMode}
         name={name}
