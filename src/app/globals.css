@@ -120,9 +120,15 @@ main {
     width: 100%;
   }
 
-  body > div,
+  body > div:not(.bayblaze-referral-toast),
   main {
     min-height: 100dvh;
+  }
+
+  .bayblaze-referral-toast {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: 2rem !important;
   }
 
   main {
