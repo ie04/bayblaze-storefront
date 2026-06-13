@@ -45,6 +45,8 @@ export default function Header({
     openCart,
     closeCart,
     removeItem,
+    setItemQuantity,
+    clearCart,
   } = useCart();
 
   function handleSearch(event: FormEvent<HTMLFormElement>) {
@@ -186,6 +188,8 @@ export default function Header({
         isOpen={isCartOpen}
         onClose={closeCart}
         onRemoveItem={removeItem}
+        onSetItemQuantity={setItemQuantity}
+        onClearCart={clearCart}
       />
     </header>
   );
@@ -301,6 +305,8 @@ function CartDrawer({
   isOpen,
   onClose,
   onRemoveItem,
+  onSetItemQuantity,
+  onClearCart,
 }: {
   items: DrawerItem[];
   cartCount: number;
@@ -308,9 +314,40 @@ function CartDrawer({
   isOpen: boolean;
   onClose: () => void;
   onRemoveItem: (id: string) => void;
+  onSetItemQuantity: (id: string, quantity: number) => void;
+  onClearCart: () => void;
 }) {
-  const jostFont = "var(--font-jost), Jost, Arial, sans-serif";
   const hasItems = items.length > 0;
+
+  const subtotal = items.reduce((total, item) => {
+    const parsedPrice = Number.parseFloat(
+      (item.price ?? "0").replace(/[^0-9.]/g, "")
+    );
+
+    return total + (Number.isFinite(parsedPrice) ? parsedPrice : 0) * item.quantity;
+  }, 0);
+
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    const previousOverflow = document.body.style.overflow;
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        onClose();
+      }
+    }
+
+    document.body.style.overflow = "hidden";
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isOpen, onClose]);
 
   return (
     <div
@@ -321,7 +358,7 @@ function CartDrawer({
     >
       <button
         type="button"
-        className={`absolute inset-0 bg-black/45 transition-opacity ${
+        className={`absolute inset-0 bg-black/55 transition-opacity ${
           isOpen ? "opacity-100" : "opacity-0"
         }`}
         aria-label="Close cart drawer"
@@ -329,125 +366,233 @@ function CartDrawer({
       />
 
       <aside
-        className={`bayblaze-cart-drawer absolute right-0 top-0 flex h-full w-full max-w-[420px] flex-col border-l-2 border-black bg-white text-black shadow-[-12px_0_30px_rgba(0,0,0,0.22)] transition-transform duration-300 max-sm:border-l-0 ${
+        role="dialog"
+        aria-modal="true"
+        aria-label="Shopping cart"
+        className={`bayblaze-cart-drawer absolute right-0 top-0 flex h-full w-full max-w-[440px] flex-col border-l-2 border-black bg-white text-black shadow-[-14px_0_32px_rgba(0,0,0,0.28)] transition-transform duration-300 max-sm:max-w-none max-sm:border-l-0 ${
           isOpen ? "translate-x-0" : "translate-x-full"
         }`}
-        aria-label="Shopping cart"
       >
-        <div className="grid grid-cols-[40px_1fr_40px] items-center border-b-2 border-black px-4 py-4 sm:px-6 sm:py-5">
-          <div aria-hidden="true" />
+        <header className="grid grid-cols-[44px_1fr_44px] items-center border-b-2 border-black bg-white px-4 py-4 sm:px-5">
+          <div className="grid size-11 place-items-center border-2 border-black bg-[var(--ast-global-color-4)]">
+            <CartIcon className="size-5" />
+          </div>
 
-          <h2 className="text-center text-[23px] font-medium leading-none sm:text-[28px]">
-            View Cart
-          </h2>
+          <div className="text-center">
+            <p className="text-[11px] font-bold uppercase tracking-widest text-[var(--ast-global-color-1)]">
+              BayBlaze bag
+            </p>
+            <h2 className="text-xl font-black uppercase leading-none sm:text-2xl">
+              {cartCount} {cartCount === 1 ? "item" : "items"}
+            </h2>
+          </div>
 
           <button
             type="button"
-            className="flex size-10 items-center justify-center border border-black text-[28px] leading-none transition-colors hover:bg-black hover:text-white"
+            className="grid size-11 place-items-center border-2 border-black bg-white text-[24px] leading-none transition-colors hover:bg-black hover:text-white"
             aria-label="Close cart drawer"
             onClick={onClose}
           >
             ×
           </button>
-        </div>
+        </header>
 
-        <div className="flex flex-1 flex-col overflow-y-auto px-4 py-5 sm:px-6 sm:py-6">
+        <div className="flex-1 overflow-y-auto bg-[var(--ast-global-color-4)] p-4">
           {!hasItems ? (
-            <div className="flex flex-1 flex-col justify-center text-center">
-              <p
-                className="text-[22px] font-medium leading-tight text-black"
-                style={{ fontFamily: jostFont }}
-              >
-                Your cart is empty.
-              </p>
+            <div className="flex min-h-full flex-col justify-center">
+              <div className="bayblaze-sharp-card bg-white p-6 text-center">
+                <div className="mx-auto grid size-16 place-items-center border-2 border-black bg-[var(--ast-global-color-4)] text-3xl">
+                  🛒
+                </div>
 
-              <p
-                className="mx-auto mt-3 max-w-[300px] text-[16px] leading-[1.7] text-[#585858]"
-                style={{ fontFamily: jostFont }}
-              >
-                Add products from the shop and come back here when you are ready
-                for local delivery checkout.
-              </p>
+                <h3 className="mt-4 text-2xl font-black uppercase leading-none">
+                  Bag is empty
+                </h3>
+
+                <p className="mx-auto mt-2 max-w-[280px] text-sm font-medium leading-[1.6] text-[#585858]">
+                  Add fast-delivery essentials and they&apos;ll stay ready here.
+                </p>
+
+                <Link
+                  href="/shop"
+                  className="bayblaze-sharp-button bayblaze-sharp-button--primary mt-5 w-full"
+                  onClick={onClose}
+                >
+                  Browse shop
+                </Link>
+              </div>
             </div>
           ) : (
-            <div className="space-y-4">
-              {items.map((item) => (
-                <div
-                  key={item.id}
-                  className="flex gap-4 border-b border-[#e7e7e7] pb-4"
+            <div className="space-y-3">
+              <div className="flex items-center justify-between gap-3 border-2 border-black bg-white px-3 py-2">
+                <p className="text-xs font-bold uppercase tracking-widest text-[#585858]">
+                  Cart items
+                </p>
+
+                <button
+                  type="button"
+                  className="text-xs font-bold uppercase tracking-widest text-[#585858] transition-colors hover:text-black"
+                  onClick={onClearCart}
                 >
-                  {item.image ? (
-                    <Image
-                      src={item.image}
-                      alt={item.name}
-                      width={80}
-                      height={80}
-                      className="size-20 shrink-0 border border-[#e7e7e7] bg-white object-contain p-2"
-                    />
-                  ) : (
-                    <div className="flex size-20 shrink-0 items-center justify-center border border-[#e7e7e7] bg-white text-[12px] text-[#777]">
-                      No image
-                    </div>
-                  )}
+                  Clear all
+                </button>
+              </div>
 
-                  <div className="min-w-0 flex-1 text-left">
-                    <p className="text-[16px] font-semibold leading-snug text-black">
-                      {item.name}
-                    </p>
+              <ul className="space-y-3">
+                {items.map((item) => {
+                  const parsedPrice = Number.parseFloat(
+                    (item.price ?? "0").replace(/[^0-9.]/g, "")
+                  );
+                  const lineTotal =
+                    (Number.isFinite(parsedPrice) ? parsedPrice : 0) *
+                    item.quantity;
 
-                    {item.flavor ? (
-                      <p className="mt-1 text-[14px] leading-snug text-[#585858]">
-                        Flavor: {item.flavor}
-                      </p>
-                    ) : null}
-
-                    <p className="mt-1 text-[14px] text-[#585858]">
-                      Qty: {item.quantity}
-                    </p>
-
-                    {item.price ? (
-                      <p className="mt-1 text-[15px] font-medium text-black">
-                        {item.price}
-                      </p>
-                    ) : null}
-
-                    <button
-                      type="button"
-                      className="mt-3 text-[12px] font-semibold uppercase tracking-[0.12em] text-[#585858] transition-colors hover:text-black"
-                      onClick={() => onRemoveItem(item.id)}
+                  return (
+                    <li
+                      key={item.id}
+                      className="bayblaze-sharp-card grid grid-cols-[84px_1fr] gap-3 bg-white p-3"
                     >
-                      Remove
-                    </button>
-                  </div>
-                </div>
-              ))}
+                      <div className="relative size-20 overflow-hidden border-2 border-black bg-[var(--ast-global-color-4)]">
+                        {item.image ? (
+                          <Image
+                            src={item.image}
+                            alt={item.name}
+                            fill
+                            sizes="80px"
+                            className="object-contain p-2"
+                          />
+                        ) : (
+                          <div className="grid h-full w-full place-items-center px-2 text-center text-[10px] font-bold uppercase tracking-wide text-[#777]">
+                            No image
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="min-w-0">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="truncate text-[11px] font-bold uppercase tracking-widest text-[var(--ast-global-color-1)]">
+                              BayBlaze
+                            </p>
+
+                            <h3 className="line-clamp-2 text-sm font-black uppercase leading-tight">
+                              {item.name}
+                            </h3>
+
+                            {item.flavor ? (
+                              <p className="mt-1 text-xs font-medium text-[#585858]">
+                                Flavor: {item.flavor}
+                              </p>
+                            ) : null}
+                          </div>
+
+                          <button
+                            type="button"
+                            className="grid size-8 shrink-0 place-items-center border-2 border-black bg-white text-[18px] leading-none transition-colors hover:bg-black hover:text-white"
+                            aria-label={`Remove ${item.name}`}
+                            onClick={() => onRemoveItem(item.id)}
+                          >
+                            ×
+                          </button>
+                        </div>
+
+                        <div className="mt-3 flex items-end justify-between gap-3">
+                          <div className="inline-flex border-2 border-black bg-white">
+                            <button
+                              type="button"
+                              className="grid size-8 place-items-center text-lg transition-colors hover:bg-black hover:text-white"
+                              aria-label="Decrease quantity"
+                              onClick={() =>
+                                onSetItemQuantity(item.id, item.quantity - 1)
+                              }
+                            >
+                              −
+                            </button>
+
+                            <span className="grid h-8 w-9 place-items-center border-x-2 border-black text-sm font-black">
+                              {item.quantity}
+                            </span>
+
+                            <button
+                              type="button"
+                              className="grid size-8 place-items-center text-lg transition-colors hover:bg-black hover:text-white"
+                              aria-label="Increase quantity"
+                              onClick={() =>
+                                onSetItemQuantity(item.id, item.quantity + 1)
+                              }
+                            >
+                              +
+                            </button>
+                          </div>
+
+                          <p className="text-sm font-black">
+                            ${lineTotal.toFixed(2)}
+                          </p>
+                        </div>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
             </div>
           )}
         </div>
 
-        <div className="border-t border-[#e7e7e7] bg-[var(--ast-global-color-4)] p-4 sm:p-6">
-          <div className="mb-4 flex items-center justify-between text-[15px]">
-            <span className="font-semibold text-black">Items</span>
-            <span className="text-[#585858]">{cartCount}</span>
+        <footer className="border-t-2 border-black bg-white p-4 sm:p-5">
+          <div className="mb-3 grid gap-0 border-2 border-black bg-[var(--ast-global-color-4)] text-xs sm:grid-cols-2">
+            <div className="flex items-start gap-2 border-b-2 border-black p-3 sm:border-b-0 sm:border-r-2">
+              <TruckIcon className="mt-0.5 size-4 shrink-0 text-[var(--ast-global-color-0)]" />
+              <span>
+                <strong className="uppercase">Local Tampa delivery.</strong>{" "}
+                Final availability confirmed before dispatch.
+              </span>
+            </div>
+
+            <div className="flex items-start gap-2 p-3">
+              <span className="mt-0.5 inline-flex size-4 shrink-0 items-center justify-center border border-black bg-white text-[10px] font-black text-[var(--ast-global-color-0)]">
+                21
+              </span>
+              <span>
+                <strong className="uppercase">21+ ID required.</strong> Driver
+                verifies at the door.
+              </span>
+            </div>
+          </div>
+
+          <div className="mb-4 flex items-center justify-between border-b-2 border-black pb-3">
+            <span className="text-xs font-bold uppercase tracking-widest text-[#585858]">
+              Subtotal
+            </span>
+
+            <span className="text-2xl font-black leading-none">
+              ${subtotal.toFixed(2)}
+            </span>
           </div>
 
           <Link
             href={checkoutHref}
-            className={`bayblaze-hero-button flex h-12 w-full items-center justify-center rounded-[3px] text-white transition-colors ${
-              hasItems
-                ? "bg-[var(--ast-global-color-0)] hover:bg-black"
-                : "pointer-events-none bg-[#b9c8af]"
+            className={`bayblaze-sharp-button bayblaze-sharp-button--primary w-full ${
+              hasItems ? "" : "pointer-events-none opacity-55"
             }`}
             aria-disabled={!hasItems}
             onClick={onClose}
           >
-            CHECKOUT
+            Checkout
           </Link>
-        </div>
+
+          <button
+            type="button"
+            className="bayblaze-sharp-button bayblaze-sharp-button--outline mt-2 w-full"
+            onClick={onClose}
+          >
+            Keep shopping
+          </button>
+        </footer>
       </aside>
     </div>
   );
 }
+
 
 function SearchIcon({ className }: { className?: string }) {
   return (

@@ -29,6 +29,7 @@ type CartContextValue = {
   isCartOpen: boolean;
   addItem: (item: CartItem) => void;
   removeItem: (id: string) => void;
+  setItemQuantity: (id: string, quantity: number) => void;
   clearCart: () => void;
   openCart: () => void;
   closeCart: () => void;
@@ -133,6 +134,24 @@ export function CartProvider({ children }: { children: ReactNode }) {
     });
   }
 
+  function setItemQuantity(id: string, quantity: number) {
+    setItems((currentItems) => {
+      const nextItems = currentItems
+        .map((item) =>
+          item.id === id
+            ? {
+                ...item,
+                quantity: Math.max(0, quantity),
+              }
+            : item
+        )
+        .filter((item) => item.quantity > 0);
+
+      saveCartItems(nextItems);
+      return nextItems;
+    });
+  }
+
   function clearCart() {
     saveCartItems(EMPTY_CART_ITEMS);
     setItems(EMPTY_CART_ITEMS);
@@ -154,6 +173,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         isCartOpen,
         addItem,
         removeItem,
+        setItemQuantity,
         clearCart,
         openCart,
         closeCart,
