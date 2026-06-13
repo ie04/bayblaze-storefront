@@ -539,26 +539,6 @@ function CartDrawer({
         </div>
 
         <footer className="border-t-2 border-black bg-white p-4 sm:p-5">
-          <div className="mb-3 grid gap-0 border-2 border-black bg-[var(--ast-global-color-4)] text-xs sm:grid-cols-2">
-            <div className="flex items-start gap-2 border-b-2 border-black p-3 sm:border-b-0 sm:border-r-2">
-              <TruckIcon className="mt-0.5 size-4 shrink-0 text-[var(--ast-global-color-0)]" />
-              <span>
-                <strong className="uppercase">Local Tampa delivery.</strong>{" "}
-                Final availability confirmed before dispatch.
-              </span>
-            </div>
-
-            <div className="flex items-start gap-2 p-3">
-              <span className="mt-0.5 inline-flex size-4 shrink-0 items-center justify-center border border-black bg-white text-[10px] font-black text-[var(--ast-global-color-0)]">
-                21
-              </span>
-              <span>
-                <strong className="uppercase">21+ ID required.</strong> Driver
-                verifies at the door.
-              </span>
-            </div>
-          </div>
-
           <div className="mb-4 flex items-center justify-between border-b-2 border-black pb-3">
             <span className="text-xs font-bold uppercase tracking-widest text-[#585858]">
               Subtotal
