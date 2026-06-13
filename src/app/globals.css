@@ -35,6 +35,12 @@
   --color-ast-cream: var(--ast-global-color-4);
   --font-sans: var(--font-jost);
   --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+
+  /* Reduce Jost's heavier weights by one visual level sitewide. */
+  --font-weight-semibold: 500;
+  --font-weight-bold: 600;
+  --font-weight-extrabold: 700;
+  --font-weight-black: 800;
 }
 
 @media (max-width: 1024px) {
@@ -1415,4 +1421,29 @@ textarea.bayblaze-sharp-input:focus {
 .bayblaze-how-it-works-page select,
 .bayblaze-how-it-works-page textarea {
   font-family: var(--font-jost), Jost, Arial, sans-serif !important;
+}
+
+
+/* BayBlaze global Jost weight normalization */
+@layer utilities {
+  .font-semibold {
+    font-weight: 500;
+  }
+
+  .font-bold {
+    font-weight: 600;
+  }
+
+  .font-extrabold {
+    font-weight: 700;
+  }
+
+  .font-black {
+    font-weight: 800;
+  }
+}
+
+b,
+strong {
+  font-weight: 600;
 }
