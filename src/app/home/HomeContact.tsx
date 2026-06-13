@@ -12,7 +12,7 @@ export default function HomeContact() {
           reach out to us. You can contact us by email or phone.
         </p>
         <a
-          href="mailto:contact@bayblaze.net"
+          href="/contact"
           className="bayblaze-hero-button mt-[25px] inline-flex rounded-[3px] border border-black bg-[var(--ast-global-color-1)] px-5 py-2.5 text-center text-white transition-colors hover:bg-[var(--ast-global-color-0)]"
         >
           REACH OUT

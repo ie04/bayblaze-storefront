@@ -10,7 +10,7 @@ const needCards = [
   {
     key: "zyns",
     title: "ZYNs",
-    icon: "❄️",
+    icon: "🧊",
     href: "/shop?q=ZYNs",
   },
   {

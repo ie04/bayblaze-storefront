@@ -40,7 +40,7 @@ const steps = [
 
 export default function HowItWorksPage() {
   return (
-    <main className="min-h-screen bg-[var(--ast-global-color-4)] font-[var(--font-jost)] text-black">
+    <main className="bayblaze-how-it-works-page min-h-screen bg-[var(--ast-global-color-4)] font-[var(--font-jost)] text-black">
       <Header surface="solid" />
 
       <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 sm:py-16">

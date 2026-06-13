@@ -1,13 +1,13 @@
 import type { Metadata, Viewport } from "next";
-import { Jost } from "next/font/google";
+import "@fontsource/jost/400.css";
+import "@fontsource/jost/500.css";
+import "@fontsource/jost/600.css";
+import "@fontsource/jost/700.css";
+import "@fontsource/jost/800.css";
+import "@fontsource/jost/900.css";
 import Providers from "@/app/providers";
 import "./globals.css";
 
-const jost = Jost({
-  subsets: ["latin"],
-  weight: ["400", "500", "600"],
-  variable: "--font-jost",
-});
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://bayblaze.net";
 
@@ -37,11 +37,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${jost.variable} ${jost.className} h-full antialiased`}>
-      <body
-        className={`${jost.className} min-h-full flex flex-col`}
-        suppressHydrationWarning
-      >
+    <html lang="en" className="h-full antialiased">
+      <body className="min-h-full flex flex-col" suppressHydrationWarning>
         <Providers>{children}</Providers>
       </body>
     </html>
