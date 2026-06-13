@@ -11,6 +11,8 @@ import {
 } from "react";
 
 import { useCart } from "@/app/components/cart/CartContext";
+import { useReferralOffer } from "@/app/components/referral/ReferralOfferProvider";
+import { getReferralOfferTotal } from "@/app/domain/referral-offers";
 import styles from "./Header.module.css";
 
 type HeaderProps = {
@@ -318,15 +320,18 @@ function CartDrawer({
   onSetItemQuantity: (id: string, quantity: number) => void;
   onClearCart: () => void;
 }) {
+  const { offer } = useReferralOffer();
   const hasItems = items.length > 0;
 
-  const subtotal = items.reduce((total, item) => {
-    const parsedPrice = Number.parseFloat(
-      (item.price ?? "0").replace(/[^0-9.]/g, "")
-    );
+  const regularSubtotal = items.reduce((total, item) => {
+    const parsedPrice = parseCartPrice(item.price);
 
-    return total + (Number.isFinite(parsedPrice) ? parsedPrice : 0) * item.quantity;
+    return total + parsedPrice * item.quantity;
   }, 0);
+
+  const discountedSubtotal = getReferralOfferTotal(regularSubtotal, offer);
+  const hasActiveDiscount =
+    Boolean(offer) && discountedSubtotal < regularSubtotal;
 
   useEffect(() => {
     if (!isOpen) {
@@ -441,12 +446,14 @@ function CartDrawer({
 
               <ul className="space-y-3">
                 {items.map((item) => {
-                  const parsedPrice = Number.parseFloat(
-                    (item.price ?? "0").replace(/[^0-9.]/g, "")
+                  const unitPrice = parseCartPrice(item.price);
+                  const regularLineTotal = unitPrice * item.quantity;
+                  const discountedLineTotal = getReferralOfferTotal(
+                    regularLineTotal,
+                    offer,
                   );
-                  const lineTotal =
-                    (Number.isFinite(parsedPrice) ? parsedPrice : 0) *
-                    item.quantity;
+                  const lineHasDiscount =
+                    Boolean(offer) && discountedLineTotal < regularLineTotal;
                   const stockLimit =
                     typeof item.availableQuantity === "number"
                       ? Math.max(0, item.availableQuantity)
@@ -542,9 +549,39 @@ function CartDrawer({
                           </div>
 
                           <div className="text-right">
-                            <p className="text-sm font-black">
-                              ${lineTotal.toFixed(2)}
-                            </p>
+                            {lineHasDiscount ? (
+                              <div className="flex flex-wrap items-baseline justify-end gap-x-2 gap-y-1 text-sm font-black">
+                                <del className="text-[#7a7a7a]">
+                                  {formatCartMoney(regularLineTotal)}
+                                </del>
+                                <ins className="text-[var(--ast-global-color-1)] no-underline">
+                                  {formatCartMoney(discountedLineTotal)}
+                                </ins>
+                              </div>
+                            ) : (
+                              <p className="text-sm font-black">
+                                {formatCartMoney(regularLineTotal)}
+                              </p>
+                            )}
+
+                            {item.quantity > 1 ? (
+                              <p className="mt-1 text-[10px] font-bold uppercase tracking-wide text-[#585858]">
+                                {lineHasDiscount ? (
+                                  <>
+                                    <del>{formatCartMoney(unitPrice)}</del>{" "}
+                                    <ins className="text-[var(--ast-global-color-1)] no-underline">
+                                      {formatCartMoney(
+                                        getReferralOfferTotal(unitPrice, offer),
+                                      )}
+                                    </ins>{" "}
+                                    each
+                                  </>
+                                ) : (
+                                  <>{formatCartMoney(unitPrice)} each</>
+                                )}
+                              </p>
+                            ) : null}
+
                             {stockLimit !== null ? (
                               <p className="mt-1 text-[10px] font-bold uppercase tracking-wide text-[#585858]">
                                 {stockLimit} in stock
@@ -562,13 +599,30 @@ function CartDrawer({
         </div>
 
         <footer className="border-t-2 border-black bg-white p-4 sm:p-5">
+          {hasActiveDiscount && offer ? (
+            <div className="mb-3 border-2 border-black bg-[var(--ast-global-color-4)] px-3 py-2 text-center text-xs font-bold uppercase tracking-widest text-[var(--ast-global-color-1)]">
+              {offer.label} applied
+            </div>
+          ) : null}
+
           <div className="mb-4 flex items-center justify-between border-b-2 border-black pb-3">
             <span className="text-xs font-bold uppercase tracking-widest text-[#585858]">
               Subtotal
             </span>
 
-            <span className="text-2xl font-black leading-none">
-              ${subtotal.toFixed(2)}
+            <span className="flex flex-wrap items-baseline justify-end gap-x-2 text-2xl font-black leading-none">
+              {hasActiveDiscount ? (
+                <>
+                  <del className="text-base text-[#7a7a7a]">
+                    {formatCartMoney(regularSubtotal)}
+                  </del>
+                  <ins className="text-[var(--ast-global-color-1)] no-underline">
+                    {formatCartMoney(discountedSubtotal)}
+                  </ins>
+                </>
+              ) : (
+                formatCartMoney(regularSubtotal)
+              )}
             </span>
           </div>
 
@@ -594,6 +648,24 @@ function CartDrawer({
       </aside>
     </div>
   );
+}
+
+
+function parseCartPrice(price?: string) {
+  if (!price) {
+    return 0;
+  }
+
+  const parsed = Number.parseFloat(price.replace(/[^0-9.]/g, ""));
+
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function formatCartMoney(amount: number) {
+  return new Intl.NumberFormat("en-US", {
+    currency: "USD",
+    style: "currency",
+  }).format(amount);
 }
 
 
