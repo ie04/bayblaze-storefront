@@ -111,10 +111,10 @@ function ReferralOfferToast({ offer }: { offer: ReferralOffer }) {
   return (
     <div
       aria-live="polite"
-      className="bayblaze-referral-toast pointer-events-none fixed left-1/2 top-3 z-[120] inline-flex h-auto min-h-0 max-h-8 w-max max-w-[calc(100vw-2rem)] -translate-x-1/2 items-center border-2 border-black bg-white px-3 py-1.5 text-center text-black shadow-[2px_2px_0_#000] sm:top-4"
+      className="bayblaze-referral-toast pointer-events-none fixed bottom-5 left-1/2 z-[120] inline-flex h-auto min-h-0 max-h-10 w-max max-w-[calc(100vw-2rem)] -translate-x-1/2 items-center border-2 border-black bg-white px-4 py-2 text-center text-black shadow-[3px_3px_0_#000] sm:bottom-6 sm:px-5"
       role="status"
     >
-      <p className="truncate whitespace-nowrap text-[10px] font-bold uppercase leading-none tracking-[0.06em] sm:text-[11px]">
+      <p className="truncate whitespace-nowrap text-[11px] font-bold uppercase leading-none tracking-[0.07em] sm:text-[12px]">
         {offer.label} active
       </p>
     </div>
