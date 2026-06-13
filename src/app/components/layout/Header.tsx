@@ -22,6 +22,7 @@ type HeaderProps = {
 
 type DrawerItem = {
   id: string;
+  availableQuantity?: number;
   name: string;
   flavor?: string;
   image?: string;
@@ -446,6 +447,12 @@ function CartDrawer({
                   const lineTotal =
                     (Number.isFinite(parsedPrice) ? parsedPrice : 0) *
                     item.quantity;
+                  const stockLimit =
+                    typeof item.availableQuantity === "number"
+                      ? Math.max(0, item.availableQuantity)
+                      : null;
+                  const canIncrease =
+                    stockLimit === null || item.quantity < stockLimit;
 
                   return (
                     <li
@@ -515,19 +522,35 @@ function CartDrawer({
 
                             <button
                               type="button"
-                              className="grid size-8 place-items-center text-lg transition-colors hover:bg-black hover:text-white"
-                              aria-label="Increase quantity"
-                              onClick={() =>
-                                onSetItemQuantity(item.id, item.quantity + 1)
+                              className="grid size-8 place-items-center text-lg transition-colors hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-white disabled:hover:text-black"
+                              aria-label={
+                                canIncrease
+                                  ? "Increase quantity"
+                                  : "Maximum available quantity reached"
                               }
+                              disabled={!canIncrease}
+                              onClick={() => {
+                                if (!canIncrease) {
+                                  return;
+                                }
+
+                                onSetItemQuantity(item.id, item.quantity + 1);
+                              }}
                             >
                               +
                             </button>
                           </div>
 
-                          <p className="text-sm font-black">
-                            ${lineTotal.toFixed(2)}
-                          </p>
+                          <div className="text-right">
+                            <p className="text-sm font-black">
+                              ${lineTotal.toFixed(2)}
+                            </p>
+                            {stockLimit !== null ? (
+                              <p className="mt-1 text-[10px] font-bold uppercase tracking-wide text-[#585858]">
+                                {stockLimit} in stock
+                              </p>
+                            ) : null}
+                          </div>
                         </div>
                       </div>
                     </li>

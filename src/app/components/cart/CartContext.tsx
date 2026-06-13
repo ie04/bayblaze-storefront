@@ -68,6 +68,17 @@ function saveCartItems(items: CartItem[]) {
   }
 }
 
+
+function getLimitedQuantity(quantity: number, availableQuantity?: number) {
+  const safeQuantity = Math.max(0, quantity);
+
+  if (typeof availableQuantity !== "number") {
+    return safeQuantity;
+  }
+
+  return Math.min(safeQuantity, Math.max(0, availableQuantity));
+}
+
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>(EMPTY_CART_ITEMS);
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -107,7 +118,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
             ? {
                 ...currentItem,
                 ...item,
-                quantity: currentItem.quantity + item.quantity,
+                quantity: getLimitedQuantity(
+                  currentItem.quantity + item.quantity,
+                  item.availableQuantity ?? currentItem.availableQuantity,
+                ),
               }
             : currentItem
         );
@@ -116,7 +130,16 @@ export function CartProvider({ children }: { children: ReactNode }) {
         return nextItems;
       }
 
-      const nextItems = [...currentItems, item];
+      const limitedItem = {
+        ...item,
+        quantity: getLimitedQuantity(item.quantity, item.availableQuantity),
+      };
+
+      if (limitedItem.quantity <= 0) {
+        return currentItems;
+      }
+
+      const nextItems = [...currentItems, limitedItem];
 
       saveCartItems(nextItems);
       return nextItems;
@@ -141,7 +164,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
           item.id === id
             ? {
                 ...item,
-                quantity: Math.max(0, quantity),
+                quantity: getLimitedQuantity(quantity, item.availableQuantity),
               }
             : item
         )
