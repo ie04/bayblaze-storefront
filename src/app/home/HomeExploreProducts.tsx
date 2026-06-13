@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 
+import ReferralProductPrice from "@/app/components/products/ReferralProductPrice";
 import type { ProductPreviewItem } from "@/app/lib/medusa-products";
 
 export default function HomeExploreProducts({
@@ -114,16 +115,10 @@ function FastDeliveryProductCard({
         </Link>
 
         <p className="mt-3 text-[15px] font-bold leading-none text-black sm:text-[17px]">
-          {product.originalPrice ? (
-            <>
-              <del className="mr-2 text-[#7a7a7a]">
-                {product.originalPrice}
-              </del>
-              <ins className="no-underline">{product.salePrice}</ins>
-            </>
-          ) : (
-            <span>{product.salePrice}</span>
-          )}
+          <ReferralProductPrice
+            currentPrice={product.salePrice}
+            originalPrice={product.originalPrice}
+          />
         </p>
 
         <Link

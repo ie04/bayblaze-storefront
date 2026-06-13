@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { type FormEvent, useMemo, useState } from "react";
 
 import { SearchLineIcon } from "@/app/components/icons/SharpIcons";
+import ReferralProductPrice from "@/app/components/products/ReferralProductPrice";
 import type { ShopProductItem } from "@/app/lib/medusa-products";
 
 const allCategoriesLabel = "All";
@@ -331,14 +332,10 @@ function ProductCard({
         </Link>
 
         <p className="mt-3 text-[15px] font-bold leading-none text-black sm:text-[17px]">
-          {product.originalPrice ? (
-            <>
-              <del className="mr-2 text-[#7a7a7a]">{product.originalPrice}</del>
-              <ins className="no-underline">{product.salePrice}</ins>
-            </>
-          ) : (
-            <span>{product.price}</span>
-          )}
+          <ReferralProductPrice
+            currentPrice={product.salePrice || product.price}
+            originalPrice={product.originalPrice}
+          />
         </p>
 
         {product.action === "Add to cart" ? (
