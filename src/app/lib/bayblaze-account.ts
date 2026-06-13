@@ -19,6 +19,14 @@ export type BayBlazeAccount = {
 
 type BayBlazeAccountSessionResponse = {
   account: BayBlazeAccount;
+  commerce?: {
+    customer?: {
+      email?: string | null;
+      id: string;
+    };
+    customerToken?: string;
+  };
+  redirectTo?: string;
   session: {
     email: string;
     token: string;
@@ -60,6 +68,30 @@ export async function createBayBlazeCustomerAccount(input: {
   password: string;
 }) {
   return bayblazeApiRequest<BayBlazeAccountSessionResponse>("/v1/customer/auth/accounts", {
+    body: input,
+    method: "POST",
+  });
+}
+
+export async function startBayBlazeGoogleOAuth(input: {
+  callbackUrl: string;
+  redirectTo: string;
+}) {
+  return bayblazeApiRequest<{
+    authorizationUrl: string;
+    expiresInSeconds: number;
+  }>("/v1/customer/auth/google/start", {
+    body: input,
+    method: "POST",
+  });
+}
+
+export async function completeBayBlazeGoogleOAuth(input: {
+  callbackUrl: string;
+  code: string;
+  state: string;
+}) {
+  return bayblazeApiRequest<BayBlazeAccountSessionResponse>("/v1/customer/auth/google/callback", {
     body: input,
     method: "POST",
   });
