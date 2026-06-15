@@ -11,8 +11,11 @@ export type Customer = {
 
 export type CustomerOrderItem = {
   id?: string | null;
+  product_handle?: string | null;
+  product_id?: string | null;
   title?: string | null;
   product_title?: string | null;
+  variant_id?: string | null;
   variant_title?: string | null;
   quantity?: number | null;
   unit_price?: number | null;
@@ -117,13 +120,59 @@ function normalizeMedusaAssetUrl(url?: string | null) {
 }
 
 function normalizeCustomerOrder(order: CustomerOrder): CustomerOrder {
+  const items = order.items?.length
+    ? order.items
+    : readRequestedItems(order.metadata);
+
   return {
     ...order,
-    items: order.items?.map((item) => ({
+    items: items?.map((item) => ({
       ...item,
       thumbnail: normalizeMedusaAssetUrl(item.thumbnail),
     })),
   };
+}
+
+function readRequestedItems(metadata?: Record<string, unknown> | null): CustomerOrderItem[] | undefined {
+  const requestedItems = metadata?.requested_items;
+
+  if (!Array.isArray(requestedItems) || requestedItems.length === 0) {
+    return undefined;
+  }
+
+  const items: CustomerOrderItem[] = [];
+
+  requestedItems.forEach((item, index) => {
+    if (!item || typeof item !== "object") {
+      return;
+    }
+
+    const record = item as Record<string, unknown>;
+    const name = readString(record.name) || "Product";
+    const quantity = readNumber(record.quantity) ?? 1;
+    const variantId = readString(record.variant_id);
+
+    items.push({
+      id: variantId || `requested-item-${index}`,
+      product_handle: readString(record.product_handle),
+      product_id: readString(record.product_id),
+      product_title: name,
+      quantity,
+      title: name,
+      variant_id: variantId,
+      variant_title: readString(record.flavor),
+    });
+  });
+
+  return items.length ? items : undefined;
+}
+
+function readString(value: unknown) {
+  return typeof value === "string" ? value : undefined;
+}
+
+function readNumber(value: unknown) {
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
 }
 
 function getHeaders(options: RequestOptions) {
