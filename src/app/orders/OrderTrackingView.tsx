@@ -9,12 +9,14 @@ import {
   getOrderItemTotal,
   getOrderItemTitle,
   getOrderLifecycleStatus,
+  getOrderReference,
   getOrderRecipient,
   getScheduledDeliveryDisplay,
   getVariantLabel,
   isCompletedOrder,
 } from "@/app/domain/orders";
 import { getOrderFirstOrderOfferTotal } from "@/app/domain/referral-offers";
+import OrderCancelAction from "./OrderCancelAction";
 
 export default function OrderTrackingView({
   mode = "page",
@@ -75,6 +77,9 @@ export default function OrderTrackingView({
 
         <aside className="grid h-fit gap-5">
           <OrderSummary order={order} />
+          {!isComplete ? (
+            <OrderCancelAction orderReference={getOrderReference(order)} />
+          ) : null}
           {!isComplete ? <DriverChat /> : null}
         </aside>
       </div>

@@ -198,6 +198,12 @@ standalone `bayblaze-medusa` repo is retired.
 - Storefront code should not fake inventory state or quantity. Missing
   `inventoryState` or `availableQuantity` should be treated as a data/config
   problem that must be fixed in Medusa or the inventory app.
+- Customer order cancellation from `/orders/[orderId]` must go through the
+  server route `src/app/api/orders/[orderId]/route.ts`, which calls
+  `bayblaze-api` with `BAYBLAZE_API_URL` and `BAYBLAZE_API_SERVICE_TOKEN`.
+  Browser code must not call Medusa admin routes or hold service tokens. The
+  API/Medusa boundary is responsible for deleting the Medusa order and restoring
+  variant availability/inventory levels.
 
 ### Centralized BayBlaze Accounts
 
