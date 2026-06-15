@@ -29,6 +29,7 @@ type CheckoutItem = {
   productId?: string;
   productHandle?: string;
   inventoryState?: string;
+  image?: string;
   name?: string;
   price?: string;
   flavor?: string;
@@ -280,6 +281,12 @@ export async function POST(request: Request) {
     ...deliveryMetadata,
     ...referralOfferMetadata,
     ...addressLine2Metadata,
+    delivery_address_1: customer.address.trim(),
+    delivery_address_2: addressLine2 || undefined,
+    delivery_city: customer.city.trim(),
+    delivery_state: customer.state.trim(),
+    delivery_postal_code: customer.zip.trim(),
+    delivery_country_code: "us",
   };
   const shippingAddress = {
     first_name: customer.first_name.trim(),

@@ -209,23 +209,90 @@ export function formatDeliveryAddress(order: CustomerOrder) {
 export function getDeliveryAddressLines(order: CustomerOrder) {
   const address = order.shipping_address;
 
-  if (!address) {
-    return [];
+  if (address) {
+    const cityRegion = [
+      address.city,
+      address.province,
+    ]
+      .map(readAddressPart)
+      .filter(Boolean)
+      .join(", ");
+
+    const cityLine = [
+      cityRegion,
+      readAddressPart(address.postal_code),
+    ]
+      .filter(Boolean)
+      .join(" ");
+
+    const addressLines = [
+      readAddressPart(address.address_1),
+      getDeliveryAddressLine2(order),
+      cityLine,
+    ].filter(Boolean);
+
+    if (addressLines.length) {
+      return addressLines;
+    }
   }
 
-  const cityRegion = [address.city, address.province]
-    .map(readAddressPart)
+  const storedAddressLines = [
+    readOrderMetadataString(
+      order,
+      "delivery_address_1",
+      "checkout_address_1",
+      "address_1",
+    ),
+    getDeliveryAddressLine2(order),
+  ];
+
+  const storedCityRegion = [
+    readOrderMetadataString(
+      order,
+      "delivery_city",
+      "checkout_city",
+    ),
+    readOrderMetadataString(
+      order,
+      "delivery_state",
+      "checkout_state",
+    ),
+  ]
     .filter(Boolean)
     .join(", ");
-  const cityLine = [cityRegion, readAddressPart(address.postal_code)]
+
+  const storedCityLine = [
+    storedCityRegion,
+    readOrderMetadataString(
+      order,
+      "delivery_postal_code",
+      "checkout_postal_code",
+      "delivery_zip",
+      "checkout_zip",
+    ),
+  ]
     .filter(Boolean)
     .join(" ");
 
-  return [
-    readAddressPart(address.address_1),
-    getDeliveryAddressLine2(order),
-    cityLine,
+  const structuredFallback = [
+    ...storedAddressLines,
+    storedCityLine,
   ].filter(Boolean);
+
+  if (structuredFallback.length) {
+    return structuredFallback;
+  }
+
+  const formattedAddress = readOrderMetadataString(
+    order,
+    "address_validation_formatted_address",
+    "delivery_formatted_address",
+    "formatted_delivery_address",
+  );
+
+  return formattedAddress
+    ? [formattedAddress]
+    : [];
 }
 
 export function getDeliveryAddressLine2(order: CustomerOrder) {

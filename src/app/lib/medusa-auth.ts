@@ -9,6 +9,22 @@ export type Customer = {
   phone?: string | null;
 };
 
+export type CustomerOrderProductImage = {
+  url?: string | null;
+};
+
+export type CustomerOrderProduct = {
+  id?: string | null;
+  thumbnail?: string | null;
+  images?: CustomerOrderProductImage[] | null;
+};
+
+export type CustomerOrderVariant = {
+  id?: string | null;
+  product_id?: string | null;
+  product?: CustomerOrderProduct | null;
+};
+
 export type CustomerOrderItem = {
   id?: string | null;
   product_handle?: string | null;
@@ -21,6 +37,7 @@ export type CustomerOrderItem = {
   unit_price?: number | null;
   total?: number | null;
   thumbnail?: string | null;
+  variant?: CustomerOrderVariant | null;
 };
 
 export type CustomerOrderAddress = {
@@ -91,7 +108,7 @@ const backendUrl =
   "http://localhost:9000";
 
 const publishableKey = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY;
-const orderFields = [
+const orderListFields = [
   "id",
   "display_id",
   "custom_display_id",
@@ -101,11 +118,29 @@ const orderFields = [
   "currency_code",
   "created_at",
   "metadata",
+].join(",");
+
+const orderDetailFields = [
+  "id",
+  "display_id",
+  "custom_display_id",
+  "email",
+  "status",
+  "payment_status",
+  "fulfillment_status",
+  "total",
+  "currency_code",
+  "created_at",
+  "metadata",
   "*items",
+  "*items.variant",
+  "*items.variant.product",
+  "*items.variant.product.images",
   "*shipping_address",
   "*billing_address",
   "*shipping_methods",
 ].join(",");
+
 
 function normalizeMedusaAssetUrl(url?: string | null) {
   if (!url) {
@@ -119,52 +154,189 @@ function normalizeMedusaAssetUrl(url?: string | null) {
   return url.replace(/^https?:\/\/localhost:9000(?=\/)/, backendUrl);
 }
 
-function normalizeCustomerOrder(order: CustomerOrder): CustomerOrder {
+function normalizeCustomerOrder(
+  order: CustomerOrder,
+): CustomerOrder {
+  const requestedItems = getRequestedOrderItems(
+    order.metadata,
+  );
+
   const items = order.items?.length
     ? order.items
     : readRequestedItems(order.metadata);
 
   return {
     ...order,
-    items: items?.map((item) => ({
-      ...item,
-      thumbnail: normalizeMedusaAssetUrl(item.thumbnail),
-    })),
+    items: items?.map((item, index) => {
+      const requestedItem = findRequestedOrderItem(
+        requestedItems,
+        item,
+        index,
+      );
+
+      return {
+        ...item,
+        thumbnail: normalizeMedusaAssetUrl(
+          getOrderItemThumbnail(
+            item,
+            requestedItem,
+          ),
+        ),
+      };
+    }),
   };
 }
 
-function readRequestedItems(metadata?: Record<string, unknown> | null): CustomerOrderItem[] | undefined {
+type RequestedOrderItem = {
+  flavor?: unknown;
+  image?: unknown;
+  name?: unknown;
+  product_handle?: unknown;
+  product_id?: unknown;
+  quantity?: unknown;
+  thumbnail?: unknown;
+  variant_id?: unknown;
+};
+
+function getRequestedOrderItems(
+  metadata?: Record<string, unknown> | null,
+) {
   const requestedItems = metadata?.requested_items;
 
-  if (!Array.isArray(requestedItems) || requestedItems.length === 0) {
+  if (!Array.isArray(requestedItems)) {
+    return [] as RequestedOrderItem[];
+  }
+
+  return requestedItems.filter(
+    (item): item is RequestedOrderItem =>
+      Boolean(item) &&
+      typeof item === "object",
+  );
+}
+
+function readRequestedItems(
+  metadata?: Record<string, unknown> | null,
+): CustomerOrderItem[] | undefined {
+  const requestedItems =
+    getRequestedOrderItems(metadata);
+
+  if (!requestedItems.length) {
     return undefined;
   }
 
-  const items: CustomerOrderItem[] = [];
+  return requestedItems.map((item, index) => {
+    const name =
+      readRequestedItemString(item.name) ||
+      "Product";
 
-  requestedItems.forEach((item, index) => {
-    if (!item || typeof item !== "object") {
-      return;
-    }
+    const variantId =
+      readRequestedItemString(item.variant_id);
 
-    const record = item as Record<string, unknown>;
-    const name = readString(record.name) || "Product";
-    const quantity = readNumber(record.quantity) ?? 1;
-    const variantId = readString(record.variant_id);
-
-    items.push({
-      id: variantId || `requested-item-${index}`,
-      product_handle: readString(record.product_handle),
-      product_id: readString(record.product_id),
+    return {
+      id:
+        variantId ||
+        `requested-item-${index}`,
+      product_handle:
+        readRequestedItemString(
+          item.product_handle,
+        ),
+      product_id:
+        readRequestedItemString(
+          item.product_id,
+        ),
       product_title: name,
-      quantity,
+      quantity:
+        readNumber(item.quantity) ?? 1,
+      thumbnail:
+        readRequestedItemString(
+          item.image,
+        ) ||
+        readRequestedItemString(
+          item.thumbnail,
+        ) ||
+        null,
       title: name,
       variant_id: variantId,
-      variant_title: readString(record.flavor),
-    });
+      variant_title:
+        readRequestedItemString(
+          item.flavor,
+        ),
+    };
   });
+}
 
-  return items.length ? items : undefined;
+function findRequestedOrderItem(
+  requestedItems: RequestedOrderItem[],
+  item: CustomerOrderItem,
+  index: number,
+) {
+  const variantId =
+    item.variant_id?.trim() ||
+    item.variant?.id?.trim() ||
+    "";
+
+  const productId =
+    item.product_id?.trim() ||
+    item.variant?.product_id?.trim() ||
+    item.variant?.product?.id?.trim() ||
+    "";
+
+  return (
+    requestedItems.find((requestedItem) => {
+      const requestedVariantId =
+        readRequestedItemString(
+          requestedItem.variant_id,
+        );
+
+      const requestedProductId =
+        readRequestedItemString(
+          requestedItem.product_id,
+        );
+
+      return (
+        Boolean(
+          variantId &&
+            requestedVariantId === variantId,
+        ) ||
+        Boolean(
+          productId &&
+            requestedProductId === productId,
+        )
+      );
+    }) ??
+    requestedItems[index] ??
+    null
+  );
+}
+
+function getOrderItemThumbnail(
+  item: CustomerOrderItem,
+  requestedItem: RequestedOrderItem | null,
+) {
+  return (
+    item.thumbnail?.trim() ||
+    item.variant?.product?.thumbnail?.trim() ||
+    item.variant?.product?.images?.find(
+      (image) =>
+        typeof image.url === "string" &&
+        Boolean(image.url.trim()),
+    )?.url?.trim() ||
+    readRequestedItemString(
+      requestedItem?.image,
+    ) ||
+    readRequestedItemString(
+      requestedItem?.thumbnail,
+    ) ||
+    null
+  );
+}
+
+function readRequestedItemString(
+  value: unknown,
+) {
+  return typeof value === "string"
+    ? value.trim()
+    : "";
 }
 
 function readString(value: unknown) {
@@ -404,25 +576,45 @@ export async function retrieveCustomer(token: string) {
   return data.customer;
 }
 
-export async function retrieveCustomerOrders(token: string) {
+export async function retrieveCustomerOrders(
+  token: string,
+) {
   const params = new URLSearchParams({
     limit: "10",
-    fields: orderFields,
+    fields: orderListFields,
   });
-  const data = await medusaRequest<MedusaOrdersResponse>(
-    `/store/orders?${params.toString()}`,
-    {
-      token,
-      usePublishableKey: true,
-    },
-  );
 
-  return data.orders.map(normalizeCustomerOrder);
+  const data =
+    await medusaRequest<MedusaOrdersResponse>(
+      `/store/orders?${params.toString()}`,
+      {
+        token,
+        usePublishableKey: true,
+      },
+    );
+
+  return Promise.all(
+    data.orders.map(async (order) => {
+      try {
+        return await retrieveOrder(
+          order.id,
+          token,
+        );
+      } catch {
+        /*
+         * Keep the order visible if one detailed request
+         * fails. Metadata fallbacks may still provide the
+         * address and requested item information.
+         */
+        return normalizeCustomerOrder(order);
+      }
+    }),
+  );
 }
 
 export async function retrieveOrder(orderId: string, token?: string) {
   const params = new URLSearchParams({
-    fields: orderFields,
+    fields: orderDetailFields,
   });
   const data = await medusaRequest<MedusaOrderResponse>(
     `/store/orders/${encodeURIComponent(orderId)}?${params.toString()}`,
