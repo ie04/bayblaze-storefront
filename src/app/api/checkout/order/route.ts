@@ -359,6 +359,8 @@ export async function POST(request: Request) {
               name: item.name,
               flavor: item.flavor,
               quantity: item.quantity,
+              total_cents: getCheckoutItemTotalCents(item),
+              unit_price_cents: getCheckoutItemUnitPriceCents(item),
               product_handle: item.productHandle,
               product_id: item.productId,
               variant_id: item.variantId,
@@ -703,6 +705,14 @@ function getCheckoutItemsSubtotal(items: ValidCheckoutItem[]) {
   return items.reduce((total, item) => {
     return total + parsePrice(item.price) * item.quantity;
   }, 0);
+}
+
+function getCheckoutItemUnitPriceCents(item: ValidCheckoutItem) {
+  return Math.round(parsePrice(item.price) * 100);
+}
+
+function getCheckoutItemTotalCents(item: ValidCheckoutItem) {
+  return getCheckoutItemUnitPriceCents(item) * item.quantity;
 }
 
 function parsePrice(price?: string) {
