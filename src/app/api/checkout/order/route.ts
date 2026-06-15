@@ -203,6 +203,7 @@ export async function POST(request: Request) {
     getBayBlazeAccountFromSession(),
     customerToken ? retrieveAuthenticatedCustomer(customerToken).catch(() => null) : null,
   ]);
+  const authenticatedCustomerToken = accountCustomer ? customerToken : undefined;
   const cachedAgeVerification = getAccountAgeVerificationMetadata(
     accountCustomer,
     customer,
@@ -239,8 +240,8 @@ export async function POST(request: Request) {
   const referralOffer = getReferralOfferFromCookieHeader(
     request.headers.get("cookie"),
   );
-  const hasPriorOrders = customerToken
-    ? await customerHasExistingOrders(customerToken)
+  const hasPriorOrders = authenticatedCustomerToken
+    ? await customerHasExistingOrders(authenticatedCustomerToken)
     : false;
   const appliedReferralOffer = referralOffer && !hasPriorOrders ? referralOffer : null;
 
@@ -307,11 +308,11 @@ export async function POST(request: Request) {
           },
         },
       },
-      customerToken,
+      authenticatedCustomerToken,
     );
     let activeCart = cart;
 
-    if (customerToken) {
+    if (authenticatedCustomerToken) {
       const { cart: customerCart } = await medusaStoreRequest<{
         cart: MedusaCart;
       }>(
@@ -320,7 +321,7 @@ export async function POST(request: Request) {
           method: "POST",
           body: {},
         },
-        customerToken,
+        authenticatedCustomerToken,
       );
 
       activeCart = customerCart;
@@ -336,7 +337,7 @@ export async function POST(request: Request) {
             quantity: item.quantity,
           },
         },
-        customerToken,
+        authenticatedCustomerToken,
       );
     }
 
@@ -367,7 +368,7 @@ export async function POST(request: Request) {
           },
         },
       },
-      customerToken,
+      authenticatedCustomerToken,
     );
 
     if (!hasRequiredShippingAddress(addressedCart.shipping_address)) {
@@ -379,7 +380,7 @@ export async function POST(request: Request) {
 
     const shippingOption = await selectShippingOption(
       addressedCart.id,
-      customerToken,
+      authenticatedCustomerToken,
     );
 
     await medusaStoreRequest<{ cart: MedusaCart }>(
@@ -391,13 +392,13 @@ export async function POST(request: Request) {
           data: {},
         },
       },
-      customerToken,
+      authenticatedCustomerToken,
     );
 
-    const paymentProvider = await selectPaymentProvider(addressedCart, customerToken);
+    const paymentProvider = await selectPaymentProvider(addressedCart, authenticatedCustomerToken);
     const paymentCollection = await createPaymentCollection(
       addressedCart,
-      customerToken,
+      authenticatedCustomerToken,
     );
 
     await medusaStoreRequest<{ payment_collection: MedusaPaymentCollection }>(
@@ -409,7 +410,7 @@ export async function POST(request: Request) {
           data: {},
         },
       },
-      customerToken,
+      authenticatedCustomerToken,
     );
 
     const completedCart = await medusaStoreRequest<MedusaCompleteCartResponse>(
@@ -417,7 +418,7 @@ export async function POST(request: Request) {
       {
         method: "POST",
       },
-      customerToken,
+      authenticatedCustomerToken,
     );
 
     if (completedCart.type === "cart") {
