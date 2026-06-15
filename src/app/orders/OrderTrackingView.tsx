@@ -77,10 +77,10 @@ export default function OrderTrackingView({
 
         <aside className="grid h-fit gap-5">
           <OrderSummary order={order} />
+          {!isComplete ? <DriverChat /> : null}
           {!isComplete ? (
             <OrderCancelAction orderReference={getOrderReference(order)} />
           ) : null}
-          {!isComplete ? <DriverChat /> : null}
         </aside>
       </div>
     </section>

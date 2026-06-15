@@ -53,13 +53,10 @@ export default function OrderCancelAction({
   }
 
   return (
-    <section className="bayblaze-sharp-card p-5">
-      <h2 className="text-[20px] font-semibold leading-tight text-black">
-        Order options
-      </h2>
+    <div>
       <button
         type="button"
-        className="bayblaze-sharp-button bayblaze-sharp-button--outline mt-4 w-full border-red-700 px-4 py-3 text-[12px] font-semibold uppercase tracking-[0.1em] text-red-800 hover:bg-red-50 disabled:cursor-not-allowed disabled:border-[#d8d1c6] disabled:text-[#8a8a8a]"
+        className="bayblaze-sharp-button bayblaze-sharp-button--outline w-full border-red-700 px-4 py-3 text-[12px] font-semibold uppercase tracking-[0.1em] text-red-800 hover:bg-red-50 disabled:cursor-not-allowed disabled:border-[#d8d1c6] disabled:text-[#8a8a8a]"
         disabled={isCancelling}
         onClick={cancelOrder}
       >
@@ -70,7 +67,7 @@ export default function OrderCancelAction({
           {error}
         </p>
       ) : null}
-    </section>
+    </div>
   );
 }
 
