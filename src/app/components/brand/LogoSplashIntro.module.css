@@ -1,0 +1,213 @@
+.intro {
+  align-items: center;
+  display: flex;
+  inset: 0;
+  justify-content: center;
+  overflow: hidden;
+  pointer-events: none;
+  position: fixed;
+  z-index: 90;
+}
+
+.intro::before {
+  background:
+    linear-gradient(135deg, rgba(246, 248, 245, 0.96), rgba(255, 255, 255, 0.82)),
+    radial-gradient(circle at center, rgba(116, 168, 74, 0.2), transparent 56%);
+  content: "";
+  inset: 0;
+  position: absolute;
+  animation: bayblaze-intro-backdrop 2800ms ease forwards;
+}
+
+.stage {
+  aspect-ratio: 1;
+  position: relative;
+  width: min(72vmin, 420px);
+  animation: bayblaze-stage-exit 3000ms ease forwards;
+}
+
+.ball {
+  background: var(--ast-global-color-0);
+  border: 4px solid #000000;
+  border-radius: 50%;
+  box-shadow: 8px 8px 0 rgba(0, 0, 0, 0.2);
+  height: clamp(52px, 11vmin, 82px);
+  left: 50%;
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -130vh) scale(0.9);
+  width: clamp(52px, 11vmin, 82px);
+  z-index: 3;
+  animation:
+    bayblaze-ball-bounce 1450ms cubic-bezier(0.3, 0.86, 0.33, 1.02) forwards,
+    bayblaze-ball-burst 420ms cubic-bezier(0.19, 1, 0.22, 1) 1450ms forwards;
+}
+
+.splash {
+  background:
+    radial-gradient(circle at 50% 50%, rgba(116, 168, 74, 0.92) 0 16%, transparent 17%),
+    radial-gradient(circle at 20% 28%, rgba(116, 168, 74, 0.88) 0 7%, transparent 8%),
+    radial-gradient(circle at 78% 22%, rgba(0, 0, 0, 0.88) 0 5%, transparent 6%),
+    radial-gradient(circle at 80% 72%, rgba(116, 168, 74, 0.86) 0 8%, transparent 9%),
+    radial-gradient(circle at 24% 76%, rgba(0, 0, 0, 0.9) 0 5%, transparent 6%);
+  filter: drop-shadow(8px 8px 0 rgba(0, 0, 0, 0.18));
+  inset: 4%;
+  opacity: 0;
+  position: absolute;
+  transform: scale(0.28) rotate(-12deg);
+  z-index: 1;
+  animation: bayblaze-splash-pop 850ms cubic-bezier(0.18, 1.15, 0.36, 1) 1510ms forwards;
+}
+
+.logoWrap {
+  align-items: center;
+  display: flex;
+  inset: 14%;
+  justify-content: center;
+  opacity: 0;
+  position: absolute;
+  transform: scale(0.2) rotate(7deg);
+  z-index: 2;
+  animation: bayblaze-logo-pop 920ms cubic-bezier(0.18, 1.15, 0.36, 1) 1580ms forwards;
+}
+
+.logo {
+  height: auto;
+  width: 100%;
+}
+
+@keyframes bayblaze-ball-bounce {
+  0% {
+    transform: translate(-50%, -130vh) scale(0.88);
+  }
+
+  35% {
+    transform: translate(-50%, 17vh) scale(1.03, 0.8);
+  }
+
+  53% {
+    transform: translate(-50%, -24vh) scale(0.96, 1.05);
+  }
+
+  70% {
+    transform: translate(-50%, 8vh) scale(1.01, 0.88);
+  }
+
+  86% {
+    transform: translate(-50%, -7vh) scale(0.98, 1.02);
+  }
+
+  100% {
+    transform: translate(-50%, 0) scale(1);
+  }
+}
+
+@keyframes bayblaze-ball-burst {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(-50%, 0) scale(4.6);
+  }
+}
+
+@keyframes bayblaze-splash-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.25) rotate(-12deg);
+  }
+
+  52% {
+    opacity: 1;
+    transform: scale(1.08) rotate(3deg);
+  }
+
+  72% {
+    opacity: 1;
+    transform: scale(0.96) rotate(-1deg);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+@keyframes bayblaze-logo-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.2) rotate(7deg);
+  }
+
+  48% {
+    opacity: 1;
+    transform: scale(1.1) rotate(-2deg);
+  }
+
+  72% {
+    opacity: 1;
+    transform: scale(0.96) rotate(1deg);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+@keyframes bayblaze-intro-backdrop {
+  0%,
+  76% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes bayblaze-stage-exit {
+  0%,
+  84% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .intro::before {
+    animation-duration: 1300ms;
+  }
+
+  .ball,
+  .splash {
+    display: none;
+  }
+
+  .logoWrap {
+    opacity: 1;
+    transform: scale(1);
+    animation: bayblaze-reduced-logo 1100ms ease forwards;
+  }
+}
+
+@keyframes bayblaze-reduced-logo {
+  0% {
+    opacity: 0;
+  }
+
+  28%,
+  72% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+  }
+}
