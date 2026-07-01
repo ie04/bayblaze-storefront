@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { type FormEvent, useMemo, useState } from "react";
+import { type FormEvent, useEffect, useMemo, useState } from "react";
 
 import { SearchLineIcon } from "@/app/components/icons/SharpIcons";
 import { useReferralOffer } from "@/app/components/referral/ReferralOfferProvider";
@@ -28,9 +28,12 @@ export default function ShopPageClient({
   initialSearchQuery?: string;
   products: ShopProductItem[];
 }) {
+  const router = useRouter();
   const { offer } = useReferralOffer();
   const searchParams = useSearchParams();
   const availabilityFilter = searchParams.get("availability");
+  const shouldShowFreebiePicker = searchParams.get("freebie_picker") === "1";
+  const winClaimToken = searchParams.get("win_claim") ?? "";
 
   const categories = useMemo(() => {
     const productCategories = Array.from(
@@ -46,6 +49,23 @@ export default function ShopPageClient({
   const [sortBy, setSortBy] = useState<SortValue>("default");
   const [query, setQuery] = useState(initialSearchQuery);
   const [notice, setNotice] = useState("");
+  const [freebiePickerOpen, setFreebiePickerOpen] = useState(shouldShowFreebiePicker);
+  const [freebieQuery, setFreebieQuery] = useState("");
+  const [selectedFreebieHref, setSelectedFreebieHref] = useState(() => {
+    return products[0]?.href ?? "";
+  });
+
+  useEffect(() => {
+    if (shouldShowFreebiePicker) {
+      setFreebiePickerOpen(true);
+    }
+  }, [shouldShowFreebiePicker]);
+
+  useEffect(() => {
+    if (!selectedFreebieHref && products[0]?.href) {
+      setSelectedFreebieHref(products[0].href);
+    }
+  }, [products, selectedFreebieHref]);
 
   const selectedCategory = categories.includes(activeCategory)
     ? activeCategory
@@ -107,12 +127,51 @@ export default function ShopPageClient({
     });
   }, [availabilityFilter, normalizedSearchQuery, products, selectedCategory, sortBy]);
 
+  const visibleFreebieProducts = useMemo(() => {
+    const normalizedFreebieQuery = freebieQuery.trim().toLowerCase();
+
+    if (!normalizedFreebieQuery) {
+      return products;
+    }
+
+    return products.filter((product) => {
+      const searchableText = [
+        product.name,
+        product.brand,
+        product.description,
+        ...product.categories,
+      ]
+        .join(" ")
+        .toLowerCase();
+
+      return searchableText.includes(normalizedFreebieQuery);
+    });
+  }, [freebieQuery, products]);
+
   function handleSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
   }
 
   function handleQuickAdd(product: ShopProductItem) {
     setNotice(`${product.name} added.`);
+  }
+
+  function handleContinueWithFreebie() {
+    const selectedProduct = products.find((product) => product.href === selectedFreebieHref);
+
+    if (!selectedProduct) {
+      setNotice("Select a freebie before continuing.");
+      return;
+    }
+
+    const destination = new URL(selectedProduct.href, window.location.origin);
+    destination.searchParams.set("freebie", "1");
+
+    if (winClaimToken) {
+      destination.searchParams.set("win_claim", winClaimToken);
+    }
+
+    router.push(`${destination.pathname}${destination.search}`);
   }
 
   return (
@@ -273,6 +332,19 @@ export default function ShopPageClient({
           </>
         )}
       </section>
+
+      {freebiePickerOpen ? (
+        <FreebieSelectionModal
+          products={visibleFreebieProducts}
+          query={freebieQuery}
+          selectedHref={selectedFreebieHref}
+          winClaimToken={winClaimToken}
+          onClose={() => setFreebiePickerOpen(false)}
+          onContinue={handleContinueWithFreebie}
+          onQueryChange={setFreebieQuery}
+          onSelect={setSelectedFreebieHref}
+        />
+      ) : null}
     </div>
   );
 }
@@ -362,5 +434,173 @@ function ProductCard({
         )}
       </div>
     </article>
+  );
+}
+
+function FreebieSelectionModal({
+  onClose,
+  onContinue,
+  onQueryChange,
+  onSelect,
+  products,
+  query,
+  selectedHref,
+  winClaimToken,
+}: {
+  onClose: () => void;
+  onContinue: () => void;
+  onQueryChange: (value: string) => void;
+  onSelect: (href: string) => void;
+  products: ShopProductItem[];
+  query: string;
+  selectedHref: string;
+  winClaimToken: string;
+}) {
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-3 sm:p-5"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="bayblaze-freebie-picker-heading"
+    >
+      <section className="bayblaze-sharp-card max-h-[calc(100dvh-1.5rem)] w-full max-w-6xl overflow-auto bg-[var(--ast-global-color-4)]">
+        <div className="sticky top-0 z-10 border-b-2 border-black bg-white p-4 sm:p-6">
+          <div className="flex items-start justify-between gap-4">
+            <div className="text-left">
+              <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-[var(--ast-global-color-1)]">
+                BayBlaze win reward
+              </p>
+              <h2
+                id="bayblaze-freebie-picker-heading"
+                className="mt-1 text-3xl font-black uppercase leading-none text-black sm:text-5xl"
+              >
+                Select your freebie
+              </h2>
+              <p className="mt-2 max-w-2xl text-sm font-medium leading-[1.6] text-[#585858]">
+                Pick the freebie you want. BayBlaze will still verify inventory, coverage, checkout, and 21+ delivery rules before the order is finalized.
+              </p>
+              {winClaimToken ? (
+                <p className="mt-2 text-[11px] font-bold uppercase tracking-widest text-[var(--ast-global-color-1)]">
+                  Claim token ready
+                </p>
+              ) : null}
+            </div>
+            <button
+              aria-label="Close freebie picker"
+              className="grid size-11 shrink-0 place-items-center border-2 border-black bg-white text-2xl font-black leading-none hover:bg-black hover:text-white"
+              type="button"
+              onClick={onClose}
+            >
+              ×
+            </button>
+          </div>
+
+          <form
+            role="search"
+            className="mt-5 flex max-w-xl border-2 border-black bg-white"
+            onSubmit={(event) => event.preventDefault()}
+          >
+            <label htmlFor="freebie-search" className="sr-only">
+              Search freebies
+            </label>
+            <div className="grid w-11 place-items-center border-r-2 border-black bg-[var(--ast-global-color-4)]">
+              <SearchLineIcon className="h-4 w-4" />
+            </div>
+            <input
+              id="freebie-search"
+              type="search"
+              value={query}
+              onChange={(event) => onQueryChange(event.target.value)}
+              placeholder="Search brand, product, category…"
+              className="min-w-0 flex-1 bg-white px-3 py-3 text-sm font-medium text-black outline-none placeholder:text-[#7a7a7a]"
+            />
+          </form>
+        </div>
+
+        <div className="p-4 sm:p-6">
+          {products.length === 0 ? (
+            <div className="bayblaze-sharp-card bg-white p-8 text-center">
+              <div className="text-2xl font-black uppercase">No matches</div>
+              <p className="mt-1 text-sm font-medium text-[#585858]">
+                Try a different search term.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4">
+              {products.map((product) => (
+                <FreebieTile
+                  key={product.href}
+                  product={product}
+                  selected={selectedHref === product.href}
+                  onSelect={() => onSelect(product.href)}
+                />
+              ))}
+            </div>
+          )}
+
+          <div className="sticky bottom-0 mt-6 border-2 border-black bg-white p-3 sm:flex sm:items-center sm:justify-between sm:gap-4">
+            <p className="text-sm font-bold leading-[1.5] text-[#585858]">
+              Choose a tile, then continue to that product page with your win claim attached.
+            </p>
+            <button
+              className="bayblaze-sharp-button bayblaze-sharp-button--primary mt-3 w-full shrink-0 sm:mt-0 sm:w-auto"
+              type="button"
+              disabled={!selectedHref}
+              onClick={onContinue}
+            >
+              Continue with selected freebie
+            </button>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function FreebieTile({
+  onSelect,
+  product,
+  selected,
+}: {
+  onSelect: () => void;
+  product: ShopProductItem;
+  selected: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      aria-pressed={selected}
+      className={[
+        "group flex min-h-full flex-col overflow-hidden border-2 border-black bg-white text-left transition-transform hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[5px_5px_0_#000]",
+        selected ? "shadow-[5px_5px_0_#000] outline outline-4 outline-[var(--ast-global-color-0)]" : "",
+      ].join(" ")}
+      onClick={onSelect}
+    >
+      <span className="relative block aspect-square w-full overflow-hidden border-b-2 border-black bg-[var(--ast-global-color-4)]">
+        {selected ? (
+          <span className="bayblaze-sharp-badge bayblaze-sharp-badge--green absolute left-2 top-2 z-10">
+            Selected
+          </span>
+        ) : null}
+        <Image
+          src={product.image}
+          alt={product.name}
+          fill
+          sizes="(max-width: 640px) 46vw, (max-width: 1024px) 31vw, 280px"
+          className="object-contain p-3 transition-transform duration-300 group-hover:scale-105"
+        />
+      </span>
+      <span className="flex flex-1 flex-col p-3 sm:p-4">
+        <span className="mb-2 text-[10px] font-extrabold uppercase tracking-[0.14em] text-[var(--ast-global-color-1)]">
+          {product.brand}
+        </span>
+        <span className="line-clamp-2 text-[14px] font-bold uppercase leading-tight text-black sm:text-[16px]">
+          {product.name}
+        </span>
+        <span className="mt-3 text-[15px] font-bold leading-none text-black sm:text-[17px]">
+          {product.salePrice || product.price}
+        </span>
+      </span>
+    </button>
   );
 }
