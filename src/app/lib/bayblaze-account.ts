@@ -34,6 +34,19 @@ type BayBlazeAccountSessionResponse = {
   };
 };
 
+export type BayBlazeDiscountCodePreview = {
+  category: string;
+  code: string;
+  discountAmountCents: number;
+  discountPercent: number;
+  eligible: boolean;
+  minimumSpendCents: number;
+  ownerUid: string;
+  subtotalCents: number;
+  usageLimit: number;
+  usedCount: number;
+};
+
 const apiBaseUrl = (
   process.env.BAYBLAZE_API_URL ||
   process.env.NEXT_PUBLIC_BAYBLAZE_API_URL ||
@@ -99,6 +112,23 @@ export async function completeBayBlazeGoogleOAuth(input: {
     body: input,
     method: "POST",
   });
+}
+
+export async function previewBayBlazeDiscountCode(
+  token: string,
+  input: {
+    code: string;
+    subtotalCents?: number;
+  },
+) {
+  return bayblazeApiRequest<BayBlazeDiscountCodePreview>(
+    "/v1/customer/discount-codes/preview",
+    {
+      body: input,
+      method: "POST",
+      token,
+    },
+  );
 }
 
 async function bayblazeApiRequest<T>(

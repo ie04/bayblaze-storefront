@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { type FormEvent, useEffect, useMemo, useState } from "react";
+import { type FormEvent, useMemo, useState } from "react";
 
 import { SearchLineIcon } from "@/app/components/icons/SharpIcons";
 import { useReferralOffer } from "@/app/components/referral/ReferralOfferProvider";
@@ -54,18 +54,6 @@ export default function ShopPageClient({
   const [selectedFreebieHref, setSelectedFreebieHref] = useState(() => {
     return products[0]?.href ?? "";
   });
-
-  useEffect(() => {
-    if (shouldShowFreebiePicker) {
-      setFreebiePickerOpen(true);
-    }
-  }, [shouldShowFreebiePicker]);
-
-  useEffect(() => {
-    if (!selectedFreebieHref && products[0]?.href) {
-      setSelectedFreebieHref(products[0].href);
-    }
-  }, [products, selectedFreebieHref]);
 
   const selectedCategory = categories.includes(activeCategory)
     ? activeCategory

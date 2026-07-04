@@ -298,6 +298,11 @@ Additional UI constraints:
   delivery confirmation succeed.
 - Address validation, routing, AgeChecker, and order creation should expose
   distinct loading/error copy so failures are easy to diagnose.
+- Checkout promo codes are account-bound and must be previewed through
+  storefront server routes that call `bayblaze-api`
+  `POST /v1/customer/discount-codes/preview` with the BayBlaze account session.
+  Guest shoppers who enter a promo code should be nudged to sign in or register
+  before checkout can lock in the discount.
 
 ### PWA Install Prompt
 

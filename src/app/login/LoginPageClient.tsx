@@ -25,7 +25,9 @@ const initialFormState: FormState = {
 export default function LoginPageClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [mode, setMode] = useState<AuthMode>("login");
+  const [mode, setMode] = useState<AuthMode>(
+    searchParams.get("mode") === "register" ? "register" : "login",
+  );
   const [form, setForm] = useState<FormState>(initialFormState);
   const [error, setError] = useState(searchParams.get("oauth_error") ?? "");
   const [notice, setNotice] = useState("");

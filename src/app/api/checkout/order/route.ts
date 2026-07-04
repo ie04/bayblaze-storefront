@@ -2,6 +2,10 @@ import {
   getBayBlazeAccountFromSession,
   getCustomerToken,
 } from "@/app/lib/customer-session";
+import {
+  getBayBlazeAccountToken,
+  previewBayBlazeDiscountCode,
+} from "@/app/lib/bayblaze-account";
 import { verifyCheckoutAddressValidation } from "@/app/domain/address-validation";
 import {
   formatScheduledDelivery,
@@ -19,6 +23,13 @@ import {
   getReferralOfferOrderMetadata,
   getReferralOfferTotal,
 } from "@/app/domain/referral-offers";
+import {
+  getCheckoutPromoDiscountAmount,
+  getCheckoutPromoMetadata,
+  moneyToCents,
+  normalizeCheckoutPromoCode,
+  type CheckoutPromoCodePreview,
+} from "@/app/domain/checkout-promo-codes";
 import { verifyCheckoutAgeVerification } from "@/app/lib/age-verification-token";
 import { verifyCheckoutRoutingEvaluation } from "@/app/lib/pre-checkout-routing-token";
 
@@ -69,6 +80,9 @@ type CheckoutRequestBody = {
     scheduled_at?: unknown;
   };
   items?: CheckoutItem[];
+  promo?: {
+    code?: unknown;
+  };
   routing?: {
     token?: unknown;
   };
@@ -200,7 +214,8 @@ export async function POST(request: Request) {
   }
 
   const customerToken = await getCustomerToken();
-  const [bayBlazeAccount, accountCustomer] = await Promise.all([
+  const [bayBlazeAccountToken, bayBlazeAccount, accountCustomer] = await Promise.all([
+    getBayBlazeAccountToken(),
     getBayBlazeAccountFromSession(),
     customerToken ? retrieveAuthenticatedCustomer(customerToken).catch(() => null) : null,
   ]);
@@ -247,9 +262,36 @@ export async function POST(request: Request) {
   const appliedReferralOffer = referralOffer && !hasPriorOrders ? referralOffer : null;
 
   const discountSubtotal = getCheckoutItemsSubtotal(items);
+  const requestedPromoCode = normalizeCheckoutPromoCode(body.promo?.code);
   const firstOrderDiscount = getReferralOfferDiscountAmount(
     discountSubtotal,
     appliedReferralOffer,
+  );
+  let appliedPromo: CheckoutPromoCodePreview | null = null;
+
+  if (requestedPromoCode) {
+    const appliedPromoResult = await getAppliedCheckoutPromo({
+      accountToken: bayBlazeAccountToken,
+      code: requestedPromoCode,
+      subtotal: discountSubtotal,
+    }).catch((error: unknown) => error);
+
+    if (appliedPromoResult instanceof CheckoutPromoError) {
+      return jsonError(appliedPromoResult.message, appliedPromoResult.status);
+    }
+
+    if (appliedPromoResult instanceof Error) {
+      return jsonError(appliedPromoResult.message, 400);
+    }
+
+    appliedPromo = appliedPromoResult as CheckoutPromoCodePreview;
+  }
+  const checkoutPromoDiscount = getCheckoutPromoDiscountAmount(
+    discountSubtotal,
+    appliedPromo,
+  );
+  const totalAfterDiscounts = roundMoney(
+    Math.max(0, discountSubtotal - firstOrderDiscount - checkoutPromoDiscount),
   );
   const referralOfferMetadata = {
     ...getIgnoredReferralOfferMetadata({
@@ -260,12 +302,15 @@ export async function POST(request: Request) {
       discountAmount: firstOrderDiscount,
       offer: appliedReferralOffer,
       subtotal: discountSubtotal,
-      totalAfterDiscount: getReferralOfferTotal(
-        discountSubtotal,
-        appliedReferralOffer,
-      ),
+      totalAfterDiscount: getReferralOfferTotal(discountSubtotal, appliedReferralOffer),
     }),
   };
+  const checkoutPromoMetadata = getCheckoutPromoMetadata({
+    discountAmount: checkoutPromoDiscount,
+    promo: appliedPromo,
+    subtotal: discountSubtotal,
+    totalAfterDiscount: totalAfterDiscounts,
+  });
   const addressLine2 = normalizeOptionalString(customer.address_line_2);
   const addressLine2Metadata = addressLine2
     ? {
@@ -280,6 +325,7 @@ export async function POST(request: Request) {
     ...ageVerification.metadata,
     ...deliveryMetadata,
     ...referralOfferMetadata,
+    ...checkoutPromoMetadata,
     ...addressLine2Metadata,
     delivery_address_1: customer.address.trim(),
     delivery_address_2: addressLine2 || undefined,
@@ -643,6 +689,34 @@ async function retrieveAuthenticatedCustomer(customerToken: string) {
   return customer;
 }
 
+async function getAppliedCheckoutPromo({
+  accountToken,
+  code,
+  subtotal,
+}: {
+  accountToken?: string;
+  code: string;
+  subtotal: number;
+}): Promise<CheckoutPromoCodePreview> {
+  if (!accountToken) {
+    throw new CheckoutPromoError(401, "Sign in or register to lock in this discount.");
+  }
+
+  try {
+    return await previewBayBlazeDiscountCode(accountToken, {
+      code,
+      subtotalCents: moneyToCents(subtotal),
+    });
+  } catch (error) {
+    throw new CheckoutPromoError(
+      400,
+      error instanceof Error
+        ? error.message
+        : "That promo code could not be applied.",
+    );
+  }
+}
+
 function getAccountAgeVerificationMetadata(
   accountCustomer: MedusaCustomer | null,
   checkoutCustomer: CheckoutCustomer,
@@ -712,6 +786,10 @@ function getCheckoutItemsSubtotal(items: ValidCheckoutItem[]) {
   return items.reduce((total, item) => {
     return total + parsePrice(item.price) * item.quantity;
   }, 0);
+}
+
+function roundMoney(amount: number) {
+  return Math.round(amount * 100) / 100;
 }
 
 function getCheckoutItemUnitPriceCents(item: ValidCheckoutItem) {
@@ -802,6 +880,15 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
 
 function jsonError(message: string, status: number) {
   return Response.json({ error: message }, { status });
+}
+
+class CheckoutPromoError extends Error {
+  constructor(
+    readonly status: number,
+    message: string,
+  ) {
+    super(message);
+  }
 }
 
 function getErrorMessage(error: unknown) {

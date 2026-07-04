@@ -4,7 +4,7 @@ import type { FormEvent, ReactNode } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import Header from "@/app/components/layout/Header";
 import { useCart, type CartItem } from "@/app/components/cart/CartContext";
@@ -32,6 +32,13 @@ import {
   getReferralOfferDiscountAmount,
   getReferralOfferTotal,
 } from "@/app/domain/referral-offers";
+import {
+  getCheckoutPromoDiscountAmount,
+  getOrderCheckoutPromoTotal,
+  moneyToCents,
+  normalizeCheckoutPromoCode,
+  type CheckoutPromoCodePreview,
+} from "@/app/domain/checkout-promo-codes";
 import { isAgeCheckerTestingBypassEnabled } from "@/app/lib/agechecker-testing";
 import type { Customer, CustomerOrder } from "@/app/lib/medusa-auth";
 
@@ -152,6 +159,7 @@ export default function CheckoutPageClient({
   customer?: Customer;
 }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { items, cartCount, clearCart, removeItem } = useCart();
   const { clearOffer: clearReferralOffer, offer: referralOffer } =
     useReferralOffer();
@@ -182,6 +190,14 @@ export default function CheckoutPageClient({
   const [deliveryMode, setDeliveryMode] =
     useState<DeliveryTimingMode>("now");
   const [scheduledAt, setScheduledAt] = useState("");
+  const [promoCode, setPromoCode] = useState(() =>
+    normalizeCheckoutPromoCode(searchParams.get("promo")),
+  );
+  const [appliedPromo, setAppliedPromo] =
+    useState<CheckoutPromoCodePreview | null>(null);
+  const [promoMessage, setPromoMessage] = useState("");
+  const [isPromoApplying, setIsPromoApplying] = useState(false);
+  const [isPromoAuthDialogOpen, setIsPromoAuthDialogOpen] = useState(false);
 
   const subtotal = useMemo(() => {
     return items.reduce((total, item) => {
@@ -191,9 +207,28 @@ export default function CheckoutPageClient({
   const firstOrderDiscount = useMemo(() => {
     return getReferralOfferDiscountAmount(subtotal, referralOffer);
   }, [referralOffer, subtotal]);
+  const activeAppliedPromo = useMemo(() => {
+    if (!appliedPromo || appliedPromo.subtotalCents !== moneyToCents(subtotal)) {
+      return null;
+    }
+
+    return appliedPromo;
+  }, [appliedPromo, subtotal]);
+  const checkoutPromoDiscount = useMemo(() => {
+    return getCheckoutPromoDiscountAmount(subtotal, activeAppliedPromo);
+  }, [activeAppliedPromo, subtotal]);
   const totalDue = useMemo(() => {
-    return getReferralOfferTotal(subtotal, referralOffer);
-  }, [referralOffer, subtotal]);
+    return roundMoney(
+      Math.max(
+        0,
+        getReferralOfferTotal(subtotal, referralOffer) - checkoutPromoDiscount,
+      ),
+    );
+  }, [checkoutPromoDiscount, referralOffer, subtotal]);
+  const effectivePromoMessage =
+    appliedPromo && !activeAppliedPromo
+      ? "Cart changed. Apply the promo code again."
+      : promoMessage;
   const scheduleRequirement = useMemo(() => {
     return currentTime ? getDeliveryScheduleRequirement(currentTime) : null;
   }, [currentTime]);
@@ -362,6 +397,98 @@ export default function CheckoutPageClient({
     };
   }, []);
 
+  async function handleApplyPromoCode() {
+    const code = normalizeCheckoutPromoCode(promoCode);
+
+    setPromoCode(code);
+    setPromoMessage("");
+    setAppliedPromo(null);
+
+    if (!code) {
+      setPromoMessage("Enter a promo code.");
+      return;
+    }
+
+    if (!customer) {
+      setIsPromoAuthDialogOpen(true);
+      return;
+    }
+
+    setIsPromoApplying(true);
+
+    try {
+      const response = await fetch("/api/checkout/promo/preview", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          code,
+          subtotalCents: moneyToCents(subtotal),
+        }),
+      });
+      const data = (await response.json().catch(() => ({}))) as
+        | CheckoutPromoCodePreview
+        | { message?: string };
+
+      if (response.status === 401) {
+        setIsPromoAuthDialogOpen(true);
+        return;
+      }
+
+      if (!response.ok || !("eligible" in data) || !data.eligible) {
+        setPromoMessage(
+          "message" in data && data.message
+            ? data.message
+            : "That promo code could not be applied.",
+        );
+        return;
+      }
+
+      setAppliedPromo(data);
+      setPromoMessage(`${data.discountPercent}% off applied.`);
+    } catch {
+      setPromoMessage("Unable to apply that promo code right now.");
+    } finally {
+      setIsPromoApplying(false);
+    }
+  }
+
+  function handlePromoCodeChange(value: string) {
+    const normalizedCode = normalizeCheckoutPromoCode(value);
+
+    setPromoCode(normalizedCode);
+
+    if (appliedPromo && appliedPromo.code !== normalizedCode) {
+      setAppliedPromo(null);
+      setPromoMessage("");
+    }
+  }
+
+  function clearAppliedPromoCode() {
+    setAppliedPromo(null);
+    setPromoMessage("");
+    setPromoCode("");
+  }
+
+  function getPromoAuthHref(mode: "login" | "register") {
+    const redirectParams = new URLSearchParams();
+    const normalizedCode = normalizeCheckoutPromoCode(promoCode);
+
+    if (normalizedCode) {
+      redirectParams.set("promo", normalizedCode);
+    }
+
+    const redirect = `/checkout${redirectParams.toString() ? `?${redirectParams.toString()}` : ""}`;
+    const params = new URLSearchParams({ redirect });
+
+    if (mode === "register") {
+      params.set("mode", "register");
+    }
+
+    return `/login?${params.toString()}`;
+  }
+
   async function handlePlaceOrder(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
@@ -376,6 +503,19 @@ export default function CheckoutPageClient({
     setAgeVerificationMessage("");
     pendingCheckoutRef.current = null;
     setRoutingConfirmation(null);
+
+    const normalizedPromoCode = normalizeCheckoutPromoCode(promoCode);
+
+    if (normalizedPromoCode && !activeAppliedPromo) {
+      if (!customer) {
+        setIsPromoAuthDialogOpen(true);
+        return;
+      }
+
+      setCheckoutError("Apply the promo code before placing your order, or clear it.");
+      return;
+    }
+
     setIsRoutingEvaluating(true);
 
     try {
@@ -505,6 +645,11 @@ export default function CheckoutPageClient({
           customer: checkoutCustomer,
           delivery,
           items,
+          promo: activeAppliedPromo
+            ? {
+                code: activeAppliedPromo.code,
+              }
+            : undefined,
           routing: {
             token: routingToken,
           },
@@ -517,6 +662,10 @@ export default function CheckoutPageClient({
       };
 
       if (!response.ok) {
+        if (response.status === 401 && activeAppliedPromo) {
+          setIsPromoAuthDialogOpen(true);
+        }
+
         setCheckoutError(
           data.error ??
             "Unable to place your order right now. Please try again.",
@@ -531,6 +680,7 @@ export default function CheckoutPageClient({
       setIsOrderComplete(true);
       clearCart();
       clearReferralOffer();
+      clearAppliedPromoCode();
 
       if (customer && recentOrder) {
         saveRecentOrder(recentOrder);
@@ -986,6 +1136,50 @@ export default function CheckoutPageClient({
               </div>
             )}
 
+            <div className="mt-6 border-t border-[#e7e7e7] pt-5">
+              <label className="grid gap-2 text-[14px] font-semibold text-black">
+                Promo code
+                <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_104px]">
+                  <input
+                    className="h-11 w-full min-w-0 border border-[#d6d6d6] bg-white px-3 text-[15px] font-semibold uppercase text-black outline-none transition focus:border-black"
+                    onChange={(event) => handlePromoCodeChange(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") {
+                        event.preventDefault();
+                        void handleApplyPromoCode();
+                      }
+                    }}
+                    placeholder="BLAZE20"
+                    value={promoCode}
+                  />
+                  <button
+                    className="h-11 border border-black bg-black px-4 text-[13px] font-semibold uppercase text-white transition-colors hover:bg-[var(--ast-global-color-0)] disabled:cursor-not-allowed disabled:border-[#9d9d9d] disabled:bg-[#9d9d9d]"
+                    disabled={isPromoApplying || !hasItems}
+                    onClick={() => void handleApplyPromoCode()}
+                    type="button"
+                  >
+                    {isPromoApplying ? "Applying" : "Apply"}
+                  </button>
+                </div>
+              </label>
+
+              {activeAppliedPromo ? (
+                <button
+                  className="mt-2 text-[12px] font-semibold uppercase tracking-[0.12em] text-[#585858] transition-colors hover:text-black"
+                  onClick={clearAppliedPromoCode}
+                  type="button"
+                >
+                  Remove promo
+                </button>
+              ) : null}
+
+              {effectivePromoMessage ? (
+                <p className="mt-2 text-[14px] font-semibold leading-[1.45] text-[#585858]">
+                  {effectivePromoMessage}
+                </p>
+              ) : null}
+            </div>
+
             <dl className="mt-6 grid gap-3 border-t border-[#e7e7e7] pt-5 text-[16px]">
               <div className="flex justify-between">
                 <dt>Items</dt>
@@ -1002,6 +1196,15 @@ export default function CheckoutPageClient({
                   <dt>{referralOffer.label}</dt>
                   <dd className="font-semibold">
                     -{formatMoney(firstOrderDiscount)}
+                  </dd>
+                </div>
+              ) : null}
+
+              {activeAppliedPromo && checkoutPromoDiscount > 0 ? (
+                <div className="flex justify-between text-[var(--ast-global-color-1)]">
+                  <dt>Promo {activeAppliedPromo.code}</dt>
+                  <dd className="font-semibold">
+                    -{formatMoney(checkoutPromoDiscount)}
                   </dd>
                 </div>
               ) : null}
@@ -1026,6 +1229,14 @@ export default function CheckoutPageClient({
           isSubmitting={isPlacingOrder || isAgeVerifying}
           onCancel={handleCancelDeliveryEligibility}
           onConfirm={handleConfirmDeliveryEligibility}
+        />
+      ) : null}
+
+      {isPromoAuthDialogOpen ? (
+        <PromoAuthDialog
+          loginHref={getPromoAuthHref("login")}
+          registerHref={getPromoAuthHref("register")}
+          onClose={() => setIsPromoAuthDialogOpen(false)}
         />
       ) : null}
     </main>
@@ -1871,6 +2082,62 @@ function RoutingConfirmationDialog({
   );
 }
 
+function PromoAuthDialog({
+  loginHref,
+  registerHref,
+  onClose,
+}: {
+  loginHref: string;
+  registerHref: string;
+  onClose: () => void;
+}) {
+  return (
+    <div
+      className="fixed inset-0 z-[80] flex items-center justify-center bg-black/60 px-4 py-6"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="promo-auth-title"
+    >
+      <div className="w-full max-w-[480px] border-2 border-black bg-white p-5 shadow-[6px_6px_0_#000] sm:p-6">
+        <p className="text-[12px] font-extrabold uppercase tracking-[0.16em] text-[var(--ast-global-color-1)]">
+          Promo code
+        </p>
+        <h2
+          id="promo-auth-title"
+          className="mt-2 text-[30px] font-black uppercase leading-none text-black sm:text-[38px]"
+        >
+          Sign in or register to lock in your discount
+        </h2>
+        <p className="mt-4 text-[16px] font-medium leading-[1.55] text-[#585858]">
+          BayBlaze promo codes are tied to customer accounts so each code can be
+          used correctly.
+        </p>
+        <div className="mt-6 grid gap-3 sm:grid-cols-2">
+          <Link
+            className="bayblaze-sharp-button bayblaze-sharp-button--primary flex h-12 items-center justify-center text-center"
+            href={loginHref}
+          >
+            Sign in
+          </Link>
+          <Link
+            className="bayblaze-sharp-button bayblaze-sharp-button--outline flex h-12 items-center justify-center text-center"
+            href={registerHref}
+          >
+            Register
+          </Link>
+        </div>
+        <button
+          className="mt-4 text-[13px] font-extrabold uppercase tracking-widest text-[#585858] transition-colors hover:text-black"
+          onClick={onClose}
+          type="button"
+        >
+          Continue as guest
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function parsePrice(price?: string) {
   if (!price) {
     return 0;
@@ -1894,7 +2161,8 @@ function getRecentOrderSnapshot(
   subtotal: number,
   items: CartItem[],
 ): CustomerOrder {
-  const orderTotal = getOrderFirstOrderOfferTotal(order);
+  const orderTotal =
+    getOrderCheckoutPromoTotal(order) ?? getOrderFirstOrderOfferTotal(order);
 
   return {
     ...order,
@@ -1940,4 +2208,8 @@ function formatMoney(amount: number) {
     currency: "USD",
     style: "currency",
   }).format(amount);
+}
+
+function roundMoney(amount: number) {
+  return Math.round(amount * 100) / 100;
 }
