@@ -986,7 +986,7 @@ export default function CheckoutPageClient({
             </div>
           </CheckoutPanel>
 
-          <CheckoutPanel title="Promo / Coupon Code">
+          <CheckoutPanel title="Enter Promo/Discount Code">
             <div className="grid gap-3">
               <label className="grid gap-2 text-[15px] font-semibold text-black sm:text-[16px]">
                 Coupon code
@@ -1964,10 +1964,7 @@ function CheckoutPanel({
 }) {
   return (
     <section className="bayblaze-sharp-card bg-white p-4 sm:p-6">
-      <p className="text-[11px] font-bold uppercase tracking-widest text-[var(--ast-global-color-1)]">
-        Checkout step
-      </p>
-      <h2 className="mb-4 mt-1 text-2xl font-black uppercase leading-none text-black sm:mb-5 sm:text-3xl">
+      <h2 className="mb-4 text-2xl font-black uppercase leading-none text-black sm:mb-5 sm:text-3xl">
         {title}
       </h2>
       {children}
