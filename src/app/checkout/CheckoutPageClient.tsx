@@ -986,6 +986,52 @@ export default function CheckoutPageClient({
             </div>
           </CheckoutPanel>
 
+          <CheckoutPanel title="Promo / Coupon Code">
+            <div className="grid gap-3">
+              <label className="grid gap-2 text-[15px] font-semibold text-black sm:text-[16px]">
+                Coupon code
+                <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_128px]">
+                  <input
+                    className="h-[50px] w-full min-w-0 border border-[#d6d6d6] bg-white px-4 text-[16px] font-semibold uppercase text-black outline-none transition focus:border-black sm:h-[52px]"
+                    onChange={(event) => handlePromoCodeChange(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") {
+                        event.preventDefault();
+                        void handleApplyPromoCode();
+                      }
+                    }}
+                    placeholder="BLAZE20"
+                    value={promoCode}
+                  />
+                  <button
+                    className="h-[50px] border-2 border-black bg-black px-5 text-[13px] font-semibold uppercase text-white transition-colors hover:bg-[var(--ast-global-color-0)] disabled:cursor-not-allowed disabled:border-[#9d9d9d] disabled:bg-[#9d9d9d] sm:h-[52px]"
+                    disabled={isPromoApplying || !hasItems}
+                    onClick={() => void handleApplyPromoCode()}
+                    type="button"
+                  >
+                    {isPromoApplying ? "Applying" : "Apply"}
+                  </button>
+                </div>
+              </label>
+
+              {activeAppliedPromo ? (
+                <button
+                  className="w-fit text-[12px] font-semibold uppercase tracking-[0.12em] text-[#585858] transition-colors hover:text-black"
+                  onClick={clearAppliedPromoCode}
+                  type="button"
+                >
+                  Remove coupon
+                </button>
+              ) : null}
+
+              {effectivePromoMessage ? (
+                <p className="border border-[#d7d1c6] bg-white px-4 py-3 text-[15px] font-semibold leading-[1.5] text-black">
+                  {effectivePromoMessage}
+                </p>
+              ) : null}
+            </div>
+          </CheckoutPanel>
+
           {isAgeCheckerEnabled ? (
             <CheckoutPanel title="Age Verification">
               <div className="border border-[#e7e7e7] bg-white p-5">
@@ -1135,50 +1181,6 @@ export default function CheckoutPageClient({
                 ))}
               </div>
             )}
-
-            <div className="mt-6 border-t border-[#e7e7e7] pt-5">
-              <label className="grid gap-2 text-[14px] font-semibold text-black">
-                Promo code
-                <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_104px]">
-                  <input
-                    className="h-11 w-full min-w-0 border border-[#d6d6d6] bg-white px-3 text-[15px] font-semibold uppercase text-black outline-none transition focus:border-black"
-                    onChange={(event) => handlePromoCodeChange(event.target.value)}
-                    onKeyDown={(event) => {
-                      if (event.key === "Enter") {
-                        event.preventDefault();
-                        void handleApplyPromoCode();
-                      }
-                    }}
-                    placeholder="BLAZE20"
-                    value={promoCode}
-                  />
-                  <button
-                    className="h-11 border border-black bg-black px-4 text-[13px] font-semibold uppercase text-white transition-colors hover:bg-[var(--ast-global-color-0)] disabled:cursor-not-allowed disabled:border-[#9d9d9d] disabled:bg-[#9d9d9d]"
-                    disabled={isPromoApplying || !hasItems}
-                    onClick={() => void handleApplyPromoCode()}
-                    type="button"
-                  >
-                    {isPromoApplying ? "Applying" : "Apply"}
-                  </button>
-                </div>
-              </label>
-
-              {activeAppliedPromo ? (
-                <button
-                  className="mt-2 text-[12px] font-semibold uppercase tracking-[0.12em] text-[#585858] transition-colors hover:text-black"
-                  onClick={clearAppliedPromoCode}
-                  type="button"
-                >
-                  Remove promo
-                </button>
-              ) : null}
-
-              {effectivePromoMessage ? (
-                <p className="mt-2 text-[14px] font-semibold leading-[1.45] text-[#585858]">
-                  {effectivePromoMessage}
-                </p>
-              ) : null}
-            </div>
 
             <dl className="mt-6 grid gap-3 border-t border-[#e7e7e7] pt-5 text-[16px]">
               <div className="flex justify-between">
