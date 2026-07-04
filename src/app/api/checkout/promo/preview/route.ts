@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import {
   getBayBlazeAccountToken,
   previewBayBlazeDiscountCode,
+  previewPublicBayBlazeDiscountCode,
 } from "@/app/lib/bayblaze-account";
 
 export async function POST(request: Request) {
@@ -26,18 +27,16 @@ export async function POST(request: Request) {
 
     const token = await getBayBlazeAccountToken();
 
-    if (!token) {
-      return NextResponse.json(
-        { message: "Sign in or register to lock in this discount." },
-        { status: 401 },
-      );
-    }
-
     return NextResponse.json(
-      await previewBayBlazeDiscountCode(token, {
-        code,
-        subtotalCents,
-      }),
+      token
+        ? await previewBayBlazeDiscountCode(token, {
+            code,
+            subtotalCents,
+          })
+        : await previewPublicBayBlazeDiscountCode({
+            code,
+            subtotalCents,
+          }),
     );
   } catch (error) {
     return NextResponse.json(

@@ -41,7 +41,7 @@ export type BayBlazeDiscountCodePreview = {
   discountPercent: number;
   eligible: boolean;
   minimumSpendCents: number;
-  ownerUid: string;
+  ownerUid?: string;
   subtotalCents: number;
   usageLimit: number;
   usedCount: number;
@@ -127,6 +127,19 @@ export async function previewBayBlazeDiscountCode(
       body: input,
       method: "POST",
       token,
+    },
+  );
+}
+
+export async function previewPublicBayBlazeDiscountCode(input: {
+  code: string;
+  subtotalCents?: number;
+}) {
+  return bayblazeApiRequest<BayBlazeDiscountCodePreview>(
+    "/v1/discount-codes/preview",
+    {
+      body: input,
+      method: "POST",
     },
   );
 }

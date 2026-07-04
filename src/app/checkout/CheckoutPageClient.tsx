@@ -111,6 +111,24 @@ type PreCheckoutRoutingResult =
       token: string;
     };
 
+type AuthMode = "login" | "register";
+
+type AuthFormState = {
+  code: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  password: string;
+};
+
+const initialAuthFormState: AuthFormState = {
+  code: "",
+  email: "",
+  firstName: "",
+  lastName: "",
+  password: "",
+};
+
 
 type CheckoutAddressPayload = {
   address?: unknown;
@@ -198,6 +216,7 @@ export default function CheckoutPageClient({
   const [promoMessage, setPromoMessage] = useState("");
   const [isPromoApplying, setIsPromoApplying] = useState(false);
   const [isPromoAuthDialogOpen, setIsPromoAuthDialogOpen] = useState(false);
+  const [hasCompletedPromoAuth, setHasCompletedPromoAuth] = useState(false);
 
   const subtotal = useMemo(() => {
     return items.reduce((total, item) => {
@@ -409,11 +428,6 @@ export default function CheckoutPageClient({
       return;
     }
 
-    if (!customer) {
-      setIsPromoAuthDialogOpen(true);
-      return;
-    }
-
     setIsPromoApplying(true);
 
     try {
@@ -430,11 +444,6 @@ export default function CheckoutPageClient({
       const data = (await response.json().catch(() => ({}))) as
         | CheckoutPromoCodePreview
         | { message?: string };
-
-      if (response.status === 401) {
-        setIsPromoAuthDialogOpen(true);
-        return;
-      }
 
       if (!response.ok || !("eligible" in data) || !data.eligible) {
         setPromoMessage(
@@ -471,7 +480,7 @@ export default function CheckoutPageClient({
     setPromoCode("");
   }
 
-  function getPromoAuthHref(mode: "login" | "register") {
+  function getPromoCheckoutRedirect() {
     const redirectParams = new URLSearchParams();
     const normalizedCode = normalizeCheckoutPromoCode(promoCode);
 
@@ -479,14 +488,7 @@ export default function CheckoutPageClient({
       redirectParams.set("promo", normalizedCode);
     }
 
-    const redirect = `/checkout${redirectParams.toString() ? `?${redirectParams.toString()}` : ""}`;
-    const params = new URLSearchParams({ redirect });
-
-    if (mode === "register") {
-      params.set("mode", "register");
-    }
-
-    return `/login?${params.toString()}`;
+    return `/checkout${redirectParams.toString() ? `?${redirectParams.toString()}` : ""}`;
   }
 
   async function handlePlaceOrder(event: FormEvent<HTMLFormElement>) {
@@ -507,12 +509,12 @@ export default function CheckoutPageClient({
     const normalizedPromoCode = normalizeCheckoutPromoCode(promoCode);
 
     if (normalizedPromoCode && !activeAppliedPromo) {
-      if (!customer) {
-        setIsPromoAuthDialogOpen(true);
-        return;
-      }
-
       setCheckoutError("Apply the promo code before placing your order, or clear it.");
+      return;
+    }
+
+    if (activeAppliedPromo && !customer && !hasCompletedPromoAuth) {
+      setIsPromoAuthDialogOpen(true);
       return;
     }
 
@@ -1236,8 +1238,14 @@ export default function CheckoutPageClient({
 
       {isPromoAuthDialogOpen ? (
         <PromoAuthDialog
-          loginHref={getPromoAuthHref("login")}
-          registerHref={getPromoAuthHref("register")}
+          googleOAuthHref={`/api/auth/oauth/google/start?redirect=${encodeURIComponent(
+            getPromoCheckoutRedirect(),
+          )}`}
+          onAuthComplete={() => {
+            setIsPromoAuthDialogOpen(false);
+            setHasCompletedPromoAuth(true);
+            router.refresh();
+          }}
           onClose={() => setIsPromoAuthDialogOpen(false)}
         />
       ) : null}
@@ -2082,58 +2090,346 @@ function RoutingConfirmationDialog({
 }
 
 function PromoAuthDialog({
-  loginHref,
-  registerHref,
+  googleOAuthHref,
+  onAuthComplete,
   onClose,
 }: {
-  loginHref: string;
-  registerHref: string;
+  googleOAuthHref: string;
+  onAuthComplete: () => void;
   onClose: () => void;
 }) {
+  const [mode, setMode] = useState<AuthMode>("login");
+  const [form, setForm] = useState<AuthFormState>(initialAuthFormState);
+  const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [verificationEmail, setVerificationEmail] = useState("");
+  const isVerifyingRegistration = mode === "register" && Boolean(verificationEmail);
+
+  function updateField(field: keyof AuthFormState, value: string) {
+    setForm((current) => ({ ...current, [field]: value }));
+  }
+
+  function resetMessages() {
+    setError("");
+    setNotice("");
+  }
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    resetMessages();
+    setIsSubmitting(true);
+
+    const endpoint =
+      mode === "login"
+        ? "/api/auth/login"
+        : isVerifyingRegistration
+          ? "/api/auth/register"
+          : "/api/auth/register/start";
+    const payload =
+      mode === "login"
+        ? {
+            email: form.email,
+            password: form.password,
+          }
+        : {
+            email: form.email,
+            firstName: form.firstName,
+            lastName: form.lastName,
+            password: form.password,
+            ...(isVerifyingRegistration ? { code: form.code } : {}),
+          };
+
+    try {
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => null);
+        throw new Error(
+          data?.message || "We could not complete that request. Please try again.",
+        );
+      }
+
+      if (mode === "register" && !isVerifyingRegistration) {
+        setVerificationEmail(form.email.trim().toLowerCase());
+        setNotice("We sent a 6-digit code to your email.");
+        return;
+      }
+
+      onAuthComplete();
+    } catch (submitError) {
+      setError(
+        submitError instanceof Error
+          ? submitError.message
+          : "We could not complete that request. Please try again.",
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
   return (
     <div
-      className="fixed inset-0 z-[80] flex items-center justify-center bg-black/60 px-4 py-6"
+      className="fixed inset-0 z-[80] overflow-y-auto bg-black/60 px-4 py-6"
       role="dialog"
       aria-modal="true"
       aria-labelledby="promo-auth-title"
     >
-      <div className="w-full max-w-[480px] border-2 border-black bg-white p-5 shadow-[6px_6px_0_#000] sm:p-6">
-        <p className="text-[12px] font-extrabold uppercase tracking-[0.16em] text-[var(--ast-global-color-1)]">
-          Promo code
-        </p>
-        <h2
-          id="promo-auth-title"
-          className="mt-2 text-[30px] font-black uppercase leading-none text-black sm:text-[38px]"
+      <div className="mx-auto flex min-h-full w-full max-w-[520px] items-center py-4">
+        <section
+          aria-labelledby="promo-auth-title"
+          className="w-full border-2 border-black bg-white p-5 shadow-[6px_6px_0_#000] sm:p-8"
         >
-          Sign in or register to lock in your discount
-        </h2>
-        <p className="mt-4 text-[16px] font-medium leading-[1.55] text-[#585858]">
-          BayBlaze promo codes are tied to customer accounts so each code can be
-          used correctly.
-        </p>
-        <div className="mt-6 grid gap-3 sm:grid-cols-2">
-          <Link
-            className="bayblaze-sharp-button bayblaze-sharp-button--primary flex h-12 items-center justify-center text-center"
-            href={loginHref}
+          <div className="mb-6 border-2 border-black bg-[var(--ast-global-color-4)] p-4">
+            <p className="text-[13px] font-extrabold uppercase tracking-[0.16em] text-[var(--ast-global-color-1)]">
+              Discount code
+            </p>
+            <h2
+              id="promo-auth-title"
+              className="mt-2 text-3xl font-black uppercase leading-none text-black sm:text-4xl"
+            >
+              Sign in to lock in your discount
+            </h2>
+            <p className="mt-3 text-[15px] font-medium leading-[1.6] text-[#585858]">
+              You can preview the savings now, but BayBlaze needs a customer
+              account before placing the order with this discount.
+            </p>
+          </div>
+
+          {!isVerifyingRegistration ? (
+            <div className="mb-6 grid grid-cols-2 border-2 border-black bg-white">
+              <button
+                type="button"
+                aria-pressed={mode === "login"}
+                className={`h-12 border-r-2 border-black text-[14px] font-extrabold uppercase tracking-widest transition-colors ${
+                  mode === "login"
+                    ? "bg-black text-white"
+                    : "bg-white text-black hover:bg-[var(--ast-global-color-4)]"
+                }`}
+                onClick={() => {
+                  setMode("login");
+                  resetMessages();
+                  setVerificationEmail("");
+                }}
+              >
+                Login
+              </button>
+
+              <button
+                type="button"
+                aria-pressed={mode === "register"}
+                className={`h-12 text-[14px] font-extrabold uppercase tracking-widest transition-colors ${
+                  mode === "register"
+                    ? "bg-black text-white"
+                    : "bg-white text-black hover:bg-[var(--ast-global-color-4)]"
+                }`}
+                onClick={() => {
+                  setMode("register");
+                  resetMessages();
+                }}
+              >
+                Register
+              </button>
+            </div>
+          ) : null}
+
+          {!isVerifyingRegistration ? (
+            <>
+              <a
+                href={googleOAuthHref}
+                className="mb-5 flex h-12 w-full items-center justify-center gap-3 border-2 border-black bg-white px-4 text-center text-[14px] font-extrabold uppercase tracking-wider text-black no-underline transition-colors hover:bg-black hover:text-white"
+              >
+                <AuthGoogleIcon />
+                Continue with Google
+              </a>
+
+              <div className="mb-5 flex items-center gap-3 text-[12px] font-extrabold uppercase tracking-[0.16em] text-[#585858]">
+                <span className="h-0.5 flex-1 bg-black" />
+                <span>Email</span>
+                <span className="h-0.5 flex-1 bg-black" />
+              </div>
+            </>
+          ) : null}
+
+          <form className="space-y-5" onSubmit={handleSubmit}>
+            {isVerifyingRegistration ? (
+              <div className="space-y-5">
+                <div className="border-2 border-black bg-[var(--ast-global-color-4)] p-5">
+                  <p className="text-[13px] font-extrabold uppercase tracking-[0.16em] text-[var(--ast-global-color-1)]">
+                    Verify email
+                  </p>
+                  <h3 className="mt-2 text-3xl font-black uppercase leading-none text-black">
+                    Enter your code
+                  </h3>
+                  <p className="mt-3 text-[15px] font-medium leading-[1.6] text-[#585858]">
+                    We sent a 6-digit code to{" "}
+                    <span className="font-bold text-black">{verificationEmail}</span>.
+                  </p>
+                </div>
+
+                <AuthInput
+                  autoComplete="one-time-code"
+                  inputMode="numeric"
+                  label="Verification code"
+                  maxLength={6}
+                  pattern="[0-9]{6}"
+                  value={form.code}
+                  onChange={(value) =>
+                    updateField("code", value.replace(/\D/g, "").slice(0, 6))
+                  }
+                />
+
+                <button
+                  type="button"
+                  className="text-[13px] font-extrabold uppercase tracking-widest text-[#585858] transition-colors hover:text-black"
+                  onClick={() => {
+                    setVerificationEmail("");
+                    setForm((current) => ({ ...current, code: "" }));
+                    resetMessages();
+                  }}
+                >
+                  Change email
+                </button>
+              </div>
+            ) : (
+              <>
+                {mode === "register" ? (
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <AuthInput
+                      autoComplete="given-name"
+                      label="First name"
+                      value={form.firstName}
+                      onChange={(value) => updateField("firstName", value)}
+                    />
+                    <AuthInput
+                      autoComplete="family-name"
+                      label="Last name"
+                      value={form.lastName}
+                      onChange={(value) => updateField("lastName", value)}
+                    />
+                  </div>
+                ) : null}
+
+                <AuthInput
+                  autoComplete="email"
+                  label="Email"
+                  type="email"
+                  value={form.email}
+                  onChange={(value) => updateField("email", value)}
+                />
+                <AuthInput
+                  autoComplete={mode === "login" ? "current-password" : "new-password"}
+                  label="Password"
+                  minLength={mode === "login" ? 6 : 12}
+                  type="password"
+                  value={form.password}
+                  onChange={(value) => updateField("password", value)}
+                />
+              </>
+            )}
+
+            <p
+              aria-live="polite"
+              className="min-h-6 border-2 border-transparent text-[14px] font-bold text-red-700"
+            >
+              {error}
+            </p>
+
+            {notice ? (
+              <p
+                aria-live="polite"
+                className="-mt-3 border-2 border-black bg-[var(--ast-global-color-4)] px-3 py-2 text-[14px] font-bold text-[var(--ast-global-color-1)]"
+              >
+                {notice}
+              </p>
+            ) : null}
+
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="bayblaze-sharp-button bayblaze-sharp-button--primary flex h-[52px] w-full items-center justify-center text-center disabled:cursor-not-allowed disabled:opacity-70"
+            >
+              {isSubmitting
+                ? mode === "login"
+                  ? "Signing in..."
+                  : verificationEmail
+                    ? "Verifying..."
+                    : "Sending code..."
+                : mode === "login"
+                  ? "Sign in"
+                  : verificationEmail
+                    ? "Verify & create account"
+                    : "Create account"}
+            </button>
+          </form>
+
+          <button
+            className="mt-4 text-[13px] font-extrabold uppercase tracking-widest text-[#585858] transition-colors hover:text-black"
+            onClick={onClose}
+            type="button"
           >
-            Sign in
-          </Link>
-          <Link
-            className="bayblaze-sharp-button bayblaze-sharp-button--outline flex h-12 items-center justify-center text-center"
-            href={registerHref}
-          >
-            Register
-          </Link>
-        </div>
-        <button
-          className="mt-4 text-[13px] font-extrabold uppercase tracking-widest text-[#585858] transition-colors hover:text-black"
-          onClick={onClose}
-          type="button"
-        >
-          Continue as guest
-        </button>
+            Back to checkout
+          </button>
+        </section>
       </div>
     </div>
+  );
+}
+
+function AuthGoogleIcon() {
+  return (
+    <span
+      aria-hidden="true"
+      className="grid size-5 place-items-center border-2 border-black bg-white text-[12px] font-black leading-none text-black"
+    >
+      G
+    </span>
+  );
+}
+
+function AuthInput({
+  label,
+  type = "text",
+  autoComplete,
+  inputMode,
+  maxLength,
+  minLength,
+  pattern,
+  value,
+  onChange,
+}: {
+  label: string;
+  type?: string;
+  autoComplete?: string;
+  inputMode?: "numeric";
+  maxLength?: number;
+  minLength?: number;
+  pattern?: string;
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <label className="block text-[13px] font-extrabold uppercase tracking-widest text-black">
+      {label}
+      <input
+        required
+        type={type}
+        autoComplete={autoComplete}
+        inputMode={inputMode}
+        maxLength={maxLength}
+        minLength={minLength}
+        pattern={pattern}
+        value={value}
+        className="bayblaze-sharp-input mt-2 h-12 text-[16px] font-medium normal-case tracking-normal"
+        onChange={(event) => onChange(event.target.value)}
+      />
+    </label>
   );
 }
 

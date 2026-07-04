@@ -5,7 +5,7 @@ export type CheckoutPromoCodePreview = {
   discountPercent: number;
   eligible: boolean;
   minimumSpendCents: number;
-  ownerUid: string;
+  ownerUid?: string;
   subtotalCents: number;
   usageLimit: number;
   usedCount: number;
