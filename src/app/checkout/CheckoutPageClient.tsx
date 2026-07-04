@@ -986,10 +986,10 @@ export default function CheckoutPageClient({
             </div>
           </CheckoutPanel>
 
-          <CheckoutPanel title="Enter Promo/Discount Code">
+          <CheckoutPanel title="Enter Discount Code">
             <div className="grid gap-3">
               <label className="grid gap-2 text-[15px] font-semibold text-black sm:text-[16px]">
-                Coupon code
+                <span className="sr-only">Discount code</span>
                 <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_128px]">
                   <input
                     className="h-[50px] w-full min-w-0 border border-[#d6d6d6] bg-white px-4 text-[16px] font-semibold uppercase text-black outline-none transition focus:border-black sm:h-[52px]"
