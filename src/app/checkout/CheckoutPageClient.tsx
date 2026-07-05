@@ -1,7 +1,7 @@
 "use client";
 
 import type { FormEvent, ReactNode } from "react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -248,6 +248,7 @@ export default function CheckoutPageClient({
     appliedPromo && !activeAppliedPromo
       ? "Cart changed. Apply the promo code again."
       : promoMessage;
+  const pendingUrlPromoCode = normalizeCheckoutPromoCode(searchParams.get("promo"));
   const scheduleRequirement = useMemo(() => {
     return currentTime ? getDeliveryScheduleRequirement(currentTime) : null;
   }, [currentTime]);
@@ -416,8 +417,11 @@ export default function CheckoutPageClient({
     };
   }, []);
 
-  async function handleApplyPromoCode() {
-    const code = normalizeCheckoutPromoCode(promoCode);
+  const applyPromoCode = useCallback(async function applyPromoCode(
+    rawCode: string,
+    options: { source?: "manual" | "url" } = {},
+  ) {
+    const code = normalizeCheckoutPromoCode(rawCode);
 
     setPromoCode(code);
     setPromoMessage("");
@@ -457,11 +461,40 @@ export default function CheckoutPageClient({
       setAppliedPromo(data);
       setPromoMessage(`${data.discountPercent}% off applied.`);
     } catch {
-      setPromoMessage("Unable to apply that promo code right now.");
+      if (options.source !== "url") {
+        setPromoMessage("Unable to apply that promo code right now.");
+      }
     } finally {
       setIsPromoApplying(false);
     }
+  }, [subtotal]);
+
+  async function handleApplyPromoCode() {
+    await applyPromoCode(promoCode);
   }
+
+  useEffect(() => {
+    if (
+      !pendingUrlPromoCode ||
+      !hasItems ||
+      isPromoApplying ||
+      activeAppliedPromo?.code === pendingUrlPromoCode
+    ) {
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      void applyPromoCode(pendingUrlPromoCode, { source: "url" });
+    }, 0);
+
+    return () => window.clearTimeout(timer);
+  }, [
+    activeAppliedPromo,
+    applyPromoCode,
+    hasItems,
+    isPromoApplying,
+    pendingUrlPromoCode,
+  ]);
 
   function handlePromoCodeChange(value: string) {
     const normalizedCode = normalizeCheckoutPromoCode(value);
@@ -491,6 +524,18 @@ export default function CheckoutPageClient({
     return `/checkout${redirectParams.toString() ? `?${redirectParams.toString()}` : ""}`;
   }
 
+  function persistPromoCodeInUrl(code: string) {
+    const normalizedCode = normalizeCheckoutPromoCode(code);
+
+    if (!normalizedCode || typeof window === "undefined") {
+      return;
+    }
+
+    const url = new URL(window.location.href);
+    url.searchParams.set("promo", normalizedCode);
+    window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}`);
+  }
+
   async function handlePlaceOrder(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
@@ -514,6 +559,7 @@ export default function CheckoutPageClient({
     }
 
     if (activeAppliedPromo && !customer && !hasCompletedPromoAuth) {
+      persistPromoCodeInUrl(activeAppliedPromo.code);
       setIsPromoAuthDialogOpen(true);
       return;
     }
@@ -1244,6 +1290,7 @@ export default function CheckoutPageClient({
           onAuthComplete={() => {
             setIsPromoAuthDialogOpen(false);
             setHasCompletedPromoAuth(true);
+            persistPromoCodeInUrl(activeAppliedPromo?.code ?? promoCode);
             router.refresh();
           }}
           onClose={() => setIsPromoAuthDialogOpen(false)}
