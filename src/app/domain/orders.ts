@@ -12,6 +12,15 @@ export type OrdersResponse = {
   error?: string;
 };
 
+export type OrderDiscountSummary = {
+  amount: number;
+  code: string;
+  label: string;
+  percent: number | null;
+  subtotal: number | null;
+  totalAfterDiscount: number;
+};
+
 export function isCustomerOrder(value: unknown): value is CustomerOrder {
   if (!value || typeof value !== "object") {
     return false;
@@ -119,6 +128,66 @@ export function formatOrderTotal(total?: number | null, currencyCode = "usd") {
     currency: currencyCode.toUpperCase(),
     style: "currency",
   }).format(total);
+}
+
+export function getOrderDisplayTotal(order: CustomerOrder) {
+  return getOrderDiscountSummary(order)?.totalAfterDiscount ??
+    (typeof order.total === "number" ? order.total : null);
+}
+
+export function getOrderDiscountSummary(order: CustomerOrder): OrderDiscountSummary | null {
+  const metadata = order.metadata ?? {};
+  const checkoutPromoTotal = readMetadataNumber(
+    metadata.checkout_promo_total_after_discount,
+  );
+  const checkoutPromoSubtotal = readMetadataNumber(metadata.checkout_promo_subtotal);
+  const checkoutPromoAmount = readMetadataNumber(
+    metadata.checkout_promo_discount_amount,
+  );
+  const checkoutPromoCode = readMetadataString(metadata.checkout_promo_code);
+  const checkoutPromoPercent = readMetadataNumber(
+    metadata.checkout_promo_discount_percent,
+  );
+
+  if (checkoutPromoTotal !== null) {
+    const amount =
+      checkoutPromoSubtotal !== null
+        ? Math.max(0, roundMoney(checkoutPromoSubtotal - checkoutPromoTotal))
+        : checkoutPromoAmount ?? 0;
+
+    if (amount > 0) {
+      return {
+        amount,
+        code: checkoutPromoCode,
+        label: checkoutPromoCode ? `Discount ${checkoutPromoCode}` : "Discount",
+        percent: checkoutPromoPercent,
+        subtotal: checkoutPromoSubtotal,
+        totalAfterDiscount: checkoutPromoTotal,
+      };
+    }
+  }
+
+  const firstOrderTotal = readMetadataNumber(
+    metadata.first_order_offer_total_after_discount,
+  );
+  const firstOrderAmount = readMetadataNumber(
+    metadata.first_order_offer_discount_amount,
+  );
+
+  if (firstOrderTotal !== null && firstOrderAmount !== null && firstOrderAmount > 0) {
+    const firstOrderCode = readMetadataString(metadata.first_order_offer_code);
+
+    return {
+      amount: firstOrderAmount,
+      code: firstOrderCode,
+      label: firstOrderCode ? `Discount ${firstOrderCode}` : "First-order discount",
+      percent: readMetadataNumber(metadata.first_order_offer_discount_percent),
+      subtotal: readMetadataNumber(metadata.first_order_offer_subtotal),
+      totalAfterDiscount: firstOrderTotal,
+    };
+  }
+
+  return null;
 }
 
 export function getOrderItemTitle(item: CustomerOrderItem) {
@@ -323,4 +392,18 @@ function readOrderMetadataString(order: CustomerOrder, ...keys: string[]) {
   }
 
   return "";
+}
+
+function readMetadataString(value: unknown) {
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function readMetadataNumber(value: unknown) {
+  const number = typeof value === "number" || typeof value === "string" ? Number(value) : Number.NaN;
+
+  return Number.isFinite(number) ? number : null;
+}
+
+function roundMoney(amount: number) {
+  return Math.round(amount * 100) / 100;
 }

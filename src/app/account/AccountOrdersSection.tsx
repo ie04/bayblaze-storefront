@@ -13,6 +13,8 @@ import {
   formatOrderNumber,
   formatOrderStatus,
   formatOrderTotal,
+  getOrderDiscountSummary,
+  getOrderDisplayTotal,
   getOrderLifecycleStatus,
   getOrderItemTitle,
   getOrderItemTotal,
@@ -20,7 +22,6 @@ import {
   isCustomerOrder,
   mergeOrderLists,
 } from "@/app/domain/orders";
-import { getOrderFirstOrderOfferTotal } from "@/app/domain/referral-offers";
 
 const medusaBackendUrl =
   process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL?.replace(/\/$/, "") ?? "";
@@ -194,11 +195,11 @@ export default function AccountOrdersSection({
                   </span>
 
                   <span className="mt-3 flex items-center justify-between gap-4">
-                    {getOrderFirstOrderOfferTotal(order) !== null &&
+                    {getOrderDisplayTotal(order) !== null &&
                     order.currency_code ? (
                       <span className="text-[16px] font-semibold text-black">
                         {formatOrderTotal(
-                          getOrderFirstOrderOfferTotal(order),
+                          getOrderDisplayTotal(order),
                           order.currency_code,
                         )}
                       </span>
@@ -220,15 +221,18 @@ export default function AccountOrdersSection({
                     className="border-t border-[#eeeeee] bg-white px-4 py-4"
                   >
                     {order.items?.length ? (
-                      <ul className="space-y-3">
-                        {order.items.map((item, index) => (
-                          <OrderItemRow
-                            currencyCode={order.currency_code}
-                            item={item}
-                            key={item.id ?? `${getOrderItemTitle(item)}-${index}`}
-                          />
-                        ))}
-                      </ul>
+                      <>
+                        <ul className="space-y-3">
+                          {order.items.map((item, index) => (
+                            <OrderItemRow
+                              currencyCode={order.currency_code}
+                              item={item}
+                              key={item.id ?? `${getOrderItemTitle(item)}-${index}`}
+                            />
+                          ))}
+                        </ul>
+                        <OrderTotals order={order} />
+                      </>
                     ) : (
                       <p className="text-[15px] leading-[1.55] text-[#585858]">
                         Order details are syncing from Medusa.
@@ -246,6 +250,43 @@ export default function AccountOrdersSection({
         </p>
       )}
     </article>
+  );
+}
+
+function OrderTotals({ order }: { order: CustomerOrder }) {
+  const discount = getOrderDiscountSummary(order);
+  const total = getOrderDisplayTotal(order);
+  const currencyCode = order.currency_code ?? "usd";
+
+  if (total === null) {
+    return null;
+  }
+
+  return (
+    <dl className="mt-4 grid gap-2 border-t border-[#eeeeee] pt-4 text-[15px]">
+      {discount?.subtotal !== null && discount?.subtotal !== undefined ? (
+        <div className="flex justify-between gap-4">
+          <dt className="text-[#585858]">Subtotal</dt>
+          <dd className="font-semibold text-black">
+            {formatOrderTotal(discount.subtotal, currencyCode)}
+          </dd>
+        </div>
+      ) : null}
+      {discount ? (
+        <div className="flex justify-between gap-4 text-[var(--ast-global-color-1)]">
+          <dt>{discount.label}</dt>
+          <dd className="font-semibold">
+            -{formatOrderTotal(discount.amount, currencyCode)}
+          </dd>
+        </div>
+      ) : null}
+      <div className="flex justify-between gap-4 border-t border-[#eeeeee] pt-2">
+        <dt className="font-semibold text-black">Total due</dt>
+        <dd className="font-semibold text-black">
+          {formatOrderTotal(total, currencyCode)}
+        </dd>
+      </div>
+    </dl>
   );
 }
 

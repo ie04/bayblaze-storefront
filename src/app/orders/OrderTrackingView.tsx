@@ -6,6 +6,8 @@ import {
   formatOrderNumber,
   formatOrderStatus,
   formatOrderTotal,
+  getOrderDiscountSummary,
+  getOrderDisplayTotal,
   getOrderItemTotal,
   getOrderItemTitle,
   getOrderLifecycleStatus,
@@ -15,7 +17,6 @@ import {
   getVariantLabel,
   isCompletedOrder,
 } from "@/app/domain/orders";
-import { getOrderFirstOrderOfferTotal } from "@/app/domain/referral-offers";
 import OrderCancelAction from "./OrderCancelAction";
 
 export default function OrderTrackingView({
@@ -89,6 +90,9 @@ export default function OrderTrackingView({
 
 function OrderSummary({ order }: { order: CustomerOrder }) {
   const scheduledDelivery = getScheduledDeliveryDisplay(order);
+  const discount = getOrderDiscountSummary(order);
+  const total = getOrderDisplayTotal(order);
+  const currencyCode = order.currency_code ?? "usd";
 
   return (
     <section className="bayblaze-sharp-card bayblaze-sharp-card bayblaze-sharp-card--cream p-5">
@@ -114,13 +118,24 @@ function OrderSummary({ order }: { order: CustomerOrder }) {
           <dt className="font-semibold text-black">Payment</dt>
           <dd>Cash, Cash App, or Zelle on delivery</dd>
         </div>
-        <div className="border-t border-[#ded8cf] pt-4">
+        <div className="grid gap-2 border-t border-[#ded8cf] pt-4">
+          {discount?.subtotal !== null && discount?.subtotal !== undefined ? (
+            <div className="flex justify-between gap-4">
+              <dt className="font-semibold text-black">Subtotal</dt>
+              <dd>{formatOrderTotal(discount.subtotal, currencyCode)}</dd>
+            </div>
+          ) : null}
+          {discount ? (
+            <div className="flex justify-between gap-4 text-[var(--ast-global-color-1)]">
+              <dt className="font-semibold">{discount.label}</dt>
+              <dd className="font-semibold">
+                -{formatOrderTotal(discount.amount, currencyCode)}
+              </dd>
+            </div>
+          ) : null}
           <dt className="font-semibold text-black">Total</dt>
           <dd className="text-[22px] font-semibold text-black">
-            {formatOrderTotal(
-              getOrderFirstOrderOfferTotal(order),
-              order.currency_code ?? "usd",
-            )}
+            {formatOrderTotal(total, currencyCode)}
           </dd>
         </div>
       </dl>
