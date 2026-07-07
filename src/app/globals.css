@@ -1023,38 +1023,6 @@ main {
   color: #000000;
 }
 
-@media print {
-  body {
-    background: #ffffff !important;
-  }
-
-  .bayblaze-promo-qr-page {
-    background: #ffffff !important;
-    min-height: auto !important;
-    padding: 0 !important;
-  }
-
-  .bayblaze-promo-qr-header,
-  .bayblaze-promo-qr-controls {
-    display: none !important;
-  }
-
-  .bayblaze-promo-qr-page > section > div,
-  .bayblaze-promo-qr-page > section {
-    display: block !important;
-    max-width: none !important;
-  }
-
-  .bayblaze-promo-qr-print {
-    border: 0 !important;
-    box-shadow: none !important;
-    margin: 0 auto !important;
-    max-width: 4in !important;
-    padding: 0.2in !important;
-    width: 4in !important;
-  }
-}
-
 .bayblaze-google-autocomplete-container,
 .bayblaze-google-place-autocomplete,
 gmp-place-autocomplete.bayblaze-google-place-autocomplete {
