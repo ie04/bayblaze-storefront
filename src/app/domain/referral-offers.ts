@@ -3,18 +3,21 @@ export const REFERRAL_OFFER_COOKIE = "bayblaze_referral_offer";
 export const REFERRAL_OFFER_STORAGE_KEY = "bayblaze-referral-offer";
 
 export type ReferralOfferSource = "qr" | "admin_promo";
+export type ReferralOfferType = "discount" | "bogo";
 
 export type ReferralOffer = {
   code: string;
   discountPercent: number;
   label: string;
   source: ReferralOfferSource;
+  type?: ReferralOfferType;
 };
 
 type FirstOrderReferralOffer = ReferralOffer & {
   code: typeof FIRST_ORDER_QR_OFFER_CODE;
   discountPercent: 30;
   source: "qr";
+  type: "discount";
 };
 
 const acceptedQueryKeys = ["promo", "qr", "discount", "offer", "ref"];
@@ -32,18 +35,24 @@ export function getFirstOrderQrOffer(): FirstOrderReferralOffer {
     discountPercent: 30,
     label: "30% off your first order",
     source: "qr",
+    type: "discount",
   };
 }
 
 export function createAdminPromoReferralOffer({
   code,
+  codeType,
   discountPercent,
 }: {
   code: string;
+  codeType?: ReferralOfferType;
   discountPercent: number;
 }): ReferralOffer | null {
   const normalizedCode = normalizeReferralPromoCode(code);
-  const normalizedDiscountPercent = normalizeDiscountPercent(discountPercent);
+  const normalizedCodeType = codeType === "bogo" ? "bogo" : "discount";
+  const normalizedDiscountPercent = normalizedCodeType === "bogo"
+    ? 0
+    : normalizeDiscountPercent(discountPercent);
 
   if (!normalizedCode || normalizedDiscountPercent === null) {
     return null;
@@ -52,8 +61,11 @@ export function createAdminPromoReferralOffer({
   return {
     code: normalizedCode,
     discountPercent: normalizedDiscountPercent,
-    label: `${formatDiscountPercent(normalizedDiscountPercent)} off with ${normalizedCode}`,
+    label: normalizedCodeType === "bogo"
+      ? `Buy 1 get 1 free with ${normalizedCode}`
+      : `${formatDiscountPercent(normalizedDiscountPercent)} off with ${normalizedCode}`,
     source: "admin_promo",
+    type: normalizedCodeType,
   };
 }
 
@@ -121,6 +133,7 @@ export function parseReferralOffer(value?: string | null) {
       if (parsed.source === "admin_promo") {
         const offer = createAdminPromoReferralOffer({
           code: String(parsed.code || ""),
+          codeType: parsed.type === "bogo" ? "bogo" : "discount",
           discountPercent: Number(parsed.discountPercent),
         });
 
@@ -150,7 +163,7 @@ export function getReferralOfferFromCookieHeader(cookieHeader?: string | null) {
 }
 
 export function getReferralOfferDiscountAmount(subtotal: number, offer?: ReferralOffer | null) {
-  if (!offer || subtotal <= 0) {
+  if (!offer || offer.type === "bogo" || subtotal <= 0) {
     return 0;
   }
 
