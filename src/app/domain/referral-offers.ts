@@ -2,11 +2,13 @@ export const FIRST_ORDER_QR_OFFER_CODE = "first30";
 export const REFERRAL_OFFER_COOKIE = "bayblaze_referral_offer";
 export const REFERRAL_OFFER_STORAGE_KEY = "bayblaze-referral-offer";
 
+export type ReferralOfferSource = "qr" | "admin_promo";
+
 export type ReferralOffer = {
-  code: typeof FIRST_ORDER_QR_OFFER_CODE;
-  discountPercent: 30;
+  code: string;
+  discountPercent: number;
   label: string;
-  source: "qr";
+  source: ReferralOfferSource;
 };
 
 const acceptedQueryKeys = ["promo", "qr", "discount", "offer", "ref"];
@@ -27,16 +29,51 @@ export function getFirstOrderQrOffer(): ReferralOffer {
   };
 }
 
+export function createAdminPromoReferralOffer({
+  code,
+  discountPercent,
+}: {
+  code: string;
+  discountPercent: number;
+}): ReferralOffer | null {
+  const normalizedCode = normalizePromoDisplayCode(code);
+  const normalizedDiscountPercent = normalizeDiscountPercent(discountPercent);
+
+  if (!normalizedCode || normalizedDiscountPercent === null) {
+    return null;
+  }
+
+  return {
+    code: normalizedCode,
+    discountPercent: normalizedDiscountPercent,
+    label: `${formatDiscountPercent(normalizedDiscountPercent)} off with ${normalizedCode}`,
+    source: "admin_promo",
+  };
+}
+
 export function getReferralOfferFromSearchParams(searchParams: URLSearchParams) {
   for (const key of acceptedQueryKeys) {
-    const value = searchParams.get(key)?.trim().toLowerCase();
+    const value = searchParams.get(key);
 
-    if (value && acceptedQueryValues.includes(value)) {
+    if (isFirstOrderQrOfferCode(value)) {
       return getFirstOrderQrOffer();
     }
   }
 
   return null;
+}
+
+export function isFirstOrderQrOfferCode(value: unknown) {
+  return typeof value === "string" && acceptedQueryValues.includes(value.trim().toLowerCase());
+}
+
+export function isFirstOrderReferralOffer(offer?: ReferralOffer | null) {
+  return Boolean(
+    offer &&
+      offer.source === "qr" &&
+      isFirstOrderQrOfferCode(offer.code) &&
+      offer.discountPercent === 30,
+  );
 }
 
 export function getFirstOrderQrPromoUrl({
@@ -70,12 +107,19 @@ export function parseReferralOffer(value?: string | null) {
     try {
       const parsed = JSON.parse(candidate) as Partial<ReferralOffer>;
 
-      if (
-        parsed.code === FIRST_ORDER_QR_OFFER_CODE &&
-        parsed.discountPercent === 30 &&
-        parsed.source === "qr"
-      ) {
+      if (isFirstOrderReferralOffer(parsed as ReferralOffer)) {
         return getFirstOrderQrOffer();
+      }
+
+      if (parsed.source === "admin_promo") {
+        const offer = createAdminPromoReferralOffer({
+          code: String(parsed.code || ""),
+          discountPercent: Number(parsed.discountPercent),
+        });
+
+        if (offer) {
+          return offer;
+        }
       }
     } catch {
       // Try the next candidate.
@@ -93,8 +137,9 @@ export function getReferralOfferFromCookieHeader(cookieHeader?: string | null) {
     ?.split("=")
     .slice(1)
     .join("=");
+  const offer = parseReferralOffer(cookieValue);
 
-  return parseReferralOffer(cookieValue);
+  return isFirstOrderReferralOffer(offer) ? offer : null;
 }
 
 export function getReferralOfferDiscountAmount(subtotal: number, offer?: ReferralOffer | null) {
@@ -110,7 +155,7 @@ export function getReferralOfferTotal(subtotal: number, offer?: ReferralOffer | 
 }
 
 export function getReferralOfferCustomerMetadata(offer?: ReferralOffer | null) {
-  if (!offer) {
+  if (!isFirstOrderReferralOffer(offer)) {
     return {};
   }
 
@@ -133,7 +178,7 @@ export function getReferralOfferOrderMetadata({
   subtotal: number;
   totalAfterDiscount: number;
 }) {
-  if (!offer || discountAmount <= 0) {
+  if (!isFirstOrderReferralOffer(offer) || discountAmount <= 0) {
     return {};
   }
 
@@ -159,6 +204,26 @@ export function getOrderFirstOrderOfferTotal(order: {
   }
 
   return typeof order.total === "number" ? order.total : null;
+}
+
+function normalizePromoDisplayCode(value: unknown) {
+  return typeof value === "string"
+    ? value.replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 80).toUpperCase()
+    : "";
+}
+
+function normalizeDiscountPercent(value: unknown) {
+  const number = typeof value === "number" || typeof value === "string" ? Number(value) : Number.NaN;
+
+  if (!Number.isFinite(number) || number <= 0 || number > 100) {
+    return null;
+  }
+
+  return Math.round(number * 100) / 100;
+}
+
+function formatDiscountPercent(value: number) {
+  return `${Number.isInteger(value) ? value : value.toFixed(2)}%`;
 }
 
 function roundMoney(amount: number) {
