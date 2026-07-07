@@ -34,9 +34,18 @@ type BayBlazeAccountSessionResponse = {
   };
 };
 
+export type BayBlazeDiscountCodePreviewItem = {
+  quantity: number;
+  unitPriceCents: number;
+};
+
 export type BayBlazeDiscountCodePreview = {
+  bogoBuyQuantity?: number;
+  bogoDiscountedQuantity?: number;
+  bogoFreeQuantity?: number;
   category: string;
   code: string;
+  codeType?: "discount" | "bogo";
   discountAmountCents: number;
   discountPercent: number;
   eligible: boolean;
@@ -118,6 +127,7 @@ export async function previewBayBlazeDiscountCode(
   token: string,
   input: {
     code: string;
+    items?: BayBlazeDiscountCodePreviewItem[];
     subtotalCents?: number;
   },
 ) {
@@ -133,6 +143,7 @@ export async function previewBayBlazeDiscountCode(
 
 export async function previewPublicBayBlazeDiscountCode(input: {
   code: string;
+  items?: BayBlazeDiscountCodePreviewItem[];
   subtotalCents?: number;
 }) {
   return bayblazeApiRequest<BayBlazeDiscountCodePreview>(
