@@ -11,6 +11,12 @@ export type ReferralOffer = {
   source: ReferralOfferSource;
 };
 
+type FirstOrderReferralOffer = ReferralOffer & {
+  code: typeof FIRST_ORDER_QR_OFFER_CODE;
+  discountPercent: 30;
+  source: "qr";
+};
+
 const acceptedQueryKeys = ["promo", "qr", "discount", "offer", "ref"];
 const acceptedQueryValues = [
   FIRST_ORDER_QR_OFFER_CODE,
@@ -20,7 +26,7 @@ const acceptedQueryValues = [
   "qr30",
 ];
 
-export function getFirstOrderQrOffer(): ReferralOffer {
+export function getFirstOrderQrOffer(): FirstOrderReferralOffer {
   return {
     code: FIRST_ORDER_QR_OFFER_CODE,
     discountPercent: 30,
@@ -67,12 +73,13 @@ export function isFirstOrderQrOfferCode(value: unknown) {
   return typeof value === "string" && acceptedQueryValues.includes(value.trim().toLowerCase());
 }
 
-export function isFirstOrderReferralOffer(offer?: ReferralOffer | null) {
-  return Boolean(
-    offer &&
-      offer.source === "qr" &&
-      isFirstOrderQrOfferCode(offer.code) &&
-      offer.discountPercent === 30,
+export function isFirstOrderReferralOffer(
+  offer?: ReferralOffer | null,
+): offer is FirstOrderReferralOffer {
+  return (
+    offer?.source === "qr" &&
+    isFirstOrderQrOfferCode(offer.code) &&
+    offer.discountPercent === 30
   );
 }
 
