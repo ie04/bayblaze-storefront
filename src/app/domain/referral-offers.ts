@@ -36,7 +36,7 @@ export function createAdminPromoReferralOffer({
   code: string;
   discountPercent: number;
 }): ReferralOffer | null {
-  const normalizedCode = normalizePromoDisplayCode(code);
+  const normalizedCode = normalizeReferralPromoCode(code);
   const normalizedDiscountPercent = normalizeDiscountPercent(discountPercent);
 
   if (!normalizedCode || normalizedDiscountPercent === null) {
@@ -206,7 +206,7 @@ export function getOrderFirstOrderOfferTotal(order: {
   return typeof order.total === "number" ? order.total : null;
 }
 
-function normalizePromoDisplayCode(value: unknown) {
+export function normalizeReferralPromoCode(value: unknown) {
   return typeof value === "string"
     ? value.replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 80).toUpperCase()
     : "";
