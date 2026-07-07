@@ -11,6 +11,7 @@ import {
 } from "react";
 
 import { useCart } from "@/app/components/cart/CartContext";
+import { useCheckoutPromoCode } from "@/app/components/promo/CheckoutPromoCodeProvider";
 import { useReferralOffer } from "@/app/components/referral/ReferralOfferProvider";
 import { getReferralOfferTotal } from "@/app/domain/referral-offers";
 import styles from "./Header.module.css";
@@ -40,6 +41,9 @@ export default function Header({
 }: HeaderProps) {
   const [isSearchOverlayOpen, setIsSearchOverlayOpen] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const { checkoutHref: promoCheckoutHref } = useCheckoutPromoCode();
+  const effectiveCheckoutHref =
+    checkoutHref === "/checkout" ? promoCheckoutHref : checkoutHref;
 
   const {
     items,
@@ -187,7 +191,7 @@ export default function Header({
       <CartDrawer
         items={items}
         cartCount={cartCount}
-        checkoutHref={checkoutHref}
+        checkoutHref={effectiveCheckoutHref}
         isOpen={isCartOpen}
         onClose={closeCart}
         onRemoveItem={removeItem}

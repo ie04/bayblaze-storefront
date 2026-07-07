@@ -8,6 +8,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 
 import Header from "@/app/components/layout/Header";
 import { useCart, type CartItem } from "@/app/components/cart/CartContext";
+import { useCheckoutPromoCode } from "@/app/components/promo/CheckoutPromoCodeProvider";
 import { useReferralOffer } from "@/app/components/referral/ReferralOfferProvider";
 import {
   DELIVERY_SCHEDULING_RULE,
@@ -179,6 +180,11 @@ export default function CheckoutPageClient({
   const router = useRouter();
   const searchParams = useSearchParams();
   const { items, cartCount, clearCart, removeItem } = useCart();
+  const {
+    clearPromoCode: clearStoredCheckoutPromoCode,
+    promoCode: storedCheckoutPromoCode,
+    setPromoCode: storeCheckoutPromoCode,
+  } = useCheckoutPromoCode();
   const { clearOffer: clearReferralOffer, offer: referralOffer } =
     useReferralOffer();
   const [checkoutError, setCheckoutError] = useState("");
@@ -248,7 +254,9 @@ export default function CheckoutPageClient({
     appliedPromo && !activeAppliedPromo
       ? "Cart changed. Apply the promo code again."
       : promoMessage;
-  const pendingUrlPromoCode = normalizeCheckoutPromoCode(searchParams.get("promo"));
+  const pendingUrlPromoCode =
+    normalizeCheckoutPromoCode(searchParams.get("promo")) ||
+    storedCheckoutPromoCode;
   const scheduleRequirement = useMemo(() => {
     return currentTime ? getDeliveryScheduleRequirement(currentTime) : null;
   }, [currentTime]);
@@ -460,6 +468,7 @@ export default function CheckoutPageClient({
 
       setAppliedPromo(data);
       setPromoMessage(`${data.discountPercent}% off applied.`);
+      storeCheckoutPromoCode(data.code);
     } catch {
       if (options.source !== "url") {
         setPromoMessage("Unable to apply that promo code right now.");
@@ -467,7 +476,7 @@ export default function CheckoutPageClient({
     } finally {
       setIsPromoApplying(false);
     }
-  }, [subtotal]);
+  }, [storeCheckoutPromoCode, subtotal]);
 
   async function handleApplyPromoCode() {
     await applyPromoCode(promoCode);
@@ -511,6 +520,7 @@ export default function CheckoutPageClient({
     setAppliedPromo(null);
     setPromoMessage("");
     setPromoCode("");
+    clearStoredCheckoutPromoCode();
   }
 
   function getPromoCheckoutRedirect() {
