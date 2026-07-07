@@ -1,6 +1,12 @@
+export type CheckoutPromoCodeType = "discount" | "bogo";
+
 export type CheckoutPromoCodePreview = {
+  bogoBuyQuantity?: number;
+  bogoDiscountedQuantity?: number;
+  bogoFreeQuantity?: number;
   category: string;
   code: string;
+  codeType?: CheckoutPromoCodeType;
   discountAmountCents: number;
   discountPercent: number;
   eligible: boolean;
@@ -9,6 +15,11 @@ export type CheckoutPromoCodePreview = {
   subtotalCents: number;
   usageLimit: number;
   usedCount: number;
+};
+
+export type CheckoutPromoPreviewItem = {
+  quantity: number;
+  unitPriceCents: number;
 };
 
 export function normalizeCheckoutPromoCode(value: unknown) {
@@ -36,6 +47,22 @@ export function getCheckoutPromoDiscountAmount(
   return centsToMoney(promo.discountAmountCents);
 }
 
+export function getCheckoutPromoMessage(promo: CheckoutPromoCodePreview) {
+  if ((promo.codeType ?? "discount") === "bogo") {
+    return promo.discountAmountCents > 0
+      ? `Buy 1 get 1 free applied. ${promo.bogoDiscountedQuantity ?? 0} item${promo.bogoDiscountedQuantity === 1 ? "" : "s"} free.`
+      : "Buy 1 get 1 free ready. Add at least 2 eligible items to get one free.";
+  }
+
+  return `${promo.discountPercent}% off applied.`;
+}
+
+export function getCheckoutPromoLabel(promo: CheckoutPromoCodePreview) {
+  return (promo.codeType ?? "discount") === "bogo"
+    ? `BOGO ${promo.code}`
+    : `Promo ${promo.code}`;
+}
+
 export function getCheckoutPromoMetadata({
   discountAmount,
   promo,
@@ -52,8 +79,12 @@ export function getCheckoutPromoMetadata({
   }
 
   return {
+    checkout_promo_bogo_buy_quantity: promo.bogoBuyQuantity ?? undefined,
+    checkout_promo_bogo_discounted_quantity: promo.bogoDiscountedQuantity ?? undefined,
+    checkout_promo_bogo_free_quantity: promo.bogoFreeQuantity ?? undefined,
     checkout_promo_category: promo.category,
     checkout_promo_code: promo.code,
+    checkout_promo_code_type: promo.codeType ?? "discount",
     checkout_promo_discount_amount: discountAmount,
     checkout_promo_discount_percent: promo.discountPercent,
     checkout_promo_minimum_spend_cents: promo.minimumSpendCents,
