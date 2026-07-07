@@ -13,7 +13,10 @@ import { usePathname } from "next/navigation";
 import {
   REFERRAL_OFFER_COOKIE,
   REFERRAL_OFFER_STORAGE_KEY,
+  createAdminPromoReferralOffer,
   getReferralOfferFromSearchParams,
+  isFirstOrderReferralOffer,
+  normalizeReferralPromoCode,
   parseReferralOffer,
   serializeReferralOffer,
   type ReferralOffer,
@@ -22,6 +25,12 @@ import {
 type ReferralOfferContextValue = {
   clearOffer: () => void;
   offer: ReferralOffer | null;
+};
+
+type PromoPreviewResponse = {
+  code?: string;
+  discountPercent?: number;
+  eligible?: boolean;
 };
 
 const ReferralOfferContext = createContext<ReferralOfferContextValue>({
@@ -46,7 +55,7 @@ export default function ReferralOfferProvider({
     let isActive = true;
     const storedOffer = readStoredOffer();
 
-    if (storedOffer) {
+    if (storedOffer && shouldExposeOfferOnPath(storedOffer, window.location.pathname)) {
       window.setTimeout(() => {
         if (isActive) {
           setOffer(storedOffer);
@@ -61,28 +70,73 @@ export default function ReferralOfferProvider({
 
   useEffect(() => {
     let isActive = true;
-    const claimedOffer = getReferralOfferFromSearchParams(
-      new URLSearchParams(window.location.search),
-    );
+    const currentPathname = window.location.pathname;
 
-    if (!claimedOffer) {
+    if (isCheckoutPath(currentPathname)) {
+      setOffer((currentOffer) =>
+        currentOffer && isFirstOrderReferralOffer(currentOffer) ? currentOffer : null,
+      );
+      setToastOffer(null);
       return;
     }
 
-    storeOffer(claimedOffer);
-    window.setTimeout(() => {
-      if (!isActive) {
-        return;
+    const searchParams = new URLSearchParams(window.location.search);
+    const claimedOffer = getReferralOfferFromSearchParams(searchParams);
+
+    if (claimedOffer) {
+      publishOffer(claimedOffer, {
+        setOffer,
+        setToastOffer,
+      });
+
+      const toastTimer = window.setTimeout(() => setToastOffer(null), 1800);
+
+      return () => {
+        isActive = false;
+        window.clearTimeout(toastTimer);
+      };
+    }
+
+    const promoCode = getAdminPromoCodeFromSearchParams(searchParams);
+
+    if (!promoCode) {
+      const storedOffer = readStoredOffer();
+
+      if (storedOffer && shouldExposeOfferOnPath(storedOffer, currentPathname)) {
+        window.setTimeout(() => {
+          if (isActive) {
+            setOffer(storedOffer);
+          }
+        }, 0);
       }
 
-      setOffer(claimedOffer);
-      setToastOffer(claimedOffer);
-    }, 0);
+      return () => {
+        isActive = false;
+      };
+    }
+
+    const abortController = new AbortController();
+
+    previewAdminPromoOffer(promoCode, abortController.signal)
+      .then((adminOffer) => {
+        if (!isActive || !adminOffer) {
+          return;
+        }
+
+        publishOffer(adminOffer, {
+          setOffer,
+          setToastOffer,
+        });
+      })
+      .catch(() => {
+        // Invalid admin promo codes should simply fall through to checkout handling.
+      });
 
     const toastTimer = window.setTimeout(() => setToastOffer(null), 1800);
 
     return () => {
       isActive = false;
+      abortController.abort();
       window.clearTimeout(toastTimer);
     };
   }, [pathname]);
@@ -131,32 +185,55 @@ function readStoredOffer() {
   }
 }
 
+function publishOffer(
+  offer: ReferralOffer,
+  setters: {
+    setOffer: (offer: ReferralOffer | null) => void;
+    setToastOffer: (offer: ReferralOffer | null) => void;
+  },
+) {
+  storeOffer(offer);
+  window.setTimeout(() => {
+    setters.setOffer(offer);
+    setters.setToastOffer(offer);
+  }, 0);
+}
+
 function storeOffer(offer: ReferralOffer) {
   const serializedOffer = serializeReferralOffer(offer);
 
   try {
     window.sessionStorage.setItem(REFERRAL_OFFER_STORAGE_KEY, serializedOffer);
   } catch {
-    // The cookie still carries the offer into server-side signup and checkout.
+    // The current in-memory offer still drives this page view.
   }
 
-  document.cookie = [
-    `${REFERRAL_OFFER_COOKIE}=${encodeURIComponent(serializedOffer)}`,
-    "path=/",
-    "SameSite=Lax",
-    window.location.protocol === "https:" ? "Secure" : "",
-  ]
-    .filter(Boolean)
-    .join("; ");
+  if (isFirstOrderReferralOffer(offer)) {
+    document.cookie = [
+      `${REFERRAL_OFFER_COOKIE}=${encodeURIComponent(serializedOffer)}`,
+      "path=/",
+      "SameSite=Lax",
+      window.location.protocol === "https:" ? "Secure" : "",
+    ]
+      .filter(Boolean)
+      .join("; ");
+    return;
+  }
+
+  clearReferralOfferCookie();
 }
 
 function clearStoredOffer() {
   try {
     window.sessionStorage.removeItem(REFERRAL_OFFER_STORAGE_KEY);
   } catch {
-    // The session cookie cleanup below is still enough for server requests.
+    // Clearing component state is enough for this page view.
   }
 
+  clearReferralOfferCookie();
+}
+
+function clearReferralOfferCookie() {
   document.cookie = [
     `${REFERRAL_OFFER_COOKIE}=`,
     "path=/",
@@ -166,4 +243,45 @@ function clearStoredOffer() {
   ]
     .filter(Boolean)
     .join("; ");
+}
+
+function getAdminPromoCodeFromSearchParams(searchParams: URLSearchParams) {
+  return normalizeReferralPromoCode(searchParams.get("promo"));
+}
+
+async function previewAdminPromoOffer(code: string, signal: AbortSignal) {
+  const response = await fetch("/api/checkout/promo/preview", {
+    body: JSON.stringify({
+      code,
+      subtotalCents: 0,
+    }),
+    headers: {
+      "content-type": "application/json",
+    },
+    method: "POST",
+    signal,
+  });
+
+  if (!response.ok) {
+    return null;
+  }
+
+  const preview = (await response.json().catch(() => ({}))) as PromoPreviewResponse;
+
+  if (!preview.eligible || !preview.code || !preview.discountPercent) {
+    return null;
+  }
+
+  return createAdminPromoReferralOffer({
+    code: preview.code,
+    discountPercent: preview.discountPercent,
+  });
+}
+
+function shouldExposeOfferOnPath(offer: ReferralOffer, pathname: string) {
+  return !isCheckoutPath(pathname) || isFirstOrderReferralOffer(offer);
+}
+
+function isCheckoutPath(pathname: string) {
+  return pathname === "/checkout" || pathname.startsWith("/checkout/");
 }
