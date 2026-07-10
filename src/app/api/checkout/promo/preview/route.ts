@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import {
+  BayBlazeApiError,
   getBayBlazeAccountToken,
   previewBayBlazeDiscountCode,
   previewPublicBayBlazeDiscountCode,
@@ -41,6 +42,15 @@ export async function POST(request: Request) {
         : await previewPublicBayBlazeDiscountCode(payload),
     );
   } catch (error) {
+    if (error instanceof BayBlazeApiError) {
+      return NextResponse.json(
+        isPlainObject(error.payload)
+          ? error.payload
+          : { message: error.message },
+        { status: error.status >= 400 && error.status < 500 ? error.status : 400 },
+      );
+    }
+
     return NextResponse.json(
       {
         message:
@@ -51,6 +61,10 @@ export async function POST(request: Request) {
       { status: 400 },
     );
   }
+}
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
 }
 
 function normalizePreviewItems(value: unknown): BayBlazeDiscountCodePreviewItem[] {

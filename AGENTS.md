@@ -291,6 +291,11 @@ Additional UI constraints:
   discount must require a customer account and revalidate through authenticated
   `POST /v1/customer/discount-codes/preview`; guests should see the login-style
   sign-in/register card at Place Order time to lock in the discount.
+- Admin promo codes can require a minimum basket size before tax. If
+  `bayblaze-api` returns `eligible=false` with
+  `ineligibilityReason="minimum_spend"`, checkout should show a short customer
+  popup that states the minimum and how much more to add, with an option to
+  continue without the discount. Keep this copy simple and customer-facing.
 
 ### PWA Install Prompt
 

@@ -40,6 +40,7 @@ export type BayBlazeDiscountCodePreviewItem = {
 };
 
 export type BayBlazeDiscountCodePreview = {
+  amountNeededCents?: number;
   bogoBuyQuantity?: number;
   bogoDiscountedQuantity?: number;
   bogoFreeQuantity?: number;
@@ -49,6 +50,8 @@ export type BayBlazeDiscountCodePreview = {
   discountAmountCents: number;
   discountPercent: number;
   eligible: boolean;
+  ineligibilityReason?: "minimum_spend";
+  message?: string;
   minimumSpendCents: number;
   ownerUid?: string;
   subtotalCents: number;
@@ -177,10 +180,20 @@ async function bayblazeApiRequest<T>(
   const payload = text ? JSON.parse(text) : {};
 
   if (!response.ok) {
-    throw new Error(readErrorMessage(payload, response.status));
+    throw new BayBlazeApiError(response.status, readErrorMessage(payload, response.status), payload);
   }
 
   return payload as T;
+}
+
+export class BayBlazeApiError extends Error {
+  constructor(
+    readonly status: number,
+    message: string,
+    readonly payload: unknown,
+  ) {
+    super(message);
+  }
 }
 
 function readErrorMessage(payload: unknown, status: number) {

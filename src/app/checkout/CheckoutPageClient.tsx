@@ -35,9 +35,12 @@ import {
 } from "@/app/domain/referral-offers";
 import {
   getCheckoutPromoDiscountAmount,
+  getCheckoutPromoMessage,
   getOrderCheckoutPromoTotal,
+  centsToMoney,
   moneyToCents,
   normalizeCheckoutPromoCode,
+  type CheckoutPromoPreviewItem,
   type CheckoutPromoCodePreview,
 } from "@/app/domain/checkout-promo-codes";
 import { isAgeCheckerTestingBypassEnabled } from "@/app/lib/agechecker-testing";
@@ -91,6 +94,13 @@ type RoutingConfirmationState = {
   message: string;
   requirements: string[];
   title: string;
+};
+
+type PromoMinimumIssue = {
+  amountNeededCents: number;
+  code: string;
+  minimumSpendCents: number;
+  subtotalCents: number;
 };
 
 type PreCheckoutRoutingResult =
@@ -180,6 +190,7 @@ export default function CheckoutPageClient({
   const router = useRouter();
   const searchParams = useSearchParams();
   const { items, cartCount, clearCart, removeItem } = useCart();
+  const checkoutFormRef = useRef<HTMLFormElement | null>(null);
   const {
     clearPromoCode: clearStoredCheckoutPromoCode,
     promoCode: storedCheckoutPromoCode,
@@ -223,6 +234,10 @@ export default function CheckoutPageClient({
   const [isPromoApplying, setIsPromoApplying] = useState(false);
   const [isPromoAuthDialogOpen, setIsPromoAuthDialogOpen] = useState(false);
   const [hasCompletedPromoAuth, setHasCompletedPromoAuth] = useState(false);
+  const [promoMinimumIssue, setPromoMinimumIssue] =
+    useState<PromoMinimumIssue | null>(null);
+  const [promoMinimumDialog, setPromoMinimumDialog] =
+    useState<PromoMinimumIssue | null>(null);
 
   const subtotal = useMemo(() => {
     return items.reduce((total, item) => {
@@ -434,6 +449,7 @@ export default function CheckoutPageClient({
     setPromoCode(code);
     setPromoMessage("");
     setAppliedPromo(null);
+    setPromoMinimumIssue(null);
 
     if (!code) {
       setPromoMessage("Enter a promo code.");
@@ -450,6 +466,7 @@ export default function CheckoutPageClient({
         },
         body: JSON.stringify({
           code,
+          items: getCheckoutPromoPreviewItems(items),
           subtotalCents: moneyToCents(subtotal),
         }),
       });
@@ -458,6 +475,16 @@ export default function CheckoutPageClient({
         | { message?: string };
 
       if (!response.ok || !("eligible" in data) || !data.eligible) {
+        const minimumIssue = getPromoMinimumIssue(data, code);
+
+        if (minimumIssue) {
+          setPromoMinimumIssue(minimumIssue);
+          setPromoMessage(
+            `Add ${formatMoney(centsToMoney(minimumIssue.amountNeededCents))} more to use this code.`,
+          );
+          return;
+        }
+
         setPromoMessage(
           "message" in data && data.message
             ? data.message
@@ -467,7 +494,7 @@ export default function CheckoutPageClient({
       }
 
       setAppliedPromo(data);
-      setPromoMessage(`${data.discountPercent}% off applied.`);
+      setPromoMessage(getCheckoutPromoMessage(data));
       storeCheckoutPromoCode(data.code);
     } catch {
       if (options.source !== "url") {
@@ -476,7 +503,7 @@ export default function CheckoutPageClient({
     } finally {
       setIsPromoApplying(false);
     }
-  }, [storeCheckoutPromoCode, subtotal]);
+  }, [items, storeCheckoutPromoCode, subtotal]);
 
   async function handleApplyPromoCode() {
     await applyPromoCode(promoCode);
@@ -514,13 +541,27 @@ export default function CheckoutPageClient({
       setAppliedPromo(null);
       setPromoMessage("");
     }
+
+    if (promoMinimumIssue && promoMinimumIssue.code !== normalizedCode) {
+      setPromoMinimumIssue(null);
+      setPromoMinimumDialog(null);
+    }
   }
 
   function clearAppliedPromoCode() {
     setAppliedPromo(null);
     setPromoMessage("");
     setPromoCode("");
+    setPromoMinimumIssue(null);
+    setPromoMinimumDialog(null);
     clearStoredCheckoutPromoCode();
+  }
+
+  function continueWithoutPromo() {
+    clearAppliedPromoCode();
+    window.setTimeout(() => {
+      checkoutFormRef.current?.requestSubmit();
+    }, 0);
   }
 
   function getPromoCheckoutRedirect() {
@@ -564,6 +605,16 @@ export default function CheckoutPageClient({
     const normalizedPromoCode = normalizeCheckoutPromoCode(promoCode);
 
     if (normalizedPromoCode && !activeAppliedPromo) {
+      const minimumIssue =
+        getCurrentPromoMinimumIssue(appliedPromo, normalizedPromoCode, subtotal) ??
+        getCurrentStoredPromoMinimumIssue(promoMinimumIssue, normalizedPromoCode, subtotal);
+
+      if (minimumIssue) {
+        setPromoMinimumIssue(minimumIssue);
+        setPromoMinimumDialog(minimumIssue);
+        return;
+      }
+
       setCheckoutError("Apply the promo code before placing your order, or clear it.");
       return;
     }
@@ -715,11 +766,27 @@ export default function CheckoutPageClient({
       });
 
       const data = (await response.json().catch(() => ({}))) as {
+        amountNeededCents?: number;
+        code?: string;
+        discountCode?: string;
         error?: string;
+        minimumSpendCents?: number;
         order?: CustomerOrder;
+        subtotalCents?: number;
       };
 
       if (!response.ok) {
+        if (data.code === "PROMO_MINIMUM_NOT_MET") {
+          const minimumIssue = getPromoMinimumIssueFromOrderError(data, activeAppliedPromo?.code ?? promoCode);
+
+          if (minimumIssue) {
+            setPromoMinimumIssue(minimumIssue);
+            setPromoMinimumDialog(minimumIssue);
+            setCheckoutError("");
+            return;
+          }
+        }
+
         if (response.status === 401 && activeAppliedPromo) {
           setIsPromoAuthDialogOpen(true);
         }
@@ -793,7 +860,7 @@ export default function CheckoutPageClient({
       </section>
 
       <section className="mx-auto grid w-full max-w-[1180px] gap-7 px-4 py-8 sm:px-5 sm:py-10 lg:grid-cols-[minmax(0,1fr)_360px]">
-        <form className="grid gap-8" onSubmit={handlePlaceOrder}>
+        <form className="grid gap-8" onSubmit={handlePlaceOrder} ref={checkoutFormRef}>
           <CheckoutPanel title="Contact Information">
             {customer ? (
               <p className="mb-5 border border-[#d9d9d9] bg-[var(--ast-global-color-4)] px-4 py-3 text-[16px] font-medium leading-[1.5] text-black">
@@ -1289,6 +1356,14 @@ export default function CheckoutPageClient({
           isSubmitting={isPlacingOrder || isAgeVerifying}
           onCancel={handleCancelDeliveryEligibility}
           onConfirm={handleConfirmDeliveryEligibility}
+        />
+      ) : null}
+
+      {promoMinimumDialog ? (
+        <PromoMinimumDialog
+          issue={promoMinimumDialog}
+          onClose={() => setPromoMinimumDialog(null)}
+          onContinue={continueWithoutPromo}
         />
       ) : null}
 
@@ -2146,6 +2221,58 @@ function RoutingConfirmationDialog({
   );
 }
 
+function PromoMinimumDialog({
+  issue,
+  onClose,
+  onContinue,
+}: {
+  issue: PromoMinimumIssue;
+  onClose: () => void;
+  onContinue: () => void;
+}) {
+  return (
+    <div
+      aria-labelledby="promo-minimum-title"
+      aria-modal="true"
+      className="fixed inset-0 z-[80] grid place-items-center bg-black/55 px-4 py-6"
+      role="dialog"
+    >
+      <section className="w-full max-w-[520px] border-2 border-black bg-white p-5 shadow-[6px_6px_0_#000] sm:p-6">
+        <p className="text-[13px] font-extrabold uppercase tracking-[0.16em] text-[var(--ast-global-color-1)]">
+          Discount code
+        </p>
+        <h2
+          className="mt-2 text-[28px] font-black uppercase leading-none text-black sm:text-[36px]"
+          id="promo-minimum-title"
+        >
+          Add {formatMoney(centsToMoney(issue.amountNeededCents))} more
+        </h2>
+        <p className="mt-4 text-[16px] font-medium leading-[1.55] text-[#585858] sm:text-[18px]">
+          This code needs a {formatMoney(centsToMoney(issue.minimumSpendCents))} basket before tax.
+          Add {formatMoney(centsToMoney(issue.amountNeededCents))} more, or continue without the discount.
+        </p>
+
+        <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end">
+          <Link
+            className="bayblaze-sharp-button bayblaze-sharp-button--primary flex h-12 items-center justify-center text-center"
+            href="/shop"
+            onClick={onClose}
+          >
+            Add products
+          </Link>
+          <button
+            className="h-12 border border-black bg-white px-6 text-[14px] font-semibold uppercase tracking-[0.12em] text-black transition-colors hover:bg-[var(--ast-global-color-4)]"
+            onClick={onContinue}
+            type="button"
+          >
+            Continue without discount
+          </button>
+        </div>
+      </section>
+    </div>
+  );
+}
+
 function PromoAuthDialog({
   googleOAuthHref,
   onAuthComplete,
@@ -2498,6 +2625,125 @@ function parsePrice(price?: string) {
   const number = Number(price.replace(/[^0-9.]/g, ""));
 
   return Number.isFinite(number) ? number : 0;
+}
+
+function getCheckoutPromoPreviewItems(items: CartItem[]): CheckoutPromoPreviewItem[] {
+  return items
+    .map((item) => ({
+      quantity: item.quantity,
+      unitPriceCents: moneyToCents(parsePrice(item.price)),
+    }))
+    .filter((item) => item.quantity > 0 && item.unitPriceCents > 0);
+}
+
+function getPromoMinimumIssue(
+  value: unknown,
+  fallbackCode: string,
+): PromoMinimumIssue | null {
+  if (!value || typeof value !== "object") {
+    return null;
+  }
+
+  const preview = value as Partial<CheckoutPromoCodePreview>;
+
+  if (preview.ineligibilityReason !== "minimum_spend") {
+    return null;
+  }
+
+  const code = normalizeCheckoutPromoCode(preview.code || fallbackCode);
+  const minimumSpendCents = readCents(preview.minimumSpendCents);
+  const subtotalCents = readCents(preview.subtotalCents);
+  const amountNeededCents = readCents(preview.amountNeededCents) || Math.max(0, minimumSpendCents - subtotalCents);
+
+  if (!code || minimumSpendCents <= 0 || amountNeededCents <= 0) {
+    return null;
+  }
+
+  return {
+    amountNeededCents,
+    code,
+    minimumSpendCents,
+    subtotalCents,
+  };
+}
+
+function getCurrentPromoMinimumIssue(
+  promo: CheckoutPromoCodePreview | null,
+  code: string,
+  subtotal: number,
+): PromoMinimumIssue | null {
+  if (!promo || normalizeCheckoutPromoCode(promo.code) !== code || promo.minimumSpendCents <= 0) {
+    return null;
+  }
+
+  const subtotalCents = moneyToCents(subtotal);
+  const amountNeededCents = promo.minimumSpendCents - subtotalCents;
+
+  if (amountNeededCents <= 0) {
+    return null;
+  }
+
+  return {
+    amountNeededCents,
+    code,
+    minimumSpendCents: promo.minimumSpendCents,
+    subtotalCents,
+  };
+}
+
+function getCurrentStoredPromoMinimumIssue(
+  issue: PromoMinimumIssue | null,
+  code: string,
+  subtotal: number,
+): PromoMinimumIssue | null {
+  if (!issue || issue.code !== code || issue.minimumSpendCents <= 0) {
+    return null;
+  }
+
+  const subtotalCents = moneyToCents(subtotal);
+  const amountNeededCents = issue.minimumSpendCents - subtotalCents;
+
+  if (amountNeededCents <= 0) {
+    return null;
+  }
+
+  return {
+    ...issue,
+    amountNeededCents,
+    subtotalCents,
+  };
+}
+
+function getPromoMinimumIssueFromOrderError(
+  data: {
+    amountNeededCents?: number;
+    discountCode?: string;
+    minimumSpendCents?: number;
+    subtotalCents?: number;
+  },
+  fallbackCode: string,
+): PromoMinimumIssue | null {
+  const code = normalizeCheckoutPromoCode(data.discountCode || fallbackCode);
+  const minimumSpendCents = readCents(data.minimumSpendCents);
+  const subtotalCents = readCents(data.subtotalCents);
+  const amountNeededCents = readCents(data.amountNeededCents) || Math.max(0, minimumSpendCents - subtotalCents);
+
+  if (!code || minimumSpendCents <= 0 || amountNeededCents <= 0) {
+    return null;
+  }
+
+  return {
+    amountNeededCents,
+    code,
+    minimumSpendCents,
+    subtotalCents,
+  };
+}
+
+function readCents(value: unknown) {
+  return typeof value === "number" && Number.isInteger(value) && value > 0
+    ? value
+    : 0;
 }
 
 function getUsableScheduledAt(scheduledAt: string, minimumScheduledAt: string) {

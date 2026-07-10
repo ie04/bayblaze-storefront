@@ -273,11 +273,12 @@ export async function POST(request: Request) {
     const appliedPromoResult = await getAppliedCheckoutPromo({
       accountToken: bayBlazeAccountToken,
       code: requestedPromoCode,
+      items,
       subtotal: discountSubtotal,
     }).catch((error: unknown) => error);
 
     if (appliedPromoResult instanceof CheckoutPromoError) {
-      return jsonError(appliedPromoResult.message, appliedPromoResult.status);
+      return jsonError(appliedPromoResult.message, appliedPromoResult.status, appliedPromoResult.details);
     }
 
     if (appliedPromoResult instanceof Error) {
@@ -692,10 +693,12 @@ async function retrieveAuthenticatedCustomer(customerToken: string) {
 async function getAppliedCheckoutPromo({
   accountToken,
   code,
+  items,
   subtotal,
 }: {
   accountToken?: string;
   code: string;
+  items: ValidCheckoutItem[];
   subtotal: number;
 }): Promise<CheckoutPromoCodePreview> {
   if (!accountToken) {
@@ -703,11 +706,29 @@ async function getAppliedCheckoutPromo({
   }
 
   try {
-    return await previewBayBlazeDiscountCode(accountToken, {
+    const preview = await previewBayBlazeDiscountCode(accountToken, {
       code,
+      items: items.map((item) => ({
+        quantity: item.quantity,
+        unitPriceCents: getCheckoutItemUnitPriceCents(item),
+      })),
       subtotalCents: moneyToCents(subtotal),
     });
+
+    if (!preview.eligible) {
+      throw new CheckoutPromoError(
+        409,
+        preview.message || "That promo code could not be applied.",
+        getPromoMinimumErrorDetails(preview),
+      );
+    }
+
+    return preview;
   } catch (error) {
+    if (error instanceof CheckoutPromoError) {
+      throw error;
+    }
+
     throw new CheckoutPromoError(
       400,
       error instanceof Error
@@ -715,6 +736,20 @@ async function getAppliedCheckoutPromo({
         : "That promo code could not be applied.",
     );
   }
+}
+
+function getPromoMinimumErrorDetails(preview: CheckoutPromoCodePreview) {
+  if (preview.ineligibilityReason !== "minimum_spend") {
+    return undefined;
+  }
+
+  return {
+    amountNeededCents: preview.amountNeededCents,
+    code: "PROMO_MINIMUM_NOT_MET",
+    discountCode: preview.code,
+    minimumSpendCents: preview.minimumSpendCents,
+    subtotalCents: preview.subtotalCents,
+  };
 }
 
 function getAccountAgeVerificationMetadata(
@@ -878,14 +913,15 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
 }
 
-function jsonError(message: string, status: number) {
-  return Response.json({ error: message }, { status });
+function jsonError(message: string, status: number, details?: Record<string, unknown>) {
+  return Response.json({ error: message, ...(details ?? {}) }, { status });
 }
 
 class CheckoutPromoError extends Error {
   constructor(
     readonly status: number,
     message: string,
+    readonly details?: Record<string, unknown>,
   ) {
     super(message);
   }

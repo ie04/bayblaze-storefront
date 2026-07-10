@@ -1,6 +1,7 @@
 export type CheckoutPromoCodeType = "discount" | "bogo";
 
 export type CheckoutPromoCodePreview = {
+  amountNeededCents?: number;
   bogoBuyQuantity?: number;
   bogoDiscountedQuantity?: number;
   bogoFreeQuantity?: number;
@@ -10,6 +11,8 @@ export type CheckoutPromoCodePreview = {
   discountAmountCents: number;
   discountPercent: number;
   eligible: boolean;
+  ineligibilityReason?: "minimum_spend";
+  message?: string;
   minimumSpendCents: number;
   ownerUid?: string;
   subtotalCents: number;
