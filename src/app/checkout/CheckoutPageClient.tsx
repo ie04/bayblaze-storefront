@@ -542,6 +542,23 @@ export default function CheckoutPageClient({
       setPromoMessage("");
     }
 
+    if (storedCheckoutPromoCode && storedCheckoutPromoCode !== normalizedCode) {
+      clearStoredCheckoutPromoCode();
+    }
+
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+
+      if (normalizeCheckoutPromoCode(url.searchParams.get("promo")) !== normalizedCode) {
+        url.searchParams.delete("promo");
+        window.history.replaceState(
+          window.history.state,
+          "",
+          `${url.pathname}${url.search}`,
+        );
+      }
+    }
+
     if (promoMinimumIssue && promoMinimumIssue.code !== normalizedCode) {
       setPromoMinimumIssue(null);
       setPromoMinimumDialog(null);
