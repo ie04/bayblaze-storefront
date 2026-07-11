@@ -110,12 +110,6 @@ export default function Header({
             Shop
           </Link>
           <Link
-            href="/shop?q=Deals"
-            className="text-sm font-semibold uppercase tracking-wider text-black no-underline hover:text-[var(--ast-global-color-0)]"
-          >
-            Deals
-          </Link>
-          <Link
             href="/how-it-works"
             className="text-sm font-semibold uppercase tracking-wider text-black no-underline hover:text-[var(--ast-global-color-0)]"
           >
