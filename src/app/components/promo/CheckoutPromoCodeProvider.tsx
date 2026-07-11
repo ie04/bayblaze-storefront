@@ -48,8 +48,9 @@ export default function CheckoutPromoCodeProvider({
 
     if (isFirstOrderQrOfferCode(rawClaimedCode)) {
       clearStoredPromoCode();
-      setStoredPromoCode("");
-      return;
+      const timer = window.setTimeout(() => setStoredPromoCode(""), 0);
+
+      return () => window.clearTimeout(timer);
     }
 
     if (!claimedCode) {

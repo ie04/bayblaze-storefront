@@ -257,13 +257,14 @@ export async function POST(request: Request) {
   const referralOffer = getReferralOfferFromCookieHeader(
     request.headers.get("cookie"),
   );
+  const discountSubtotal = getCheckoutItemsSubtotal(items);
+  const requestedPromoCode = normalizeCheckoutPromoCode(body.promo?.code);
   const hasPriorOrders = authenticatedCustomerToken
     ? await customerHasExistingOrders(authenticatedCustomerToken)
     : false;
-  const appliedReferralOffer = referralOffer && !hasPriorOrders ? referralOffer : null;
+  const appliedReferralOffer =
+    referralOffer && !hasPriorOrders && !requestedPromoCode ? referralOffer : null;
 
-  const discountSubtotal = getCheckoutItemsSubtotal(items);
-  const requestedPromoCode = normalizeCheckoutPromoCode(body.promo?.code);
   const firstOrderDiscount = getReferralOfferDiscountAmount(
     discountSubtotal,
     appliedReferralOffer,

@@ -73,11 +73,21 @@ export default function ReferralOfferProvider({
     const currentPathname = window.location.pathname;
 
     if (isCheckoutPath(currentPathname)) {
-      setOffer((currentOffer) =>
-        currentOffer && isFirstOrderReferralOffer(currentOffer) ? currentOffer : null,
-      );
-      setToastOffer(null);
-      return;
+      const timer = window.setTimeout(() => {
+        if (!isActive) {
+          return;
+        }
+
+        setOffer((currentOffer) =>
+          currentOffer && isFirstOrderReferralOffer(currentOffer) ? currentOffer : null,
+        );
+        setToastOffer(null);
+      }, 0);
+
+      return () => {
+        isActive = false;
+        window.clearTimeout(timer);
+      };
     }
 
     const searchParams = new URLSearchParams(window.location.search);

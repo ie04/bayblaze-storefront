@@ -90,6 +90,12 @@ type PendingCheckout = {
   routingToken: string;
 };
 
+type PromoReplacementNotice = {
+  appliedCode: string;
+  message: string;
+  replacedCode: string;
+};
+
 type RoutingConfirmationState = {
   estimatedMinutes?: number;
   message: string;
@@ -243,6 +249,8 @@ export default function CheckoutPageClient({
     useState<PromoMinimumIssue | null>(null);
   const [promoMinimumDialog, setPromoMinimumDialog] =
     useState<PromoMinimumIssue | null>(null);
+  const [promoReplacementNotice, setPromoReplacementNotice] =
+    useState<PromoReplacementNotice | null>(null);
   const [drinkUpsellCheckout, setDrinkUpsellCheckout] =
     useState<PendingCheckout | null>(null);
   const hasHandledDrinkUpsellRef = useRef(false);
@@ -254,9 +262,6 @@ export default function CheckoutPageClient({
       return total + parsePrice(item.price) * item.quantity;
     }, 0);
   }, [items]);
-  const firstOrderDiscount = useMemo(() => {
-    return getReferralOfferDiscountAmount(subtotal, referralOffer);
-  }, [referralOffer, subtotal]);
   const subtotalMatchedAppliedPromo = useMemo(() => {
     if (!appliedPromo || appliedPromo.subtotalCents !== moneyToCents(subtotal)) {
       return null;
@@ -276,14 +281,18 @@ export default function CheckoutPageClient({
   const checkoutPromoDiscount = useMemo(() => {
     return getCheckoutPromoDiscountAmount(subtotal, activeAppliedPromo);
   }, [activeAppliedPromo, subtotal]);
+  const activeReferralOffer = activeAppliedPromo ? null : referralOffer;
+  const firstOrderDiscount = useMemo(() => {
+    return getReferralOfferDiscountAmount(subtotal, activeReferralOffer);
+  }, [activeReferralOffer, subtotal]);
   const totalDue = useMemo(() => {
     return roundMoney(
       Math.max(
         0,
-        getReferralOfferTotal(subtotal, referralOffer) - checkoutPromoDiscount,
+        getReferralOfferTotal(subtotal, activeReferralOffer) - checkoutPromoDiscount,
       ),
     );
-  }, [checkoutPromoDiscount, referralOffer, subtotal]);
+  }, [activeReferralOffer, checkoutPromoDiscount, subtotal]);
   const effectivePromoMessage =
     appliedPromo && !activeAppliedPromo
       ? subtotalMatchedAppliedPromo
@@ -528,9 +537,23 @@ export default function CheckoutPageClient({
       }
 
       setAppliedPromo(data);
-      setPromoMessage(
+      const replacedCode =
         options.replacingCode && options.replacingCode !== data.code
-          ? `Promo codes can't stack. ${options.replacingCode} was removed and ${data.code} is now applied. ${getCheckoutPromoMessage(data)}`
+          ? options.replacingCode
+          : "";
+
+      if (replacedCode) {
+        clearReferralOffer();
+        setPromoReplacementNotice({
+          appliedCode: data.code,
+          message: getCheckoutPromoMessage(data),
+          replacedCode,
+        });
+      }
+
+      setPromoMessage(
+        replacedCode
+          ? `Promo codes can't stack. ${replacedCode} was removed and ${data.code} is now applied. ${getCheckoutPromoMessage(data)}`
           : getCheckoutPromoMessage(data),
       );
       storeCheckoutPromoCode(data.code);
@@ -541,7 +564,7 @@ export default function CheckoutPageClient({
     } finally {
       setIsPromoApplying(false);
     }
-  }, [items, storeCheckoutPromoCode, subtotal]);
+  }, [clearReferralOffer, items, storeCheckoutPromoCode, subtotal]);
 
   async function handleApplyPromoCode() {
     const normalizedCode = normalizeCheckoutPromoCode(promoCode);
@@ -564,6 +587,8 @@ export default function CheckoutPageClient({
       replacingCode:
         subtotalMatchedAppliedPromo && subtotalMatchedAppliedPromo.code !== normalizedCode
           ? subtotalMatchedAppliedPromo.code
+          : referralOffer && referralOffer.code !== normalizedCode
+            ? referralOffer.code
           : undefined,
     });
   }
@@ -1473,9 +1498,9 @@ export default function CheckoutPageClient({
                 <dd className="text-black">{formatMoney(subtotal)}</dd>
               </div>
 
-              {referralOffer && firstOrderDiscount > 0 ? (
+              {activeReferralOffer && firstOrderDiscount > 0 ? (
                 <div className="flex justify-between text-[var(--ast-global-color-1)]">
-                  <dt>{referralOffer.label}</dt>
+                  <dt>{activeReferralOffer.label}</dt>
                   <dd className="font-semibold">
                     -{formatMoney(firstOrderDiscount)}
                   </dd>
@@ -1528,6 +1553,13 @@ export default function CheckoutPageClient({
           issue={promoMinimumDialog}
           onClose={() => setPromoMinimumDialog(null)}
           onContinue={continueWithoutPromo}
+        />
+      ) : null}
+
+      {promoReplacementNotice ? (
+        <PromoReplacementDialog
+          notice={promoReplacementNotice}
+          onClose={() => setPromoReplacementNotice(null)}
         />
       ) : null}
 
@@ -2555,6 +2587,52 @@ function PromoMinimumDialog({
             type="button"
           >
             Continue without discount
+          </button>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function PromoReplacementDialog({
+  notice,
+  onClose,
+}: {
+  notice: PromoReplacementNotice;
+  onClose: () => void;
+}) {
+  return (
+    <div
+      aria-labelledby="promo-replacement-title"
+      aria-modal="true"
+      className="fixed inset-0 z-[80] grid place-items-center bg-black/55 px-4 py-6"
+      role="dialog"
+    >
+      <section className="w-full max-w-[520px] border-2 border-black bg-white p-5 shadow-[6px_6px_0_#000] sm:p-6">
+        <p className="text-[13px] font-extrabold uppercase tracking-[0.16em] text-[var(--ast-global-color-1)]">
+          Discount code
+        </p>
+        <h2
+          className="mt-2 text-[28px] font-black uppercase leading-none text-black sm:text-[36px]"
+          id="promo-replacement-title"
+        >
+          Promo replaced
+        </h2>
+        <p className="mt-4 text-[16px] font-medium leading-[1.55] text-[#585858] sm:text-[18px]">
+          Promo codes can&apos;t stack. {notice.replacedCode} was removed and{" "}
+          {notice.appliedCode} is now applied.
+        </p>
+        <p className="mt-3 border border-[#d7d1c6] bg-[var(--ast-global-color-4)] px-4 py-3 text-[15px] font-semibold leading-[1.5] text-black">
+          {notice.message}
+        </p>
+
+        <div className="mt-6 flex justify-end">
+          <button
+            className="bayblaze-sharp-button bayblaze-sharp-button--primary flex h-12 items-center justify-center text-center"
+            onClick={onClose}
+            type="button"
+          >
+            Got it
           </button>
         </div>
       </section>
