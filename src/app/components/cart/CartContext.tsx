@@ -27,7 +27,7 @@ type CartContextValue = {
   items: CartItem[];
   cartCount: number;
   isCartOpen: boolean;
-  addItem: (item: CartItem) => void;
+  addItem: (item: CartItem, options?: { openCart?: boolean }) => void;
   removeItem: (id: string) => void;
   setItemQuantity: (id: string, quantity: number) => void;
   clearCart: () => void;
@@ -106,7 +106,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     return items.reduce((total, item) => total + item.quantity, 0);
   }, [items]);
 
-  function addItem(item: CartItem) {
+  function addItem(item: CartItem, options: { openCart?: boolean } = {}) {
     setItems((currentItems) => {
       const existingItem = currentItems.find(
         (currentItem) => currentItem.id === item.id
@@ -145,7 +145,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
       return nextItems;
     });
 
-    setIsCartOpen(true);
+    if (options.openCart !== false) {
+      setIsCartOpen(true);
+    }
   }
 
   function removeItem(id: string) {

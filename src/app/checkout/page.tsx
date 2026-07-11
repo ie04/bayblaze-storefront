@@ -5,6 +5,7 @@ import {
   getCustomerToken,
 } from "@/app/lib/customer-session";
 import { retrieveCustomer } from "@/app/lib/medusa-auth";
+import { getCheckoutDrinkUpsellItems } from "@/app/lib/medusa-products";
 import CheckoutPageClient from "./CheckoutPageClient";
 
 export const metadata: Metadata = {
@@ -14,9 +15,10 @@ export const metadata: Metadata = {
 
 export default async function CheckoutPage() {
   const token = await getCustomerToken();
-  const [account, customer] = await Promise.all([
+  const [account, customer, drinkUpsellItems] = await Promise.all([
     getBayBlazeAccountFromSession(),
     token ? retrieveCustomer(token).catch(() => undefined) : undefined,
+    getCheckoutDrinkUpsellItems(),
   ]);
 
   return (
@@ -24,6 +26,7 @@ export default async function CheckoutPage() {
       accountAgeVerificationDisabled={account?.settings.ageVerificationDisabled === true}
       accountEmail={account?.email}
       customer={customer}
+      drinkUpsellItems={drinkUpsellItems}
     />
   );
 }

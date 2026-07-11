@@ -45,6 +45,7 @@ import {
 } from "@/app/domain/checkout-promo-codes";
 import { isAgeCheckerTestingBypassEnabled } from "@/app/lib/agechecker-testing";
 import type { Customer, CustomerOrder } from "@/app/lib/medusa-auth";
+import type { CheckoutDrinkUpsellItem } from "@/app/lib/medusa-products";
 
 declare global {
   interface Window {
@@ -182,14 +183,16 @@ export default function CheckoutPageClient({
   accountAgeVerificationDisabled = false,
   accountEmail,
   customer,
+  drinkUpsellItems = [],
 }: {
   accountAgeVerificationDisabled?: boolean;
   accountEmail?: string;
   customer?: Customer;
+  drinkUpsellItems?: CheckoutDrinkUpsellItem[];
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { items, cartCount, clearCart, removeItem } = useCart();
+  const { addItem, cartCount, clearCart, items, removeItem } = useCart();
   const checkoutFormRef = useRef<HTMLFormElement | null>(null);
   const {
     clearPromoCode: clearStoredCheckoutPromoCode,
@@ -238,6 +241,10 @@ export default function CheckoutPageClient({
     useState<PromoMinimumIssue | null>(null);
   const [promoMinimumDialog, setPromoMinimumDialog] =
     useState<PromoMinimumIssue | null>(null);
+  const [drinkUpsellCheckout, setDrinkUpsellCheckout] =
+    useState<PendingCheckout | null>(null);
+  const hasHandledDrinkUpsellRef = useRef(false);
+  const promoReapplyAfterUpsellRef = useRef("");
 
   const subtotal = useMemo(() => {
     return items.reduce((total, item) => {
@@ -532,6 +539,17 @@ export default function CheckoutPageClient({
     pendingUrlPromoCode,
   ]);
 
+  useEffect(() => {
+    const code = promoReapplyAfterUpsellRef.current;
+
+    if (!code || !hasItems || isPromoApplying) {
+      return;
+    }
+
+    promoReapplyAfterUpsellRef.current = "";
+    void applyPromoCode(code);
+  }, [applyPromoCode, hasItems, isPromoApplying, items]);
+
   function handlePromoCodeChange(value: string) {
     const normalizedCode = normalizeCheckoutPromoCode(value);
 
@@ -716,12 +734,64 @@ export default function CheckoutPageClient({
 
     setRoutingConfirmation(null);
     pendingCheckoutRef.current = null;
+
+    if (
+      !hasHandledDrinkUpsellRef.current &&
+      hasAvailableDrinkUpsellItems(drinkUpsellItems, items)
+    ) {
+      hasHandledDrinkUpsellRef.current = true;
+      setDrinkUpsellCheckout(pendingCheckout);
+      return;
+    }
+
     await completeCheckout(pendingCheckout);
   }
 
   function handleCancelDeliveryEligibility() {
     pendingCheckoutRef.current = null;
     setRoutingConfirmation(null);
+  }
+
+  function handleSkipDrinkUpsell() {
+    const pendingCheckout = drinkUpsellCheckout;
+
+    setDrinkUpsellCheckout(null);
+
+    if (pendingCheckout) {
+      void completeCheckout(pendingCheckout);
+    }
+  }
+
+  function handleAddDrinkUpsell(item: CheckoutDrinkUpsellItem) {
+    const activeCode = activeAppliedPromo?.code ?? "";
+
+    addItem(
+      {
+        id: item.id,
+        availableQuantity: item.availableQuantity,
+        variantId: item.variantId,
+        productId: item.productId,
+        productHandle: item.productHandle,
+        inventoryState: item.inventoryState,
+        name: item.name,
+        flavor: item.flavor,
+        image: item.image,
+        price: item.price,
+        quantity: 1,
+      },
+      { openCart: false },
+    );
+
+    if (activeCode) {
+      promoReapplyAfterUpsellRef.current = activeCode;
+      setPromoMessage("Drink added. Recalculating your discount...");
+    }
+
+    pendingCheckoutRef.current = null;
+    setDrinkUpsellCheckout(null);
+    setRoutingConfirmation(null);
+    setCheckoutError("");
+    setOrderMessage("Drink added. Review your updated total, then place your order.");
   }
 
   function handleAddressInputChange() {
@@ -1373,6 +1443,15 @@ export default function CheckoutPageClient({
           isSubmitting={isPlacingOrder || isAgeVerifying}
           onCancel={handleCancelDeliveryEligibility}
           onConfirm={handleConfirmDeliveryEligibility}
+        />
+      ) : null}
+
+      {drinkUpsellCheckout ? (
+        <DrinkUpsellDialog
+          items={items}
+          products={drinkUpsellItems}
+          onAddDrink={handleAddDrinkUpsell}
+          onSkip={handleSkipDrinkUpsell}
         />
       ) : null}
 
@@ -2236,6 +2315,123 @@ function RoutingConfirmationDialog({
       </div>
     </div>
   );
+}
+
+function DrinkUpsellDialog({
+  items,
+  products,
+  onAddDrink,
+  onSkip,
+}: {
+  items: CartItem[];
+  products: CheckoutDrinkUpsellItem[];
+  onAddDrink: (item: CheckoutDrinkUpsellItem) => void;
+  onSkip: () => void;
+}) {
+  return (
+    <div
+      aria-labelledby="drink-upsell-title"
+      aria-modal="true"
+      className="fixed inset-0 z-[85] overflow-y-auto bg-black/60 px-4 py-6"
+      role="dialog"
+    >
+      <div className="mx-auto flex min-h-full w-full max-w-[760px] items-center py-4">
+        <section className="w-full border-2 border-black bg-white p-5 shadow-[6px_6px_0_#000] sm:p-6">
+          <h2
+            className="text-[30px] font-black uppercase leading-none text-black sm:text-[42px]"
+            id="drink-upsell-title"
+          >
+            Feeling Thirsty?
+          </h2>
+          <p className="mt-4 text-[16px] font-medium leading-[1.55] text-[#585858] sm:text-[18px]">
+            Spoil yourself by adding a drink to your order. We guarentee it will be ice cold by the time it gets to you.
+          </p>
+
+          <div className="mt-6 grid gap-3 sm:grid-cols-2">
+            {products.map((product) => {
+              const existingQuantity =
+                items.find((item) => item.id === product.id)?.quantity ?? 0;
+              const remainingQuantity =
+                product.availableQuantity === undefined
+                  ? 0
+                  : Math.max(product.availableQuantity - existingQuantity, 0);
+              const canAdd =
+                remainingQuantity > 0 && Boolean(product.inventoryState);
+
+              return (
+                <article
+                  className="grid grid-cols-[92px_minmax(0,1fr)] gap-3 border-2 border-black bg-[var(--ast-global-color-4)] p-3"
+                  key={product.id}
+                >
+                  {product.image ? (
+                    <Image
+                      alt={product.name}
+                      className="size-[92px] border border-black bg-white object-contain p-2"
+                      height={92}
+                      src={product.image}
+                      width={92}
+                    />
+                  ) : (
+                    <div className="grid size-[92px] place-items-center border border-black bg-white px-2 text-center text-[11px] font-bold uppercase text-[#585858]">
+                      Image coming soon
+                    </div>
+                  )}
+
+                  <div className="min-w-0">
+                    <h3 className="line-clamp-2 text-[15px] font-black uppercase leading-tight text-black">
+                      {product.name}
+                    </h3>
+                    {product.flavor ? (
+                      <p className="mt-1 text-[13px] font-semibold leading-snug text-[#585858]">
+                        {product.flavor}
+                      </p>
+                    ) : null}
+                    <p className="mt-2 text-[16px] font-black text-black">
+                      {product.price}
+                    </p>
+                    <button
+                      className="bayblaze-sharp-button bayblaze-sharp-button--primary mt-3 flex h-10 w-full items-center justify-center !py-0 text-center text-[12px] disabled:cursor-not-allowed disabled:opacity-60"
+                      disabled={!canAdd}
+                      onClick={() => onAddDrink(product)}
+                      type="button"
+                    >
+                      {canAdd ? "Add drink" : "Max in cart"}
+                    </button>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+
+          <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end">
+            <button
+              className="h-12 border border-black bg-white px-6 text-[14px] font-semibold uppercase tracking-[0.12em] text-black transition-colors hover:bg-[var(--ast-global-color-4)]"
+              onClick={onSkip}
+              type="button"
+            >
+              No thanks
+            </button>
+          </div>
+        </section>
+      </div>
+    </div>
+  );
+}
+
+function hasAvailableDrinkUpsellItems(
+  products: CheckoutDrinkUpsellItem[],
+  items: CartItem[],
+) {
+  return products.some((product) => {
+    const existingQuantity =
+      items.find((item) => item.id === product.id)?.quantity ?? 0;
+    const remainingQuantity =
+      product.availableQuantity === undefined
+        ? 0
+        : Math.max(product.availableQuantity - existingQuantity, 0);
+
+    return remainingQuantity > 0 && Boolean(product.inventoryState);
+  });
 }
 
 function PromoMinimumDialog({

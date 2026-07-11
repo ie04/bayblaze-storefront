@@ -96,6 +96,19 @@ export type ProductPreviewItem = {
   variantName?: string;
 };
 
+export type CheckoutDrinkUpsellItem = {
+  availableQuantity?: number;
+  flavor?: string;
+  id: string;
+  image: string;
+  inventoryState?: InventoryLocationState;
+  name: string;
+  price: string;
+  productHandle: string;
+  productId: string;
+  variantId: string;
+};
+
 export type ShopProductItem = {
   name: string;
   brand: string;
@@ -526,6 +539,58 @@ function toVariantProductPreviewItem(
   };
 }
 
+function toCheckoutDrinkUpsellItems(product: InventoryProduct) {
+  const storefrontProduct = toStorefrontProduct(product);
+
+  return storefrontProduct.variants
+    .map((variant): CheckoutDrinkUpsellItem => {
+      const image = variant.images[0]?.src ?? storefrontProduct.images[0]?.src ?? "";
+      const flavor = variant.flavor || (storefrontProduct.variants.length > 1 ? variant.title : undefined);
+
+      return {
+        availableQuantity: variant.availableQuantity,
+        flavor,
+        id: [variant.id, flavor || "default"].join("::"),
+        image,
+        inventoryState: variant.inventoryState,
+        name: storefrontProduct.name,
+        price: formatPrice(
+          product.variants.find((item) => item.id === variant.id)?.priceCents,
+        ) || storefrontProduct.salePrice,
+        productHandle: storefrontProduct.handle,
+        productId: storefrontProduct.id,
+        variantId: variant.id,
+      };
+    })
+    .filter((item) => {
+      return (
+        Boolean(item.variantId) &&
+        Boolean(item.image) &&
+        Boolean(item.inventoryState) &&
+        (item.availableQuantity ?? 0) > 0
+      );
+    });
+}
+
+function isDrinkProduct(product: InventoryProduct) {
+  const values = [
+    product.category,
+    product.collectionTitle,
+    product.metadata?.inventoryCategory,
+    product.metadata?.category,
+  ];
+
+  return values.some((value) => {
+    if (typeof value !== "string") {
+      return false;
+    }
+
+    const handle = toCategoryHandle(value);
+
+    return handle.includes("drink") || handle.includes("beverage");
+  });
+}
+
 async function getPublishedInventoryProducts() {
   const snapshot = await fetchInventorySnapshot();
 
@@ -605,6 +670,21 @@ export async function getShopProducts() {
   return products.map(toShopProductItem).filter((product) => {
     return Boolean(product.image);
   });
+}
+
+export async function getCheckoutDrinkUpsellItems() {
+  let products: InventoryProduct[];
+
+  try {
+    products = await getPublishedInventoryProducts();
+  } catch {
+    return [];
+  }
+
+  return products
+    .filter(isDrinkProduct)
+    .flatMap(toCheckoutDrinkUpsellItems)
+    .slice(0, 6);
 }
 
 export function getShopSearchSuggestions(products: ShopProductItem[]) {
