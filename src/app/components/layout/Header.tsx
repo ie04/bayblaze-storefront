@@ -18,6 +18,7 @@ import styles from "./Header.module.css";
 
 type HeaderProps = {
   searchAction?: string;
+  searchSuggestions?: string[];
   checkoutHref?: string;
   accountHref?: string;
   surface?: "transparent" | "solid";
@@ -35,6 +36,7 @@ type DrawerItem = {
 
 export default function Header({
   searchAction = "/shop",
+  searchSuggestions = [],
   checkoutHref = "/checkout",
   accountHref = "/account",
   surface = "transparent",
@@ -177,6 +179,7 @@ export default function Header({
         <HeaderSearchOverlay
           inputRef={searchInputRef}
           searchAction={searchAction}
+          searchSuggestions={searchSuggestions}
           onClose={() => setIsSearchOverlayOpen(false)}
           onSubmit={handleSearch}
         />
@@ -210,14 +213,18 @@ const headerSearchSuggestions = [
 function HeaderSearchOverlay({
   inputRef,
   searchAction,
+  searchSuggestions,
   onClose,
   onSubmit,
 }: {
   inputRef: RefObject<HTMLInputElement | null>;
   searchAction: string;
+  searchSuggestions: string[];
   onClose: () => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
 }) {
+  const visibleSuggestions = getHeaderSearchSuggestions(searchSuggestions);
+
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     onSubmit(event);
 
@@ -265,9 +272,16 @@ function HeaderSearchOverlay({
             name="q"
             type="search"
             autoComplete="off"
+            list="header-overlay-search-suggestions"
             className={styles.searchOverlayInput}
             placeholder="Search vapes, cones, wraps, accessories..."
           />
+
+          <datalist id="header-overlay-search-suggestions">
+            {visibleSuggestions.map((term) => (
+              <option key={term} value={term} />
+            ))}
+          </datalist>
 
           <button
             type="button"
@@ -282,7 +296,7 @@ function HeaderSearchOverlay({
         <div className={styles.searchSuggestions}>
           <p className={styles.searchSuggestionsTitle}>Popular searches</p>
           <div className={styles.searchSuggestionList}>
-            {headerSearchSuggestions.map((term) => (
+            {visibleSuggestions.map((term) => (
               <Link
                 key={term}
                 href={getSuggestionHref(term)}
@@ -297,6 +311,16 @@ function HeaderSearchOverlay({
       </div>
     </div>
   );
+}
+
+function getHeaderSearchSuggestions(searchSuggestions: string[]) {
+  return Array.from(
+    new Set(
+      [...searchSuggestions, ...headerSearchSuggestions]
+        .map((term) => term.trim())
+        .filter(Boolean),
+    ),
+  ).slice(0, 16);
 }
 
 function CartDrawer({

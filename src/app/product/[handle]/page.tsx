@@ -7,6 +7,9 @@ import ProductPage from "./ProductPageClient";
 
 type ProductPageProps = {
   params: Promise<{ handle: string }>;
+  searchParams?: Promise<{
+    variant?: string | string[];
+  }>;
 };
 
 export async function generateMetadata({
@@ -27,8 +30,11 @@ export async function generateMetadata({
   };
 }
 
-export default async function Page({ params }: ProductPageProps) {
+export default async function Page({ params, searchParams }: ProductPageProps) {
   const { handle } = await params;
+  const query = searchParams ? await searchParams : {};
+  const variantParam = query.variant;
+  const selectedVariantId = Array.isArray(variantParam) ? variantParam[0] : variantParam;
   const product = await getProductByStorefrontHandle(handle);
 
   if (!product) {
@@ -38,7 +44,7 @@ export default async function Page({ params }: ProductPageProps) {
   return (
     <main className="min-h-screen bg-[var(--ast-global-color-4)] font-[var(--font-jost)] text-black">
       <Header surface="solid" />
-      <ProductPage product={product} />
+      <ProductPage initialVariantId={selectedVariantId ?? ""} product={product} />
     </main>
   );
 }

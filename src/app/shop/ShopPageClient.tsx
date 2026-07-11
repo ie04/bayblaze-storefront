@@ -90,6 +90,7 @@ export default function ShopPageClient({
             product.brand,
             product.description,
             ...product.categories,
+            ...product.variantSearchTerms,
           ]
             .join(" ")
             .toLowerCase();
@@ -128,6 +129,7 @@ export default function ShopPageClient({
         product.brand,
         product.description,
         ...product.categories,
+        ...product.variantSearchTerms,
       ]
         .join(" ")
         .toLowerCase();
@@ -207,6 +209,7 @@ export default function ShopPageClient({
 
             <input
               id="shop-search"
+              list="shop-search-suggestions"
               type="search"
               value={query}
               onChange={(event) => {
@@ -216,7 +219,28 @@ export default function ShopPageClient({
               placeholder="Search brand, product, category…"
               className="min-w-0 flex-1 bg-white px-3 py-3 text-sm font-medium text-black outline-none placeholder:text-[#7a7a7a]"
             />
+            <datalist id="shop-search-suggestions">
+              {getShopSearchSuggestions(products).map((term) => (
+                <option key={term} value={term} />
+              ))}
+            </datalist>
           </form>
+
+          <div className="mt-3 flex max-w-3xl gap-2 overflow-x-auto pb-1" aria-label="Variant search suggestions">
+            {getShopVariantSearchSuggestions(products).map((term) => (
+              <button
+                key={term}
+                type="button"
+                className="shrink-0 border-2 border-black bg-[var(--ast-global-color-4)] px-3 py-2 text-xs font-bold uppercase tracking-wide text-black transition-colors hover:bg-black hover:text-white"
+                onClick={() => {
+                  setQuery(term);
+                  setNotice("");
+                }}
+              >
+                {term}
+              </button>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -335,6 +359,33 @@ export default function ShopPageClient({
       ) : null}
     </div>
   );
+}
+
+function getShopSearchSuggestions(products: ShopProductItem[]) {
+  return Array.from(
+    new Set(
+      products
+        .flatMap((product) => [
+          product.name,
+          product.brand,
+          ...product.categories,
+          ...product.variantSearchTerms,
+        ])
+        .map((term) => term.trim())
+        .filter(Boolean),
+    ),
+  ).slice(0, 80);
+}
+
+function getShopVariantSearchSuggestions(products: ShopProductItem[]) {
+  return Array.from(
+    new Set(
+      products
+        .flatMap((product) => product.variantSearchTerms)
+        .map((term) => term.trim())
+        .filter(Boolean),
+    ),
+  ).slice(0, 18);
 }
 
 function ProductCard({

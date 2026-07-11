@@ -13,14 +13,16 @@ import {
 import type { StorefrontProduct } from "@/app/lib/medusa-products";
 
 export default function ProductPage({
+  initialVariantId = "",
   product,
 }: {
+  initialVariantId?: string;
   product: StorefrontProduct;
 }) {
   const { addItem, items } = useCart();
 
   const [activeImage, setActiveImage] = useState(0);
-  const [flavor, setFlavor] = useState("");
+  const [flavor, setFlavor] = useState(() => getInitialFlavor(product, initialVariantId));
   const [quantity, setQuantity] = useState(1);
   const [cartNotice, setCartNotice] = useState("");
 
@@ -487,4 +489,14 @@ export default function ProductPage({
       </section>
     </div>
   );
+}
+
+function getInitialFlavor(product: StorefrontProduct, initialVariantId: string) {
+  if (!initialVariantId) {
+    return "";
+  }
+
+  const variant = product.variants.find((item) => item.id === initialVariantId);
+
+  return variant?.flavor || variant?.optionValues[0] || "";
 }

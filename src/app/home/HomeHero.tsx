@@ -2,7 +2,11 @@ import Link from "next/link";
 
 import HeroSearch, { HeroRibbon } from "@/app/home/HeroSearch";
 
-export default function HomeHero() {
+export default function HomeHero({
+  searchSuggestions = [],
+}: {
+  searchSuggestions?: string[];
+}) {
   return (
     <section className="relative min-h-[720px] overflow-hidden border-b border-[#e8e2d8] bg-[var(--ast-global-color-4)] sm:min-h-screen">
       <div
@@ -30,7 +34,7 @@ export default function HomeHero() {
           TAMPA BAY MOBILE SMOKE SHOP
         </h2>
 
-        <HeroSearch />
+        <HeroSearch searchSuggestions={searchSuggestions} />
         <HomeHeroInfoStrip />
         <HomeHeroActions />
       </div>

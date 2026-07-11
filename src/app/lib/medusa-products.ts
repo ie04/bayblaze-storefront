@@ -82,6 +82,8 @@ export type StorefrontProduct = {
   specs: [string, string][];
 };
 
+type StorefrontVariant = StorefrontProduct["variants"][number];
+
 export type ProductPreviewItem = {
   name: string;
   brand: string;
@@ -91,6 +93,7 @@ export type ProductPreviewItem = {
   salePrice: string;
   position: string;
   isSale?: boolean;
+  variantName?: string;
 };
 
 export type ShopProductItem = {
@@ -108,6 +111,7 @@ export type ShopProductItem = {
   action: "Add to cart" | "Select options";
   isSale?: boolean;
   description: string;
+  variantSearchTerms: string[];
 };
 
 const assetOrigin =
@@ -232,6 +236,31 @@ function getStorefrontVariants(product: InventoryProduct) {
       optionValues: flavor ? splitOptionValue(flavor) : [],
     };
   });
+}
+
+function getVariantDisplayName(variant: StorefrontVariant) {
+  return variant.flavor?.trim() || variant.title?.trim() || variant.sku?.trim() || "";
+}
+
+function getVariantSearchTerms(product: StorefrontProduct) {
+  return Array.from(
+    new Set(
+      product.variants
+        .flatMap((variant) => {
+          const variantName = getVariantDisplayName(variant);
+
+          return [
+            variantName,
+            variant.sku,
+            ...variant.optionValues,
+            variantName ? `${product.name} ${variantName}` : "",
+            variantName && product.brand ? `${product.brand} ${variantName}` : "",
+          ];
+        })
+        .map((term) => term.trim())
+        .filter(Boolean),
+    ),
+  );
 }
 
 function getVariantImages(product: InventoryProduct, variant: InventoryVariant) {
@@ -448,16 +477,8 @@ function toShopProductItem(product: InventoryProduct): ShopProductItem {
       product.description ??
       storefrontProduct.details.find(Boolean) ??
       "BayBlaze product available for local delivery.",
+    variantSearchTerms: getVariantSearchTerms(storefrontProduct),
   };
-}
-
-function hasFastDeliveryInventory(product: InventoryProduct) {
-  return product.variants.some((variant) => {
-    return (
-      getVariantInventoryState(variant) === "ON_VEHICLE" &&
-      (getVariantAvailableQuantity(variant) ?? 0) > 0
-    );
-  });
 }
 
 function toProductPreviewItem(
@@ -477,6 +498,31 @@ function toProductPreviewItem(
     salePrice: formatPrice(priceCents) || "Price unavailable",
     position: positions[index % positions.length],
     isSale: hasSalePrice(),
+  };
+}
+
+function toVariantProductPreviewItem(
+  product: InventoryProduct,
+  variant: InventoryVariant,
+  index: number,
+): ProductPreviewItem {
+  const storefrontProduct = toStorefrontProduct(product);
+  const storefrontVariant = storefrontProduct.variants.find((item) => item.id === variant.id);
+  const variantName = storefrontVariant ? getVariantDisplayName(storefrontVariant) : variant.title;
+  const variantImages = getVariantImages(product, variant);
+  const image = variantImages[0] ?? getProductImages(product)[0] ?? "";
+  const positions = ["left", "center", "right"];
+
+  return {
+    name: variantName ? `${product.title} - ${variantName}` : product.title,
+    brand: storefrontProduct.brand || "BayBlaze",
+    image,
+    href: `/product/${product.handle}?variant=${encodeURIComponent(variant.id)}`,
+    originalPrice: getOriginalPrice(),
+    salePrice: formatPrice(variant.priceCents) || "Price unavailable",
+    position: positions[index % positions.length],
+    isSale: hasSalePrice(),
+    variantName: variantName || undefined,
   };
 }
 
@@ -533,8 +579,18 @@ export async function getFastDeliveryProductPreviews() {
   }
 
   return products
-    .filter(hasFastDeliveryInventory)
-    .map((product, index) => toProductPreviewItem(product, index));
+    .flatMap((product) => {
+      return product.variants
+        .filter((variant) => {
+          return (
+            getVariantInventoryState(variant) === "ON_VEHICLE" &&
+            (getVariantAvailableQuantity(variant) ?? 0) > 0
+          );
+        })
+        .map((variant) => ({ product, variant }));
+    })
+    .map(({ product, variant }, index) => toVariantProductPreviewItem(product, variant, index))
+    .filter((product) => Boolean(product.image));
 }
 
 export async function getShopProducts() {
@@ -549,6 +605,22 @@ export async function getShopProducts() {
   return products.map(toShopProductItem).filter((product) => {
     return Boolean(product.image);
   });
+}
+
+export function getShopSearchSuggestions(products: ShopProductItem[]) {
+  return Array.from(
+    new Set(
+      products
+        .flatMap((product) => [
+          product.name,
+          product.brand,
+          ...product.categories,
+          ...product.variantSearchTerms,
+        ])
+        .map((term) => term.trim())
+        .filter(Boolean),
+    ),
+  ).slice(0, 80);
 }
 
 export async function getProductPreviewsByCategoryHandle(

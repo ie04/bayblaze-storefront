@@ -9,11 +9,12 @@ import { getFastDeliveryProductPreviews } from "@/app/lib/medusa-products";
 
 export default async function Home() {
   const fastDeliveryProducts = await getFastDeliveryProductPreviews();
+  const searchSuggestions = fastDeliveryProducts.map((product) => product.name);
 
   return (
     <main className="bayblaze-home-page relative">
-      <Header />
-      <HomeHero />
+      <Header searchSuggestions={searchSuggestions} />
+      <HomeHero searchSuggestions={searchSuggestions} />
       <HomeShopByNeed />
       <HomeExploreProducts
         fastDeliveryProducts={fastDeliveryProducts}

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 import Header from "@/app/components/layout/Header";
-import { getShopProducts } from "@/app/lib/medusa-products";
+import { getShopProducts, getShopSearchSuggestions } from "@/app/lib/medusa-products";
 import ShopPageClient from "./ShopPageClient";
 
 export const metadata: Metadata = {
@@ -24,7 +24,7 @@ export default async function Page({ searchParams }: ShopPageProps) {
 
   return (
     <main className="min-h-screen bg-[var(--ast-global-color-4)] font-[var(--font-jost)] text-black">
-      <Header surface="solid" />
+      <Header searchSuggestions={getShopSearchSuggestions(products)} surface="solid" />
       <ShopPageClient initialSearchQuery={searchQuery ?? ""} products={products} />
     </main>
   );

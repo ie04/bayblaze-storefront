@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import styles from "./HeroSearch.module.css";
 
 const searchPrompts = [
@@ -25,15 +25,23 @@ const ribbonTaglines = [
 
 const ribbonRepeatCount = 6;
 
-export default function HeroSearch() {
+export default function HeroSearch({
+  searchSuggestions = [],
+}: {
+  searchSuggestions?: string[];
+}) {
   const [query, setQuery] = useState("");
   const [isFocused, setIsFocused] = useState(false);
   const [promptIndex, setPromptIndex] = useState(0);
   const [typedPrompt, setTypedPrompt] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
+  const activeSearchPrompts = useMemo(
+    () => getSearchPrompts(searchSuggestions),
+    [searchSuggestions],
+  );
 
   useEffect(() => {
-    const prompt = searchPrompts[promptIndex];
+    const prompt = activeSearchPrompts[promptIndex] ?? searchPrompts[0];
     const isComplete = typedPrompt === prompt;
     const isEmpty = typedPrompt.length === 0;
     const delay =
@@ -54,7 +62,7 @@ export default function HeroSearch() {
       if (isEmpty && isDeleting) {
         setIsDeleting(false);
         setPromptIndex(
-          (currentIndex) => (currentIndex + 1) % searchPrompts.length,
+          (currentIndex) => (currentIndex + 1) % activeSearchPrompts.length,
         );
         return;
       }
@@ -64,7 +72,7 @@ export default function HeroSearch() {
     }, delay);
 
     return () => window.clearTimeout(timeout);
-  }, [isDeleting, promptIndex, typedPrompt]);
+  }, [activeSearchPrompts, isDeleting, promptIndex, typedPrompt]);
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     const query = new FormData(event.currentTarget).get("q")?.toString().trim();
@@ -97,12 +105,19 @@ export default function HeroSearch() {
             name="q"
             type="search"
             autoComplete="off"
+            list="hero-search-suggestions"
             className={styles.input}
             value={query}
             onBlur={() => setIsFocused(false)}
             onChange={(event) => setQuery(event.currentTarget.value)}
             onFocus={() => setIsFocused(true)}
           />
+
+          <datalist id="hero-search-suggestions">
+            {activeSearchPrompts.map((prompt) => (
+              <option key={prompt} value={prompt.replace(/^Search for\s+/i, "").replace(/\.\.\.$/, "")} />
+            ))}
+          </datalist>
 
           <span
             aria-hidden="true"
@@ -123,6 +138,16 @@ export default function HeroSearch() {
       </form>
     </div>
   );
+}
+
+function getSearchPrompts(searchSuggestions: string[]) {
+  const dynamicPrompts = searchSuggestions
+    .map((term) => term.trim())
+    .filter(Boolean)
+    .slice(0, 8)
+    .map((term) => `Search for ${term}...`);
+
+  return dynamicPrompts.length ? dynamicPrompts : searchPrompts;
 }
 
 export function HeroRibbon() {
