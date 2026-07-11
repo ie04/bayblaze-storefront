@@ -26,10 +26,10 @@ const needCards = [
     href: "/shop?q=Accessories",
   },
   {
-    key: "deals",
-    title: "Deals",
-    icon: "🏷️",
-    href: "/shop?q=Deals",
+    key: "thc",
+    title: "THC",
+    icon: "🍃",
+    href: "/shop?q=THC",
   },
   {
     key: "check-delivery",
