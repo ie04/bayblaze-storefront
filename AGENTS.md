@@ -151,6 +151,13 @@ deployments.
   sensitive identity document data in the storefront or Medusa metadata.
 - `AGE_VERIFICATION_TOKEN_SECRET` should be a long server-only random value. If
   omitted, the storefront falls back to `EMAIL_VERIFICATION_SECRET`.
+- Production AgeChecker is enabled only when the Vercel env values are non-empty:
+  `NEXT_PUBLIC_AGECHECKER_KEY`, `AGECHECKER_API_KEY`, and
+  `AGE_VERIFICATION_TOKEN_SECRET`. Keep
+  `NEXT_PUBLIC_DISABLE_AGECHECKER_FOR_TESTING` and
+  `DISABLE_AGECHECKER_FOR_TESTING` set to `false` outside local testing.
+  Because the public key is read at build time, changing it requires a
+  storefront redeploy.
 - Successful AgeChecker.Net verification should be reusable for the signed-in
   Medusa customer account so future orders on the same account/email can skip
   the AgeChecker popup and avoid repeated verification fees.
