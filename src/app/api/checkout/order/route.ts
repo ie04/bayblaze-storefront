@@ -5,6 +5,7 @@ import {
 import {
   getBayBlazeAccountToken,
   previewBayBlazeDiscountCode,
+  recordBayBlazeDiscountCodeUse,
 } from "@/app/lib/bayblaze-account";
 import { verifyCheckoutAddressValidation } from "@/app/domain/address-validation";
 import {
@@ -485,15 +486,28 @@ export async function POST(request: Request) {
       );
     }
 
-    return Response.json({
-      order: {
-        ...completedCart.order,
-        shipping_address: completedCart.order.shipping_address ?? shippingAddress,
-        metadata: {
-          ...completedCart.order.metadata,
-          ...orderMetadata,
-        },
+    const completedOrder = {
+      ...completedCart.order,
+      shipping_address: completedCart.order.shipping_address ?? shippingAddress,
+      metadata: {
+        ...completedCart.order.metadata,
+        ...orderMetadata,
       },
+    };
+
+    if (appliedPromo && bayBlazeAccountToken && completedOrder.id) {
+      await recordBayBlazeDiscountCodeUse(bayBlazeAccountToken, {
+        code: appliedPromo.code,
+        customerEmail: customer.email,
+        customerId: accountCustomer?.id ?? undefined,
+        orderId: completedOrder.id,
+      }).catch((error) => {
+        console.error("[BayBlaze] Failed to record checkout promo usage.", error);
+      });
+    }
+
+    return Response.json({
+      order: completedOrder,
       message: "Order placed.",
     });
   } catch (error) {

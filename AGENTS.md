@@ -292,12 +292,16 @@ Additional UI constraints:
   delivery confirmation succeed.
 - Address validation, routing, AgeChecker, and order creation should expose
   distinct loading/error copy so failures are easy to diagnose.
-- Checkout promo codes should show savings before sign-in by previewing through
-  storefront server routes that call `bayblaze-api`
-  `POST /v1/discount-codes/preview`. Final order placement with an applied
-  discount must require a customer account and revalidate through authenticated
+- Checkout promo codes can only be applied by signed-in customer accounts.
+  Storefront promo preview routes should call authenticated `bayblaze-api`
   `POST /v1/customer/discount-codes/preview`; guests should see the login-style
-  sign-in/register card at Place Order time to lock in the discount.
+  sign-in/register card before a promo is applied. Promo codes must not stack:
+  applying a different coupon should show customer-facing replacement/error
+  copy and replace the previous code. Final order placement with an applied
+  discount must revalidate the same authenticated preview, and successful
+  orders must record promo usage through `POST /v1/customer/discount-codes/use`
+  so API-owned single-use-per-account restrictions are enforced on later
+  attempts.
 - Admin promo codes can require a minimum basket size before tax. If
   `bayblaze-api` returns `eligible=false` with
   `ineligibilityReason="minimum_spend"`, checkout should show a short customer

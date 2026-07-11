@@ -184,11 +184,13 @@ export default function CheckoutPageClient({
   accountEmail,
   customer,
   drinkUpsellItems = [],
+  isAccountSignedIn = false,
 }: {
   accountAgeVerificationDisabled?: boolean;
   accountEmail?: string;
   customer?: Customer;
   drinkUpsellItems?: CheckoutDrinkUpsellItem[];
+  isAccountSignedIn?: boolean;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -244,6 +246,7 @@ export default function CheckoutPageClient({
   const [drinkUpsellCheckout, setDrinkUpsellCheckout] =
     useState<PendingCheckout | null>(null);
   const hasHandledDrinkUpsellRef = useRef(false);
+  const pendingPromoApplyAfterAuthRef = useRef("");
   const promoReapplyAfterUpsellRef = useRef("");
 
   const subtotal = useMemo(() => {
@@ -254,13 +257,22 @@ export default function CheckoutPageClient({
   const firstOrderDiscount = useMemo(() => {
     return getReferralOfferDiscountAmount(subtotal, referralOffer);
   }, [referralOffer, subtotal]);
-  const activeAppliedPromo = useMemo(() => {
+  const subtotalMatchedAppliedPromo = useMemo(() => {
     if (!appliedPromo || appliedPromo.subtotalCents !== moneyToCents(subtotal)) {
       return null;
     }
 
     return appliedPromo;
   }, [appliedPromo, subtotal]);
+  const activeAppliedPromo = useMemo(() => {
+    const normalizedCode = normalizeCheckoutPromoCode(promoCode);
+
+    if (!subtotalMatchedAppliedPromo || subtotalMatchedAppliedPromo.code !== normalizedCode) {
+      return null;
+    }
+
+    return subtotalMatchedAppliedPromo;
+  }, [promoCode, subtotalMatchedAppliedPromo]);
   const checkoutPromoDiscount = useMemo(() => {
     return getCheckoutPromoDiscountAmount(subtotal, activeAppliedPromo);
   }, [activeAppliedPromo, subtotal]);
@@ -274,7 +286,9 @@ export default function CheckoutPageClient({
   }, [checkoutPromoDiscount, referralOffer, subtotal]);
   const effectivePromoMessage =
     appliedPromo && !activeAppliedPromo
-      ? "Cart changed. Apply the promo code again."
+      ? subtotalMatchedAppliedPromo
+        ? `Promo codes can't stack. Applying ${normalizeCheckoutPromoCode(promoCode) || "a new code"} will replace ${subtotalMatchedAppliedPromo.code}.`
+        : "Cart changed. Apply the promo code again."
       : promoMessage;
   const pendingUrlPromoCode =
     normalizeCheckoutPromoCode(searchParams.get("promo")) ||
@@ -315,6 +329,7 @@ export default function CheckoutPageClient({
     (!needsScheduledTime || Boolean(scheduledInputValue));
   const isAgeCheckerEnabled = Boolean(ageCheckerPublicKey) && !isAgeCheckerTestingBypass;
   const hasSavedAgeVerification = hasAcceptedAccountAgeVerification(customer);
+  const hasPromoAuthAccess = isAccountSignedIn || hasCompletedPromoAuth;
 
   useEffect(() => {
     const openedAt = new Date();
@@ -449,7 +464,7 @@ export default function CheckoutPageClient({
 
   const applyPromoCode = useCallback(async function applyPromoCode(
     rawCode: string,
-    options: { source?: "manual" | "url" } = {},
+    options: { replacingCode?: string; source?: "manual" | "url" } = {},
   ) {
     const code = normalizeCheckoutPromoCode(rawCode);
 
@@ -481,6 +496,18 @@ export default function CheckoutPageClient({
         | CheckoutPromoCodePreview
         | { message?: string };
 
+      if (response.status === 401) {
+        pendingPromoApplyAfterAuthRef.current = code;
+        setPromoMessage(
+          "message" in data && data.message
+            ? data.message
+            : "Sign in or register to apply promo codes.",
+        );
+        persistPromoCodeInUrl(code);
+        setIsPromoAuthDialogOpen(true);
+        return;
+      }
+
       if (!response.ok || !("eligible" in data) || !data.eligible) {
         const minimumIssue = getPromoMinimumIssue(data, code);
 
@@ -501,7 +528,11 @@ export default function CheckoutPageClient({
       }
 
       setAppliedPromo(data);
-      setPromoMessage(getCheckoutPromoMessage(data));
+      setPromoMessage(
+        options.replacingCode && options.replacingCode !== data.code
+          ? `Promo codes can't stack. ${options.replacingCode} was removed and ${data.code} is now applied. ${getCheckoutPromoMessage(data)}`
+          : getCheckoutPromoMessage(data),
+      );
       storeCheckoutPromoCode(data.code);
     } catch {
       if (options.source !== "url") {
@@ -513,7 +544,28 @@ export default function CheckoutPageClient({
   }, [items, storeCheckoutPromoCode, subtotal]);
 
   async function handleApplyPromoCode() {
-    await applyPromoCode(promoCode);
+    const normalizedCode = normalizeCheckoutPromoCode(promoCode);
+
+    if (!normalizedCode) {
+      setPromoMessage("Enter a promo code.");
+      return;
+    }
+
+    if (!hasPromoAuthAccess) {
+      pendingPromoApplyAfterAuthRef.current = normalizedCode;
+      setPromoCode(normalizedCode);
+      setPromoMessage("Sign in or register to apply promo codes.");
+      persistPromoCodeInUrl(normalizedCode);
+      setIsPromoAuthDialogOpen(true);
+      return;
+    }
+
+    await applyPromoCode(promoCode, {
+      replacingCode:
+        subtotalMatchedAppliedPromo && subtotalMatchedAppliedPromo.code !== normalizedCode
+          ? subtotalMatchedAppliedPromo.code
+          : undefined,
+    });
   }
 
   useEffect(() => {
@@ -526,6 +578,15 @@ export default function CheckoutPageClient({
       return;
     }
 
+    if (!hasPromoAuthAccess) {
+      const timer = window.setTimeout(() => {
+        setPromoCode(pendingUrlPromoCode);
+        setPromoMessage("Sign in or register to apply promo codes.");
+      }, 0);
+
+      return () => window.clearTimeout(timer);
+    }
+
     const timer = window.setTimeout(() => {
       void applyPromoCode(pendingUrlPromoCode, { source: "url" });
     }, 0);
@@ -535,6 +596,7 @@ export default function CheckoutPageClient({
     activeAppliedPromo,
     applyPromoCode,
     hasItems,
+    hasPromoAuthAccess,
     isPromoApplying,
     pendingUrlPromoCode,
   ]);
@@ -555,9 +617,15 @@ export default function CheckoutPageClient({
 
     setPromoCode(normalizedCode);
 
-    if (appliedPromo && appliedPromo.code !== normalizedCode) {
+    if (!normalizedCode && appliedPromo) {
       setAppliedPromo(null);
       setPromoMessage("");
+    } else if (appliedPromo && appliedPromo.code !== normalizedCode) {
+      setPromoMessage(
+        normalizedCode
+          ? `Promo codes can't stack. Applying ${normalizedCode} will replace ${appliedPromo.code}.`
+          : "",
+      );
     }
 
     if (storedCheckoutPromoCode && storedCheckoutPromoCode !== normalizedCode) {
@@ -654,7 +722,7 @@ export default function CheckoutPageClient({
       return;
     }
 
-    if (activeAppliedPromo && !customer && !hasCompletedPromoAuth) {
+    if (activeAppliedPromo && !hasPromoAuthAccess) {
       persistPromoCodeInUrl(activeAppliedPromo.code);
       setIsPromoAuthDialogOpen(true);
       return;
@@ -1469,9 +1537,17 @@ export default function CheckoutPageClient({
             getPromoCheckoutRedirect(),
           )}`}
           onAuthComplete={() => {
+            const pendingPromoCode = pendingPromoApplyAfterAuthRef.current;
+
+            pendingPromoApplyAfterAuthRef.current = "";
             setIsPromoAuthDialogOpen(false);
             setHasCompletedPromoAuth(true);
             persistPromoCodeInUrl(activeAppliedPromo?.code ?? promoCode);
+            if (pendingPromoCode) {
+              window.setTimeout(() => {
+                void applyPromoCode(pendingPromoCode);
+              }, 0);
+            }
             router.refresh();
           }}
           onClose={() => setIsPromoAuthDialogOpen(false)}

@@ -15,6 +15,7 @@ export type CheckoutPromoCodePreview = {
   message?: string;
   minimumSpendCents: number;
   ownerUid?: string;
+  singleUsePerAccount?: boolean;
   subtotalCents: number;
   usageLimit: number;
   usedCount: number;

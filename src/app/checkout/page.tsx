@@ -27,6 +27,7 @@ export default async function CheckoutPage() {
       accountEmail={account?.email}
       customer={customer}
       drinkUpsellItems={drinkUpsellItems}
+      isAccountSignedIn={Boolean(account)}
     />
   );
 }

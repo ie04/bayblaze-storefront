@@ -4,7 +4,6 @@ import {
   BayBlazeApiError,
   getBayBlazeAccountToken,
   previewBayBlazeDiscountCode,
-  previewPublicBayBlazeDiscountCode,
   type BayBlazeDiscountCodePreviewItem,
 } from "@/app/lib/bayblaze-account";
 
@@ -30,17 +29,21 @@ export async function POST(request: Request) {
     }
 
     const token = await getBayBlazeAccountToken();
+
+    if (!token) {
+      return NextResponse.json(
+        { message: "Sign in or register to apply promo codes." },
+        { status: 401 },
+      );
+    }
+
     const payload = {
       code,
       ...(items.length ? { items } : {}),
       subtotalCents,
     };
 
-    return NextResponse.json(
-      token
-        ? await previewBayBlazeDiscountCode(token, payload)
-        : await previewPublicBayBlazeDiscountCode(payload),
-    );
+    return NextResponse.json(await previewBayBlazeDiscountCode(token, payload));
   } catch (error) {
     if (error instanceof BayBlazeApiError) {
       return NextResponse.json(
