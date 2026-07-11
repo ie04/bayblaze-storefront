@@ -255,27 +255,6 @@ function getVariantDisplayName(variant: StorefrontVariant) {
   return variant.flavor?.trim() || variant.title?.trim() || variant.sku?.trim() || "";
 }
 
-function getVariantSearchTerms(product: StorefrontProduct) {
-  return Array.from(
-    new Set(
-      product.variants
-        .flatMap((variant) => {
-          const variantName = getVariantDisplayName(variant);
-
-          return [
-            variantName,
-            variant.sku,
-            ...variant.optionValues,
-            variantName ? `${product.name} ${variantName}` : "",
-            variantName && product.brand ? `${product.brand} ${variantName}` : "",
-          ];
-        })
-        .map((term) => term.trim())
-        .filter(Boolean),
-    ),
-  );
-}
-
 function getVariantImages(product: InventoryProduct, variant: InventoryVariant) {
   const urls = [
     ...(variant.imageUrls ?? []),
@@ -467,18 +446,55 @@ function dedupeStrings(values: string[]) {
   return Array.from(new Set(values));
 }
 
-function toShopProductItem(product: InventoryProduct): ShopProductItem {
-  const storefrontProduct = toStorefrontProduct(product);
-  const priceCents = product.variants?.[0]?.priceCents;
+function getShopVariantName(product: StorefrontProduct, variant: StorefrontVariant) {
+  const variantName = getVariantDisplayName(variant);
+
+  if (!variantName || product.variants.length <= 1) {
+    return product.name;
+  }
+
+  return `${product.name} - ${variantName}`;
+}
+
+function getShopVariantSearchTerms(
+  product: StorefrontProduct,
+  variant: StorefrontVariant,
+) {
+  const variantName = getVariantDisplayName(variant);
+
+  return Array.from(
+    new Set(
+      [
+        variantName,
+        variant.sku,
+        ...variant.optionValues,
+        variantName ? `${product.name} ${variantName}` : "",
+        variantName && product.brand ? `${product.brand} ${variantName}` : "",
+      ]
+        .map((term) => term.trim())
+        .filter(Boolean),
+    ),
+  );
+}
+
+function toShopVariantItem(
+  product: InventoryProduct,
+  storefrontProduct: StorefrontProduct,
+  variant: StorefrontVariant,
+): ShopProductItem {
+  const priceCents = product.variants.find(
+    (item) => item.id === variant.id,
+  )?.priceCents;
   const formattedPrice = formatPrice(priceCents) || "Price unavailable";
+  const image = variant.images[0]?.src ?? storefrontProduct.images[0]?.src ?? "";
 
   return {
-    name: product.title,
+    name: getShopVariantName(storefrontProduct, variant),
     brand: storefrontProduct.brand || "BayBlaze",
-    inventoryState: storefrontProduct.inventoryState,
-    availableQuantity: storefrontProduct.availableQuantity,
-    image: storefrontProduct.images[0]?.src ?? "",
-    href: `/product/${product.handle}`,
+    inventoryState: variant.inventoryState,
+    availableQuantity: variant.availableQuantity,
+    image,
+    href: `/product/${product.handle}?variant=${encodeURIComponent(variant.id)}`,
     categories: storefrontProduct.categories.map((category) => category.name),
     originalPrice: getOriginalPrice(),
     salePrice: formattedPrice,
@@ -490,7 +506,7 @@ function toShopProductItem(product: InventoryProduct): ShopProductItem {
       product.description ??
       storefrontProduct.details.find(Boolean) ??
       "BayBlaze product available for local delivery.",
-    variantSearchTerms: getVariantSearchTerms(storefrontProduct),
+    variantSearchTerms: getShopVariantSearchTerms(storefrontProduct, variant),
   };
 }
 
@@ -667,9 +683,17 @@ export async function getShopProducts() {
     return [];
   }
 
-  return products.map(toShopProductItem).filter((product) => {
-    return Boolean(product.image);
-  });
+  return products
+    .flatMap((product) => {
+      const storefrontProduct = toStorefrontProduct(product);
+
+      return storefrontProduct.variants.map((variant) =>
+        toShopVariantItem(product, storefrontProduct, variant),
+      );
+    })
+    .filter((product) => {
+      return Boolean(product.image);
+    });
 }
 
 export async function getCheckoutDrinkUpsellItems() {
