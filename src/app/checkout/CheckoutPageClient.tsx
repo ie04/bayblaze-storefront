@@ -4,7 +4,7 @@ import type { FormEvent, ReactNode } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 import Header from "@/app/components/layout/Header";
 import { useCart, type CartItem } from "@/app/components/cart/CartContext";
@@ -199,12 +199,10 @@ export default function CheckoutPageClient({
   isAccountSignedIn?: boolean;
 }) {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const { addItem, cartCount, clearCart, items, removeItem } = useCart();
   const checkoutFormRef = useRef<HTMLFormElement | null>(null);
   const {
     clearPromoCode: clearStoredCheckoutPromoCode,
-    promoCode: storedCheckoutPromoCode,
     setPromoCode: storeCheckoutPromoCode,
   } = useCheckoutPromoCode();
   const { clearOffer: clearReferralOffer, offer: referralOffer } =
@@ -236,9 +234,7 @@ export default function CheckoutPageClient({
   const [deliveryMode, setDeliveryMode] =
     useState<DeliveryTimingMode>("now");
   const [scheduledAt, setScheduledAt] = useState("");
-  const [promoCode, setPromoCode] = useState(() =>
-    normalizeCheckoutPromoCode(searchParams.get("promo")),
-  );
+  const [promoCode, setPromoCode] = useState("");
   const [appliedPromo, setAppliedPromo] =
     useState<CheckoutPromoCodePreview | null>(null);
   const [promoMessage, setPromoMessage] = useState("");
@@ -256,7 +252,6 @@ export default function CheckoutPageClient({
   const hasHandledDrinkUpsellRef = useRef(false);
   const pendingPromoApplyAfterAuthRef = useRef("");
   const promoReapplyAfterUpsellRef = useRef("");
-  const ignoredAutoPromoCodesRef = useRef<Set<string>>(new Set());
 
   const subtotal = useMemo(() => {
     return items.reduce((total, item) => {
@@ -300,9 +295,6 @@ export default function CheckoutPageClient({
         ? `Promo codes can't stack. Applying ${normalizeCheckoutPromoCode(promoCode) || "a new code"} will replace ${subtotalMatchedAppliedPromo.code}.`
         : "Cart changed. Apply the promo code again."
       : promoMessage;
-  const pendingUrlPromoCode =
-    normalizeCheckoutPromoCode(searchParams.get("promo")) ||
-    storedCheckoutPromoCode;
   const scheduleRequirement = useMemo(() => {
     return currentTime ? getDeliveryScheduleRequirement(currentTime) : null;
   }, [currentTime]);
@@ -474,7 +466,7 @@ export default function CheckoutPageClient({
 
   const applyPromoCode = useCallback(async function applyPromoCode(
     rawCode: string,
-    options: { replacingCode?: string; source?: "manual" | "url" } = {},
+    options: { replacingCode?: string } = {},
   ) {
     const code = normalizeCheckoutPromoCode(rawCode);
 
@@ -534,11 +526,6 @@ export default function CheckoutPageClient({
             ? data.message
             : "That promo code could not be applied.",
         );
-        if (options.source === "url") {
-          ignoredAutoPromoCodesRef.current.add(code);
-          clearStoredCheckoutPromoCode();
-          clearPromoCodeFromUrl(code);
-        }
         return;
       }
 
@@ -564,13 +551,11 @@ export default function CheckoutPageClient({
       );
       storeCheckoutPromoCode(data.code);
     } catch {
-      if (options.source !== "url") {
-        setPromoMessage("Unable to apply that promo code right now.");
-      }
+      setPromoMessage("Unable to apply that promo code right now.");
     } finally {
       setIsPromoApplying(false);
     }
-  }, [clearReferralOffer, clearStoredCheckoutPromoCode, items, storeCheckoutPromoCode, subtotal]);
+  }, [clearReferralOffer, items, storeCheckoutPromoCode, subtotal]);
 
   async function handleApplyPromoCode() {
     const normalizedCode = normalizeCheckoutPromoCode(promoCode);
@@ -579,8 +564,6 @@ export default function CheckoutPageClient({
       setPromoMessage("Enter a promo code.");
       return;
     }
-
-    ignoredAutoPromoCodesRef.current.delete(normalizedCode);
 
     if (!hasPromoAuthAccess) {
       pendingPromoApplyAfterAuthRef.current = normalizedCode;
@@ -602,40 +585,6 @@ export default function CheckoutPageClient({
   }
 
   useEffect(() => {
-    if (
-      !pendingUrlPromoCode ||
-      !hasItems ||
-      isPromoApplying ||
-      ignoredAutoPromoCodesRef.current.has(pendingUrlPromoCode) ||
-      activeAppliedPromo?.code === pendingUrlPromoCode
-    ) {
-      return;
-    }
-
-    if (!hasPromoAuthAccess) {
-      const timer = window.setTimeout(() => {
-        setPromoCode(pendingUrlPromoCode);
-        setPromoMessage("Sign in or register to apply promo codes.");
-      }, 0);
-
-      return () => window.clearTimeout(timer);
-    }
-
-    const timer = window.setTimeout(() => {
-      void applyPromoCode(pendingUrlPromoCode, { source: "url" });
-    }, 0);
-
-    return () => window.clearTimeout(timer);
-  }, [
-    activeAppliedPromo,
-    applyPromoCode,
-    hasItems,
-    hasPromoAuthAccess,
-    isPromoApplying,
-    pendingUrlPromoCode,
-  ]);
-
-  useEffect(() => {
     const code = promoReapplyAfterUpsellRef.current;
 
     if (!code || !hasItems || isPromoApplying) {
@@ -650,7 +599,6 @@ export default function CheckoutPageClient({
     const normalizedCode = normalizeCheckoutPromoCode(value);
 
     setPromoCode(normalizedCode);
-    ignoredAutoPromoCodesRef.current.delete(normalizedCode);
 
     if (!normalizedCode && appliedPromo) {
       setAppliedPromo(null);
@@ -661,10 +609,6 @@ export default function CheckoutPageClient({
           ? `Promo codes can't stack. Applying ${normalizedCode} will replace ${appliedPromo.code}.`
           : "",
       );
-    }
-
-    if (storedCheckoutPromoCode && storedCheckoutPromoCode !== normalizedCode) {
-      clearStoredCheckoutPromoCode();
     }
 
     if (typeof window !== "undefined") {
@@ -722,24 +666,6 @@ export default function CheckoutPageClient({
 
     const url = new URL(window.location.href);
     url.searchParams.set("promo", normalizedCode);
-    window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}`);
-  }
-
-  function clearPromoCodeFromUrl(code?: string) {
-    const normalizedCode = normalizeCheckoutPromoCode(code);
-
-    if (typeof window === "undefined") {
-      return;
-    }
-
-    const url = new URL(window.location.href);
-    const currentCode = normalizeCheckoutPromoCode(url.searchParams.get("promo"));
-
-    if (normalizedCode && currentCode && currentCode !== normalizedCode) {
-      return;
-    }
-
-    url.searchParams.delete("promo");
     window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}`);
   }
 

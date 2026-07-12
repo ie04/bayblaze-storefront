@@ -5,11 +5,9 @@ import {
   type ReactNode,
   useCallback,
   useContext,
-  useEffect,
   useMemo,
   useState,
 } from "react";
-import { usePathname } from "next/navigation";
 
 import { normalizeCheckoutPromoCode } from "@/app/domain/checkout-promo-codes";
 import { isFirstOrderQrOfferCode } from "@/app/domain/referral-offers";
@@ -39,31 +37,7 @@ export default function CheckoutPromoCodeProvider({
 }: {
   children: ReactNode;
 }) {
-  const pathname = usePathname();
   const [promoCode, setStoredPromoCode] = useState(() => readStoredPromoCode());
-
-  useEffect(() => {
-    const rawClaimedCode = new URLSearchParams(window.location.search).get("promo");
-    const claimedCode = normalizeCheckoutPromoCode(rawClaimedCode);
-
-    if (isFirstOrderQrOfferCode(rawClaimedCode)) {
-      clearStoredPromoCode();
-      const timer = window.setTimeout(() => setStoredPromoCode(""), 0);
-
-      return () => window.clearTimeout(timer);
-    }
-
-    if (!claimedCode) {
-      return;
-    }
-
-    const timer = window.setTimeout(() => {
-      storePromoCode(claimedCode);
-      setStoredPromoCode(claimedCode);
-    }, 0);
-
-    return () => window.clearTimeout(timer);
-  }, [pathname]);
 
   const clearPromoCode = useCallback(() => {
     clearStoredPromoCode();
@@ -107,24 +81,13 @@ export default function CheckoutPromoCodeProvider({
 }
 
 function buildCheckoutHref(code: string) {
-  if (!code) {
-    return "/checkout";
-  }
-
-  const params = new URLSearchParams({ promo: code });
-  return `/checkout?${params.toString()}`;
+  void code;
+  return "/checkout";
 }
 
 function readStoredPromoCode() {
-  try {
-    const storedCode = normalizeCheckoutPromoCode(
-      window.sessionStorage.getItem(checkoutPromoStorageKey),
-    );
-
-    return isFirstOrderQrOfferCode(storedCode) ? "" : storedCode;
-  } catch {
-    return "";
-  }
+  clearStoredPromoCode();
+  return "";
 }
 
 function storePromoCode(code: string) {
