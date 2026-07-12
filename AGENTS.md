@@ -301,7 +301,10 @@ Additional UI constraints:
   discount must revalidate the same authenticated preview, and successful
   orders must record promo usage through `POST /v1/customer/discount-codes/use`
   so API-owned single-use-per-account restrictions are enforced on later
-  attempts.
+  attempts. When recording a BayBlaze Win referral-code use, include
+  `isCustomerFirstOrder` from the checkout's prior-order check because win
+  freebies only unlock when the referred friend uses the code on their first
+  order.
 - Admin promo codes can require a minimum basket size before tax. If
   `bayblaze-api` returns `eligible=false` with
   `ineligibilityReason="minimum_spend"`, checkout should show a short customer

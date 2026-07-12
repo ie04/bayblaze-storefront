@@ -165,6 +165,7 @@ export async function recordBayBlazeDiscountCodeUse(
     code: string;
     customerEmail?: string;
     customerId?: string;
+    isCustomerFirstOrder?: boolean;
     orderId: string;
   },
 ) {

@@ -501,6 +501,7 @@ export async function POST(request: Request) {
         code: appliedPromo.code,
         customerEmail: customer.email,
         customerId: accountCustomer?.id ?? undefined,
+        isCustomerFirstOrder: !hasPriorOrders,
         orderId: completedOrder.id,
       }).catch((error) => {
         console.error("[BayBlaze] Failed to record checkout promo usage.", error);
