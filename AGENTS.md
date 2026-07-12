@@ -310,11 +310,14 @@ Additional UI constraints:
   `ineligibilityReason="minimum_spend"`, checkout should show a short customer
   popup that states the minimum and how much more to add, with an option to
   continue without the discount. Keep this copy simple and customer-facing.
-- `NEXT_PUBLIC_BAYBLAZE_PRICE_ADJUSTMENT_CENTS` is a storefront-wide item price
-  adjuster applied in `src/app/lib/medusa-products.ts` before product prices
-  reach shop/product/cart/checkout flows. Use `500` for a temporary $5 off every
-  item. Changing this value invalidates persisted browser carts so stale
-  pre-adjustment prices do not carry into checkout.
+- Storefront-wide item price adjustments are admin-managed through
+  `bayblaze-api` `GET/PATCH /v1/admin/storefront-settings` and read by the
+  storefront from public `GET /v1/storefront/settings`. The storefront applies
+  `priceAdjustmentCents` in `src/app/lib/medusa-products.ts` before product
+  prices reach shop/product/cart/checkout flows. The legacy
+  `NEXT_PUBLIC_BAYBLAZE_PRICE_ADJUSTMENT_CENTS` env is only a fallback when API
+  settings are unavailable. Changing the adjustment invalidates persisted
+  browser carts so stale pre-adjustment prices do not carry into checkout.
 
 ### PWA Install Prompt
 

@@ -130,9 +130,10 @@ export type ShopProductItem = {
 const assetOrigin =
   process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL?.replace(/\/$/, "") ??
   "https://api.bayblaze.net";
-const sitewidePriceAdjustmentCents = normalizeSitewidePriceAdjustmentCents(
-  process.env.NEXT_PUBLIC_BAYBLAZE_PRICE_ADJUSTMENT_CENTS,
-);
+
+type StorefrontPricing = {
+  priceAdjustmentCents: number;
+};
 
 const defaultStorefrontCategory = {
   name: "Uncategorized",
@@ -191,7 +192,7 @@ function normalizeInventoryAssetUrl(url: string) {
   return url.replace(/^https?:\/\/localhost:9000(?=\/)/, assetOrigin);
 }
 
-function formatPrice(cents?: number) {
+function formatPrice(cents: number | undefined, pricing: StorefrontPricing) {
   if (!Number.isFinite(cents ?? Number.NaN)) {
     return "";
   }
@@ -199,37 +200,27 @@ function formatPrice(cents?: number) {
   return new Intl.NumberFormat("en-US", {
     currency: "USD",
     style: "currency",
-  }).format(getAdjustedPriceCents(cents ?? 0) / 100);
+  }).format(getAdjustedPriceCents(cents ?? 0, pricing) / 100);
 }
 
-function hasSalePrice() {
-  return sitewidePriceAdjustmentCents > 0;
+function hasSalePrice(pricing: StorefrontPricing) {
+  return pricing.priceAdjustmentCents > 0;
 }
 
-function getSaleBadge() {
-  return sitewidePriceAdjustmentCents > 0
-    ? `${formatPriceWithoutAdjustment(sitewidePriceAdjustmentCents)} off`
+function getSaleBadge(pricing: StorefrontPricing) {
+  return pricing.priceAdjustmentCents > 0
+    ? `${formatPriceWithoutAdjustment(pricing.priceAdjustmentCents)} off`
     : undefined;
 }
 
-function getOriginalPrice(cents?: number) {
-  return sitewidePriceAdjustmentCents > 0 && Number.isFinite(cents ?? Number.NaN)
+function getOriginalPrice(cents: number | undefined, pricing: StorefrontPricing) {
+  return pricing.priceAdjustmentCents > 0 && Number.isFinite(cents ?? Number.NaN)
     ? formatPriceWithoutAdjustment(cents ?? 0)
     : undefined;
 }
 
-function getAdjustedPriceCents(cents: number) {
-  return Math.max(0, Math.round(cents) - sitewidePriceAdjustmentCents);
-}
-
-function normalizeSitewidePriceAdjustmentCents(value: unknown) {
-  const number = typeof value === "string" || typeof value === "number"
-    ? Number(value)
-    : Number.NaN;
-
-  return Number.isInteger(number) && number > 0
-    ? Math.min(number, 1_000_000_00)
-    : 0;
+function getAdjustedPriceCents(cents: number, pricing: StorefrontPricing) {
+  return Math.max(0, Math.round(cents) - pricing.priceAdjustmentCents);
 }
 
 function formatPriceWithoutAdjustment(cents: number) {
@@ -396,7 +387,7 @@ function toCategoryHandle(categoryName: string) {
     .replace(/^-+|-+$/g, "");
 }
 
-function toStorefrontProduct(product: InventoryProduct): StorefrontProduct {
+function toStorefrontProduct(product: InventoryProduct, pricing: StorefrontPricing): StorefrontProduct {
   const firstVariant = product.variants?.[0];
   const variants = getStorefrontVariants(product);
   const priceCents = firstVariant?.priceCents;
@@ -420,9 +411,9 @@ function toStorefrontProduct(product: InventoryProduct): StorefrontProduct {
     brand: getBrand(product),
     collectionTitle: product.collectionTitle ?? categories[0]?.name ?? "",
     categories,
-    originalPrice: getOriginalPrice(priceCents),
-    salePrice: formatPrice(priceCents) || "Price unavailable",
-    saleBadge: getSaleBadge(),
+    originalPrice: getOriginalPrice(priceCents, pricing),
+    salePrice: formatPrice(priceCents, pricing) || "Price unavailable",
+    saleBadge: getSaleBadge(pricing),
     images: images.map((src, index) => ({
       src,
       alt:
@@ -509,11 +500,12 @@ function toShopVariantItem(
   product: InventoryProduct,
   storefrontProduct: StorefrontProduct,
   variant: StorefrontVariant,
+  pricing: StorefrontPricing,
 ): ShopProductItem {
   const priceCents = product.variants.find(
     (item) => item.id === variant.id,
   )?.priceCents;
-  const formattedPrice = formatPrice(priceCents) || "Price unavailable";
+  const formattedPrice = formatPrice(priceCents, pricing) || "Price unavailable";
   const image = variant.images[0]?.src ?? storefrontProduct.images[0]?.src ?? "";
 
   return {
@@ -524,14 +516,14 @@ function toShopVariantItem(
     image,
     href: `/product/${product.handle}?variant=${encodeURIComponent(variant.id)}`,
     categories: storefrontProduct.categories.map((category) => category.name),
-    originalPrice: getOriginalPrice(priceCents),
+    originalPrice: getOriginalPrice(priceCents, pricing),
     salePrice: formattedPrice,
     price: formattedPrice,
     sortPrice: Number.isFinite(priceCents ?? Number.NaN)
-      ? getAdjustedPriceCents(priceCents ?? 0)
+      ? getAdjustedPriceCents(priceCents ?? 0, pricing)
       : Number.MAX_SAFE_INTEGER,
     action: "Select options",
-    isSale: hasSalePrice(),
+    isSale: hasSalePrice(pricing),
     description:
       product.description ??
       storefrontProduct.details.find(Boolean) ??
@@ -543,6 +535,7 @@ function toShopVariantItem(
 function toProductPreviewItem(
   product: InventoryProduct,
   index: number,
+  pricing: StorefrontPricing,
 ): ProductPreviewItem {
   const priceCents = product.variants?.[0]?.priceCents;
   const image = getProductImages(product)[0] ?? "";
@@ -553,10 +546,10 @@ function toProductPreviewItem(
     brand: getBrand(product) || "BayBlaze",
     image,
     href: `/product/${product.handle}`,
-    originalPrice: getOriginalPrice(priceCents),
-    salePrice: formatPrice(priceCents) || "Price unavailable",
+    originalPrice: getOriginalPrice(priceCents, pricing),
+    salePrice: formatPrice(priceCents, pricing) || "Price unavailable",
     position: positions[index % positions.length],
-    isSale: hasSalePrice(),
+    isSale: hasSalePrice(pricing),
   };
 }
 
@@ -564,8 +557,9 @@ function toVariantProductPreviewItem(
   product: InventoryProduct,
   variant: InventoryVariant,
   index: number,
+  pricing: StorefrontPricing,
 ): ProductPreviewItem {
-  const storefrontProduct = toStorefrontProduct(product);
+  const storefrontProduct = toStorefrontProduct(product, pricing);
   const storefrontVariant = storefrontProduct.variants.find((item) => item.id === variant.id);
   const variantName = storefrontVariant ? getVariantDisplayName(storefrontVariant) : variant.title;
   const variantImages = getVariantImages(product, variant);
@@ -577,16 +571,16 @@ function toVariantProductPreviewItem(
     brand: storefrontProduct.brand || "BayBlaze",
     image,
     href: `/product/${product.handle}?variant=${encodeURIComponent(variant.id)}`,
-    originalPrice: getOriginalPrice(variant.priceCents),
-    salePrice: formatPrice(variant.priceCents) || "Price unavailable",
+    originalPrice: getOriginalPrice(variant.priceCents, pricing),
+    salePrice: formatPrice(variant.priceCents, pricing) || "Price unavailable",
     position: positions[index % positions.length],
-    isSale: hasSalePrice(),
+    isSale: hasSalePrice(pricing),
     variantName: variantName || undefined,
   };
 }
 
-function toCheckoutDrinkUpsellItems(product: InventoryProduct) {
-  const storefrontProduct = toStorefrontProduct(product);
+function toCheckoutDrinkUpsellItems(product: InventoryProduct, pricing: StorefrontPricing) {
+  const storefrontProduct = toStorefrontProduct(product, pricing);
 
   return storefrontProduct.variants
     .map((variant): CheckoutDrinkUpsellItem => {
@@ -602,6 +596,7 @@ function toCheckoutDrinkUpsellItems(product: InventoryProduct) {
         name: storefrontProduct.name,
         price: formatPrice(
           product.variants.find((item) => item.id === variant.id)?.priceCents,
+          pricing,
         ) || storefrontProduct.salePrice,
         productHandle: storefrontProduct.handle,
         productId: storefrontProduct.id,
@@ -646,11 +641,7 @@ async function getPublishedInventoryProducts() {
 async function fetchInventorySnapshot() {
   await connection();
 
-  const bayblazeApiUrl =
-    process.env.BAYBLAZE_API_URL?.trim().replace(/\/$/, "") ??
-    "https://api.bayblaze.net";
-  const bayblazeApiToken =
-    process.env.BAYBLAZE_API_SERVICE_TOKEN?.trim() ?? "";
+  const { bayblazeApiToken, bayblazeApiUrl } = getBayBlazeApiConfig();
 
   if (!bayblazeApiToken) {
     throw new Error("BAYBLAZE_API_SERVICE_TOKEN is not configured for storefront inventory fetches.");
@@ -673,18 +664,81 @@ async function fetchInventorySnapshot() {
   return (await response.json()) as InventorySnapshot;
 }
 
+export async function getStorefrontPriceAdjustmentCents() {
+  return (await getStorefrontPricing()).priceAdjustmentCents;
+}
+
+async function getStorefrontPricing(): Promise<StorefrontPricing> {
+  await connection();
+
+  const fallbackPriceAdjustmentCents = normalizePriceAdjustmentCents(
+    process.env.NEXT_PUBLIC_BAYBLAZE_PRICE_ADJUSTMENT_CENTS,
+  );
+  const { bayblazeApiUrl } = getBayBlazeApiConfig();
+
+  try {
+    const response = await fetch(`${bayblazeApiUrl}/v1/storefront/settings`, {
+      cache: "no-store",
+    });
+
+    if (!response.ok) {
+      return { priceAdjustmentCents: fallbackPriceAdjustmentCents };
+    }
+
+    const payload = (await response.json()) as {
+      settings?: { priceAdjustmentCents?: unknown };
+    };
+
+    return {
+      priceAdjustmentCents: normalizePriceAdjustmentCents(
+        payload.settings?.priceAdjustmentCents,
+      ),
+    };
+  } catch {
+    return { priceAdjustmentCents: fallbackPriceAdjustmentCents };
+  }
+}
+
+function getBayBlazeApiConfig() {
+  const bayblazeApiUrl =
+    process.env.BAYBLAZE_API_URL?.trim().replace(/\/$/, "") ??
+    "https://api.bayblaze.net";
+  const bayblazeApiToken =
+    process.env.BAYBLAZE_API_SERVICE_TOKEN?.trim() ?? "";
+
+  return { bayblazeApiToken, bayblazeApiUrl };
+}
+
+function normalizePriceAdjustmentCents(value: unknown) {
+  const number =
+    typeof value === "string" || typeof value === "number"
+      ? Number(value)
+      : Number.NaN;
+
+  return Number.isInteger(number) && number > 0
+    ? Math.min(number, 1_000_000_00)
+    : 0;
+}
+
 export async function getProductByStorefrontHandle(handle: string) {
-  const products = await getPublishedInventoryProducts();
+  const [products, pricing] = await Promise.all([
+    getPublishedInventoryProducts(),
+    getStorefrontPricing(),
+  ]);
   const product = products.find((item) => item.handle === handle);
 
-  return product ? toStorefrontProduct(product) : undefined;
+  return product ? toStorefrontProduct(product, pricing) : undefined;
 }
 
 export async function getFastDeliveryProductPreviews() {
   let products: InventoryProduct[];
+  let pricing: StorefrontPricing;
 
   try {
-    products = await getPublishedInventoryProducts();
+    [products, pricing] = await Promise.all([
+      getPublishedInventoryProducts(),
+      getStorefrontPricing(),
+    ]);
   } catch {
     return [];
   }
@@ -700,25 +754,29 @@ export async function getFastDeliveryProductPreviews() {
         })
         .map((variant) => ({ product, variant }));
     })
-    .map(({ product, variant }, index) => toVariantProductPreviewItem(product, variant, index))
+    .map(({ product, variant }, index) => toVariantProductPreviewItem(product, variant, index, pricing))
     .filter((product) => Boolean(product.image));
 }
 
 export async function getShopProducts() {
   let products: InventoryProduct[];
+  let pricing: StorefrontPricing;
 
   try {
-    products = await getPublishedInventoryProducts();
+    [products, pricing] = await Promise.all([
+      getPublishedInventoryProducts(),
+      getStorefrontPricing(),
+    ]);
   } catch {
     return [];
   }
 
   return products
     .flatMap((product) => {
-      const storefrontProduct = toStorefrontProduct(product);
+      const storefrontProduct = toStorefrontProduct(product, pricing);
 
       return storefrontProduct.variants.map((variant) =>
-        toShopVariantItem(product, storefrontProduct, variant),
+        toShopVariantItem(product, storefrontProduct, variant, pricing),
       );
     })
     .filter((product) => {
@@ -728,16 +786,20 @@ export async function getShopProducts() {
 
 export async function getCheckoutDrinkUpsellItems() {
   let products: InventoryProduct[];
+  let pricing: StorefrontPricing;
 
   try {
-    products = await getPublishedInventoryProducts();
+    [products, pricing] = await Promise.all([
+      getPublishedInventoryProducts(),
+      getStorefrontPricing(),
+    ]);
   } catch {
     return [];
   }
 
   return products
     .filter(isDrinkProduct)
-    .flatMap(toCheckoutDrinkUpsellItems)
+    .flatMap((product) => toCheckoutDrinkUpsellItems(product, pricing))
     .slice(0, 6);
 }
 
@@ -761,9 +823,13 @@ export async function getProductPreviewsByCategoryHandle(
   categoryHandle: string,
 ) {
   let products: InventoryProduct[];
+  let pricing: StorefrontPricing;
 
   try {
-    products = await getPublishedInventoryProducts();
+    [products, pricing] = await Promise.all([
+      getPublishedInventoryProducts(),
+      getStorefrontPricing(),
+    ]);
   } catch {
     return [];
   }
@@ -775,7 +841,7 @@ export async function getProductPreviewsByCategoryHandle(
       );
     })
     .slice(0, 12)
-    .map(toProductPreviewItem)
+    .map((product, index) => toProductPreviewItem(product, index, pricing))
     .filter((product) => {
       return Boolean(product.image);
     });

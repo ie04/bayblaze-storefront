@@ -5,6 +5,7 @@ import "@fontsource/jost/600.css";
 import "@fontsource/jost/700.css";
 import "@fontsource/jost/800.css";
 import "@fontsource/jost/900.css";
+import { getStorefrontPriceAdjustmentCents } from "@/app/lib/medusa-products";
 import Providers from "@/app/providers";
 import "./globals.css";
 
@@ -31,15 +32,17 @@ export const viewport: Viewport = {
   themeColor: "#56833e",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const priceAdjustmentCents = await getStorefrontPriceAdjustmentCents();
+
   return (
     <html lang="en" className="h-full antialiased">
       <body className="min-h-full flex flex-col" suppressHydrationWarning>
-        <Providers>{children}</Providers>
+        <Providers priceAdjustmentCents={priceAdjustmentCents}>{children}</Providers>
       </body>
     </html>
   );

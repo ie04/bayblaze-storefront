@@ -7,11 +7,17 @@ import { CartProvider } from "@/app/components/cart/CartContext";
 import CheckoutPromoCodeProvider from "@/app/components/promo/CheckoutPromoCodeProvider";
 import ReferralOfferProvider from "@/app/components/referral/ReferralOfferProvider";
 
-export default function Providers({ children }: { children: ReactNode }) {
+export default function Providers({
+  children,
+  priceAdjustmentCents = 0,
+}: {
+  children: ReactNode;
+  priceAdjustmentCents?: number;
+}) {
   return (
     <ReferralOfferProvider>
       <CheckoutPromoCodeProvider>
-        <CartProvider>
+        <CartProvider priceAdjustmentCents={priceAdjustmentCents}>
           <LogoSplashIntro />
           {children}
         </CartProvider>

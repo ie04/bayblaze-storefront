@@ -38,13 +38,10 @@ type CartContextValue = {
 const CART_STORAGE_KEY = "bayblaze-cart-items";
 const CART_PRICE_ADJUSTMENT_STORAGE_KEY = "bayblaze-cart-price-adjustment-cents";
 const EMPTY_CART_ITEMS: CartItem[] = [];
-const SITEWIDE_PRICE_ADJUSTMENT_CENTS = normalizePriceAdjustmentCents(
-  process.env.NEXT_PUBLIC_BAYBLAZE_PRICE_ADJUSTMENT_CENTS,
-);
 
 const CartContext = createContext<CartContextValue | null>(null);
 
-function readStoredCartItems() {
+function readStoredCartItems(priceAdjustmentCents: number) {
   if (typeof window === "undefined") {
     return EMPTY_CART_ITEMS;
   }
@@ -54,11 +51,11 @@ function readStoredCartItems() {
       CART_PRICE_ADJUSTMENT_STORAGE_KEY,
     );
 
-    if (savedAdjustment !== String(SITEWIDE_PRICE_ADJUSTMENT_CENTS)) {
+    if (savedAdjustment !== String(priceAdjustmentCents)) {
       window.localStorage.removeItem(CART_STORAGE_KEY);
       window.localStorage.setItem(
         CART_PRICE_ADJUSTMENT_STORAGE_KEY,
-        String(SITEWIDE_PRICE_ADJUSTMENT_CENTS),
+        String(priceAdjustmentCents),
       );
       return EMPTY_CART_ITEMS;
     }
@@ -79,11 +76,11 @@ function readStoredCartItems() {
   }
 }
 
-function saveCartItems(items: CartItem[]) {
+function saveCartItems(items: CartItem[], priceAdjustmentCents: number) {
   if (typeof window !== "undefined") {
     window.localStorage.setItem(
       CART_PRICE_ADJUSTMENT_STORAGE_KEY,
-      String(SITEWIDE_PRICE_ADJUSTMENT_CENTS),
+      String(priceAdjustmentCents),
     );
     window.localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
   }
@@ -110,18 +107,26 @@ function getLimitedQuantity(quantity: number, availableQuantity?: number) {
   return Math.min(safeQuantity, Math.max(0, availableQuantity));
 }
 
-export function CartProvider({ children }: { children: ReactNode }) {
+export function CartProvider({
+  children,
+  priceAdjustmentCents = 0,
+}: {
+  children: ReactNode;
+  priceAdjustmentCents?: number;
+}) {
+  const normalizedPriceAdjustmentCents =
+    normalizePriceAdjustmentCents(priceAdjustmentCents);
   const [items, setItems] = useState<CartItem[]>(EMPTY_CART_ITEMS);
   const [isCartOpen, setIsCartOpen] = useState(false);
 
   useEffect(() => {
     const hydrationTimer = window.setTimeout(() => {
-      setItems(readStoredCartItems());
+      setItems(readStoredCartItems(normalizedPriceAdjustmentCents));
     }, 0);
 
     function handleStorage(event: StorageEvent) {
       if (event.key === CART_STORAGE_KEY) {
-        setItems(readStoredCartItems());
+        setItems(readStoredCartItems(normalizedPriceAdjustmentCents));
       }
     }
 
@@ -131,7 +136,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       window.clearTimeout(hydrationTimer);
       window.removeEventListener("storage", handleStorage);
     };
-  }, []);
+  }, [normalizedPriceAdjustmentCents]);
 
   const cartCount = useMemo(() => {
     return items.reduce((total, item) => total + item.quantity, 0);
@@ -157,7 +162,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
             : currentItem
         );
 
-        saveCartItems(nextItems);
+        saveCartItems(nextItems, normalizedPriceAdjustmentCents);
         return nextItems;
       }
 
@@ -172,7 +177,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
       const nextItems = [...currentItems, limitedItem];
 
-      saveCartItems(nextItems);
+      saveCartItems(nextItems, normalizedPriceAdjustmentCents);
       return nextItems;
     });
 
@@ -185,7 +190,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setItems((currentItems) => {
       const nextItems = currentItems.filter((item) => item.id !== id);
 
-      saveCartItems(nextItems);
+      saveCartItems(nextItems, normalizedPriceAdjustmentCents);
       return nextItems;
     });
   }
@@ -203,13 +208,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
         )
         .filter((item) => item.quantity > 0);
 
-      saveCartItems(nextItems);
+      saveCartItems(nextItems, normalizedPriceAdjustmentCents);
       return nextItems;
     });
   }
 
   function clearCart() {
-    saveCartItems(EMPTY_CART_ITEMS);
+    saveCartItems(EMPTY_CART_ITEMS, normalizedPriceAdjustmentCents);
     setItems(EMPTY_CART_ITEMS);
   }
 
