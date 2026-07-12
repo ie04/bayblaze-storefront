@@ -5,7 +5,10 @@ import "@fontsource/jost/600.css";
 import "@fontsource/jost/700.css";
 import "@fontsource/jost/800.css";
 import "@fontsource/jost/900.css";
-import { getStorefrontPriceAdjustmentCents } from "@/app/lib/medusa-products";
+import {
+  getStorefrontCartCatalogVersion,
+  getStorefrontPriceAdjustmentCents,
+} from "@/app/lib/medusa-products";
 import Providers from "@/app/providers";
 import "./globals.css";
 
@@ -37,12 +40,15 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const priceAdjustmentCents = await getStorefrontPriceAdjustmentCents();
+  const [catalogVersion, priceAdjustmentCents] = await Promise.all([
+    getStorefrontCartCatalogVersion(),
+    getStorefrontPriceAdjustmentCents(),
+  ]);
 
   return (
     <html lang="en" className="h-full antialiased">
       <body className="min-h-full flex flex-col" suppressHydrationWarning>
-        <Providers priceAdjustmentCents={priceAdjustmentCents}>{children}</Providers>
+        <Providers catalogVersion={catalogVersion} priceAdjustmentCents={priceAdjustmentCents}>{children}</Providers>
       </body>
     </html>
   );

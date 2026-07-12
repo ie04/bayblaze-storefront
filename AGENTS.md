@@ -189,6 +189,11 @@ standalone `bayblaze-medusa` repo is retired.
 - Checkout should reject stale cart items whose inventory metadata is missing or
   unverifiable and ask the customer to re-add the product so BayBlaze can confirm
   current availability.
+- Browser carts are invalidated when the storefront catalog version changes.
+  `src/app/lib/medusa-products.ts` computes that version from published variant
+  IDs, prices, availability, inventory location, and update timestamps, and
+  passes it through the root provider into `CartProvider`. This prevents stale
+  localStorage prices from surviving inventory-side price edits.
 - Storefront code should not fake inventory state or quantity. Missing
   `inventoryState` or `availableQuantity` should be treated as a data/config
   problem that must be fixed in Medusa or the inventory app.

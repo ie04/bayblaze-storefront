@@ -36,12 +36,13 @@ type CartContextValue = {
 };
 
 const CART_STORAGE_KEY = "bayblaze-cart-items";
+const CART_CATALOG_VERSION_STORAGE_KEY = "bayblaze-cart-catalog-version";
 const CART_PRICE_ADJUSTMENT_STORAGE_KEY = "bayblaze-cart-price-adjustment-cents";
 const EMPTY_CART_ITEMS: CartItem[] = [];
 
 const CartContext = createContext<CartContextValue | null>(null);
 
-function readStoredCartItems(priceAdjustmentCents: number) {
+function readStoredCartItems(priceAdjustmentCents: number, catalogVersion: string) {
   if (typeof window === "undefined") {
     return EMPTY_CART_ITEMS;
   }
@@ -50,13 +51,22 @@ function readStoredCartItems(priceAdjustmentCents: number) {
     const savedAdjustment = window.localStorage.getItem(
       CART_PRICE_ADJUSTMENT_STORAGE_KEY,
     );
+    const savedCatalogVersion = window.localStorage.getItem(
+      CART_CATALOG_VERSION_STORAGE_KEY,
+    );
 
-    if (savedAdjustment !== String(priceAdjustmentCents)) {
+    if (
+      savedAdjustment !== String(priceAdjustmentCents) ||
+      (catalogVersion && savedCatalogVersion !== catalogVersion)
+    ) {
       window.localStorage.removeItem(CART_STORAGE_KEY);
       window.localStorage.setItem(
         CART_PRICE_ADJUSTMENT_STORAGE_KEY,
         String(priceAdjustmentCents),
       );
+      if (catalogVersion) {
+        window.localStorage.setItem(CART_CATALOG_VERSION_STORAGE_KEY, catalogVersion);
+      }
       return EMPTY_CART_ITEMS;
     }
 
@@ -76,12 +86,15 @@ function readStoredCartItems(priceAdjustmentCents: number) {
   }
 }
 
-function saveCartItems(items: CartItem[], priceAdjustmentCents: number) {
+function saveCartItems(items: CartItem[], priceAdjustmentCents: number, catalogVersion: string) {
   if (typeof window !== "undefined") {
     window.localStorage.setItem(
       CART_PRICE_ADJUSTMENT_STORAGE_KEY,
       String(priceAdjustmentCents),
     );
+    if (catalogVersion) {
+      window.localStorage.setItem(CART_CATALOG_VERSION_STORAGE_KEY, catalogVersion);
+    }
     window.localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
   }
 }
@@ -108,25 +121,32 @@ function getLimitedQuantity(quantity: number, availableQuantity?: number) {
 }
 
 export function CartProvider({
+  catalogVersion = "",
   children,
   priceAdjustmentCents = 0,
 }: {
+  catalogVersion?: string;
   children: ReactNode;
   priceAdjustmentCents?: number;
 }) {
   const normalizedPriceAdjustmentCents =
     normalizePriceAdjustmentCents(priceAdjustmentCents);
+  const normalizedCatalogVersion = catalogVersion.trim();
   const [items, setItems] = useState<CartItem[]>(EMPTY_CART_ITEMS);
   const [isCartOpen, setIsCartOpen] = useState(false);
 
   useEffect(() => {
     const hydrationTimer = window.setTimeout(() => {
-      setItems(readStoredCartItems(normalizedPriceAdjustmentCents));
+      setItems(readStoredCartItems(normalizedPriceAdjustmentCents, normalizedCatalogVersion));
     }, 0);
 
     function handleStorage(event: StorageEvent) {
-      if (event.key === CART_STORAGE_KEY) {
-        setItems(readStoredCartItems(normalizedPriceAdjustmentCents));
+      if (
+        event.key === CART_STORAGE_KEY ||
+        event.key === CART_CATALOG_VERSION_STORAGE_KEY ||
+        event.key === CART_PRICE_ADJUSTMENT_STORAGE_KEY
+      ) {
+        setItems(readStoredCartItems(normalizedPriceAdjustmentCents, normalizedCatalogVersion));
       }
     }
 
@@ -136,7 +156,7 @@ export function CartProvider({
       window.clearTimeout(hydrationTimer);
       window.removeEventListener("storage", handleStorage);
     };
-  }, [normalizedPriceAdjustmentCents]);
+  }, [normalizedCatalogVersion, normalizedPriceAdjustmentCents]);
 
   const cartCount = useMemo(() => {
     return items.reduce((total, item) => total + item.quantity, 0);
@@ -162,7 +182,7 @@ export function CartProvider({
             : currentItem
         );
 
-        saveCartItems(nextItems, normalizedPriceAdjustmentCents);
+        saveCartItems(nextItems, normalizedPriceAdjustmentCents, normalizedCatalogVersion);
         return nextItems;
       }
 
@@ -177,7 +197,7 @@ export function CartProvider({
 
       const nextItems = [...currentItems, limitedItem];
 
-      saveCartItems(nextItems, normalizedPriceAdjustmentCents);
+      saveCartItems(nextItems, normalizedPriceAdjustmentCents, normalizedCatalogVersion);
       return nextItems;
     });
 
@@ -190,7 +210,7 @@ export function CartProvider({
     setItems((currentItems) => {
       const nextItems = currentItems.filter((item) => item.id !== id);
 
-      saveCartItems(nextItems, normalizedPriceAdjustmentCents);
+      saveCartItems(nextItems, normalizedPriceAdjustmentCents, normalizedCatalogVersion);
       return nextItems;
     });
   }
@@ -208,13 +228,13 @@ export function CartProvider({
         )
         .filter((item) => item.quantity > 0);
 
-      saveCartItems(nextItems, normalizedPriceAdjustmentCents);
+      saveCartItems(nextItems, normalizedPriceAdjustmentCents, normalizedCatalogVersion);
       return nextItems;
     });
   }
 
   function clearCart() {
-    saveCartItems(EMPTY_CART_ITEMS, normalizedPriceAdjustmentCents);
+    saveCartItems(EMPTY_CART_ITEMS, normalizedPriceAdjustmentCents, normalizedCatalogVersion);
     setItems(EMPTY_CART_ITEMS);
   }
 

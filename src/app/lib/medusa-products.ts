@@ -668,6 +668,31 @@ export async function getStorefrontPriceAdjustmentCents() {
   return (await getStorefrontPricing()).priceAdjustmentCents;
 }
 
+export async function getStorefrontCartCatalogVersion() {
+  try {
+    const products = await getPublishedInventoryProducts();
+
+    return products
+      .flatMap((product) =>
+        product.variants.map((variant) =>
+          [
+            product.id,
+            product.status,
+            variant.id,
+            variant.priceCents,
+            variant.metadata?.inventoryState ?? "",
+            variant.metadata?.availableQuantity ?? "",
+            variant.updatedAt,
+          ].join(":"),
+        ),
+      )
+      .sort()
+      .join("|");
+  } catch {
+    return "";
+  }
+}
+
 async function getStorefrontPricing(): Promise<StorefrontPricing> {
   await connection();
 
