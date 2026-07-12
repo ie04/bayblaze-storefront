@@ -323,6 +323,12 @@ Additional UI constraints:
   `NEXT_PUBLIC_BAYBLAZE_PRICE_ADJUSTMENT_CENTS` env is only a fallback when API
   settings are unavailable. Changing the adjustment invalidates persisted
   browser carts so stale pre-adjustment prices do not carry into checkout.
+- Storefront abandonment/activity tracking is global client instrumentation in
+  `src/app/components/analytics/StorefrontActivityTracker.tsx`. It posts safe
+  visitor/session lifecycle events, page paths, and cart count/value to
+  `bayblaze-api` `POST /v1/storefront/activity/events` using
+  `NEXT_PUBLIC_BAYBLAZE_API_URL` or `https://api.bayblaze.net`; it must not
+  write Firebase directly or include backend service tokens.
 
 ### PWA Install Prompt
 
