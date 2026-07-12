@@ -130,6 +130,9 @@ export type ShopProductItem = {
 const assetOrigin =
   process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL?.replace(/\/$/, "") ??
   "https://api.bayblaze.net";
+const sitewidePriceAdjustmentCents = normalizeSitewidePriceAdjustmentCents(
+  process.env.NEXT_PUBLIC_BAYBLAZE_PRICE_ADJUSTMENT_CENTS,
+);
 
 const defaultStorefrontCategory = {
   name: "Uncategorized",
@@ -196,19 +199,44 @@ function formatPrice(cents?: number) {
   return new Intl.NumberFormat("en-US", {
     currency: "USD",
     style: "currency",
-  }).format((cents ?? 0) / 100);
+  }).format(getAdjustedPriceCents(cents ?? 0) / 100);
 }
 
 function hasSalePrice() {
-  return false;
+  return sitewidePriceAdjustmentCents > 0;
 }
 
 function getSaleBadge() {
-  return undefined;
+  return sitewidePriceAdjustmentCents > 0
+    ? `${formatPriceWithoutAdjustment(sitewidePriceAdjustmentCents)} off`
+    : undefined;
 }
 
-function getOriginalPrice() {
-  return undefined;
+function getOriginalPrice(cents?: number) {
+  return sitewidePriceAdjustmentCents > 0 && Number.isFinite(cents ?? Number.NaN)
+    ? formatPriceWithoutAdjustment(cents ?? 0)
+    : undefined;
+}
+
+function getAdjustedPriceCents(cents: number) {
+  return Math.max(0, Math.round(cents) - sitewidePriceAdjustmentCents);
+}
+
+function normalizeSitewidePriceAdjustmentCents(value: unknown) {
+  const number = typeof value === "string" || typeof value === "number"
+    ? Number(value)
+    : Number.NaN;
+
+  return Number.isInteger(number) && number > 0
+    ? Math.min(number, 1_000_000_00)
+    : 0;
+}
+
+function formatPriceWithoutAdjustment(cents: number) {
+  return new Intl.NumberFormat("en-US", {
+    currency: "USD",
+    style: "currency",
+  }).format(Math.max(0, Math.round(cents)) / 100);
 }
 
 function getFlavorValues(product: InventoryProduct) {
@@ -392,7 +420,7 @@ function toStorefrontProduct(product: InventoryProduct): StorefrontProduct {
     brand: getBrand(product),
     collectionTitle: product.collectionTitle ?? categories[0]?.name ?? "",
     categories,
-    originalPrice: getOriginalPrice(),
+    originalPrice: getOriginalPrice(priceCents),
     salePrice: formatPrice(priceCents) || "Price unavailable",
     saleBadge: getSaleBadge(),
     images: images.map((src, index) => ({
@@ -496,10 +524,12 @@ function toShopVariantItem(
     image,
     href: `/product/${product.handle}?variant=${encodeURIComponent(variant.id)}`,
     categories: storefrontProduct.categories.map((category) => category.name),
-    originalPrice: getOriginalPrice(),
+    originalPrice: getOriginalPrice(priceCents),
     salePrice: formattedPrice,
     price: formattedPrice,
-    sortPrice: priceCents ?? Number.MAX_SAFE_INTEGER,
+    sortPrice: Number.isFinite(priceCents ?? Number.NaN)
+      ? getAdjustedPriceCents(priceCents ?? 0)
+      : Number.MAX_SAFE_INTEGER,
     action: "Select options",
     isSale: hasSalePrice(),
     description:
@@ -523,7 +553,7 @@ function toProductPreviewItem(
     brand: getBrand(product) || "BayBlaze",
     image,
     href: `/product/${product.handle}`,
-    originalPrice: getOriginalPrice(),
+    originalPrice: getOriginalPrice(priceCents),
     salePrice: formatPrice(priceCents) || "Price unavailable",
     position: positions[index % positions.length],
     isSale: hasSalePrice(),
@@ -547,7 +577,7 @@ function toVariantProductPreviewItem(
     brand: storefrontProduct.brand || "BayBlaze",
     image,
     href: `/product/${product.handle}?variant=${encodeURIComponent(variant.id)}`,
-    originalPrice: getOriginalPrice(),
+    originalPrice: getOriginalPrice(variant.priceCents),
     salePrice: formatPrice(variant.priceCents) || "Price unavailable",
     position: positions[index % positions.length],
     isSale: hasSalePrice(),

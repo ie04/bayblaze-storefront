@@ -36,7 +36,11 @@ type CartContextValue = {
 };
 
 const CART_STORAGE_KEY = "bayblaze-cart-items";
+const CART_PRICE_ADJUSTMENT_STORAGE_KEY = "bayblaze-cart-price-adjustment-cents";
 const EMPTY_CART_ITEMS: CartItem[] = [];
+const SITEWIDE_PRICE_ADJUSTMENT_CENTS = normalizePriceAdjustmentCents(
+  process.env.NEXT_PUBLIC_BAYBLAZE_PRICE_ADJUSTMENT_CENTS,
+);
 
 const CartContext = createContext<CartContextValue | null>(null);
 
@@ -46,6 +50,19 @@ function readStoredCartItems() {
   }
 
   try {
+    const savedAdjustment = window.localStorage.getItem(
+      CART_PRICE_ADJUSTMENT_STORAGE_KEY,
+    );
+
+    if (savedAdjustment !== String(SITEWIDE_PRICE_ADJUSTMENT_CENTS)) {
+      window.localStorage.removeItem(CART_STORAGE_KEY);
+      window.localStorage.setItem(
+        CART_PRICE_ADJUSTMENT_STORAGE_KEY,
+        String(SITEWIDE_PRICE_ADJUSTMENT_CENTS),
+      );
+      return EMPTY_CART_ITEMS;
+    }
+
     const savedCart = window.localStorage.getItem(CART_STORAGE_KEY);
 
     if (!savedCart) {
@@ -64,10 +81,24 @@ function readStoredCartItems() {
 
 function saveCartItems(items: CartItem[]) {
   if (typeof window !== "undefined") {
+    window.localStorage.setItem(
+      CART_PRICE_ADJUSTMENT_STORAGE_KEY,
+      String(SITEWIDE_PRICE_ADJUSTMENT_CENTS),
+    );
     window.localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
   }
 }
 
+function normalizePriceAdjustmentCents(value: unknown) {
+  const number =
+    typeof value === "string" || typeof value === "number"
+      ? Number(value)
+      : Number.NaN;
+
+  return Number.isInteger(number) && number > 0
+    ? Math.min(number, 1_000_000_00)
+    : 0;
+}
 
 function getLimitedQuantity(quantity: number, availableQuantity?: number) {
   const safeQuantity = Math.max(0, quantity);
