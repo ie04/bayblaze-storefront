@@ -256,6 +256,7 @@ export default function CheckoutPageClient({
   const hasHandledDrinkUpsellRef = useRef(false);
   const pendingPromoApplyAfterAuthRef = useRef("");
   const promoReapplyAfterUpsellRef = useRef("");
+  const ignoredAutoPromoCodesRef = useRef<Set<string>>(new Set());
 
   const subtotal = useMemo(() => {
     return items.reduce((total, item) => {
@@ -533,6 +534,11 @@ export default function CheckoutPageClient({
             ? data.message
             : "That promo code could not be applied.",
         );
+        if (options.source === "url") {
+          ignoredAutoPromoCodesRef.current.add(code);
+          clearStoredCheckoutPromoCode();
+          clearPromoCodeFromUrl(code);
+        }
         return;
       }
 
@@ -564,7 +570,7 @@ export default function CheckoutPageClient({
     } finally {
       setIsPromoApplying(false);
     }
-  }, [clearReferralOffer, items, storeCheckoutPromoCode, subtotal]);
+  }, [clearReferralOffer, clearStoredCheckoutPromoCode, items, storeCheckoutPromoCode, subtotal]);
 
   async function handleApplyPromoCode() {
     const normalizedCode = normalizeCheckoutPromoCode(promoCode);
@@ -573,6 +579,8 @@ export default function CheckoutPageClient({
       setPromoMessage("Enter a promo code.");
       return;
     }
+
+    ignoredAutoPromoCodesRef.current.delete(normalizedCode);
 
     if (!hasPromoAuthAccess) {
       pendingPromoApplyAfterAuthRef.current = normalizedCode;
@@ -598,6 +606,7 @@ export default function CheckoutPageClient({
       !pendingUrlPromoCode ||
       !hasItems ||
       isPromoApplying ||
+      ignoredAutoPromoCodesRef.current.has(pendingUrlPromoCode) ||
       activeAppliedPromo?.code === pendingUrlPromoCode
     ) {
       return;
@@ -641,6 +650,7 @@ export default function CheckoutPageClient({
     const normalizedCode = normalizeCheckoutPromoCode(value);
 
     setPromoCode(normalizedCode);
+    ignoredAutoPromoCodesRef.current.delete(normalizedCode);
 
     if (!normalizedCode && appliedPromo) {
       setAppliedPromo(null);
@@ -712,6 +722,24 @@ export default function CheckoutPageClient({
 
     const url = new URL(window.location.href);
     url.searchParams.set("promo", normalizedCode);
+    window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}`);
+  }
+
+  function clearPromoCodeFromUrl(code?: string) {
+    const normalizedCode = normalizeCheckoutPromoCode(code);
+
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const url = new URL(window.location.href);
+    const currentCode = normalizeCheckoutPromoCode(url.searchParams.get("promo"));
+
+    if (normalizedCode && currentCode && currentCode !== normalizedCode) {
+      return;
+    }
+
+    url.searchParams.delete("promo");
     window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}`);
   }
 
