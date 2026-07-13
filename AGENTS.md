@@ -323,6 +323,11 @@ Additional UI constraints:
   `NEXT_PUBLIC_BAYBLAZE_PRICE_ADJUSTMENT_CENTS` env is only a fallback when API
   settings are unavailable. Changing the adjustment invalidates persisted
   browser carts so stale pre-adjustment prices do not carry into checkout.
+- The same public storefront settings include `ageVerificationDisabled`, managed
+  from `bayblaze-admin`, for full-storefront checkout testing. When enabled,
+  checkout must bypass AgeChecker in both the client UI and the final
+  `/api/checkout/order` server route, recording order metadata
+  `age_verification_source: "storefront_testing"`.
 - Storefront abandonment/activity tracking is global client instrumentation in
   `src/app/components/analytics/StorefrontActivityTracker.tsx`. It posts safe
   visitor/session lifecycle events, page paths, and cart count/value to

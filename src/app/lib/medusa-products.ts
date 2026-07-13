@@ -1,5 +1,7 @@
 import { connection } from "next/server";
 
+import { getPublicStorefrontSettings } from "@/app/lib/storefront-settings";
+
 type InventoryState = "ON_VEHICLE" | "IN_WAREHOUSE";
 type ProductStatus = "draft" | "published";
 
@@ -694,34 +696,8 @@ export async function getStorefrontCartCatalogVersion() {
 }
 
 async function getStorefrontPricing(): Promise<StorefrontPricing> {
-  await connection();
-
-  const fallbackPriceAdjustmentCents = normalizePriceAdjustmentCents(
-    process.env.NEXT_PUBLIC_BAYBLAZE_PRICE_ADJUSTMENT_CENTS,
-  );
-  const { bayblazeApiUrl } = getBayBlazeApiConfig();
-
-  try {
-    const response = await fetch(`${bayblazeApiUrl}/v1/storefront/settings`, {
-      cache: "no-store",
-    });
-
-    if (!response.ok) {
-      return { priceAdjustmentCents: fallbackPriceAdjustmentCents };
-    }
-
-    const payload = (await response.json()) as {
-      settings?: { priceAdjustmentCents?: unknown };
-    };
-
-    return {
-      priceAdjustmentCents: normalizePriceAdjustmentCents(
-        payload.settings?.priceAdjustmentCents,
-      ),
-    };
-  } catch {
-    return { priceAdjustmentCents: fallbackPriceAdjustmentCents };
-  }
+  const settings = await getPublicStorefrontSettings();
+  return { priceAdjustmentCents: settings.priceAdjustmentCents };
 }
 
 function getBayBlazeApiConfig() {
@@ -732,17 +708,6 @@ function getBayBlazeApiConfig() {
     process.env.BAYBLAZE_API_SERVICE_TOKEN?.trim() ?? "";
 
   return { bayblazeApiToken, bayblazeApiUrl };
-}
-
-function normalizePriceAdjustmentCents(value: unknown) {
-  const number =
-    typeof value === "string" || typeof value === "number"
-      ? Number(value)
-      : Number.NaN;
-
-  return Number.isInteger(number) && number > 0
-    ? Math.min(number, 1_000_000_00)
-    : 0;
 }
 
 export async function getProductByStorefrontHandle(handle: string) {

@@ -33,6 +33,7 @@ import {
 } from "@/app/domain/checkout-promo-codes";
 import { verifyCheckoutAgeVerification } from "@/app/lib/age-verification-token";
 import { verifyCheckoutRoutingEvaluation } from "@/app/lib/pre-checkout-routing-token";
+import { getPublicStorefrontSettings } from "@/app/lib/storefront-settings";
 
 type CheckoutItem = {
   id?: string;
@@ -215,10 +216,11 @@ export async function POST(request: Request) {
   }
 
   const customerToken = await getCustomerToken();
-  const [bayBlazeAccountToken, bayBlazeAccount, accountCustomer] = await Promise.all([
+  const [bayBlazeAccountToken, bayBlazeAccount, accountCustomer, storefrontSettings] = await Promise.all([
     getBayBlazeAccountToken(),
     getBayBlazeAccountFromSession(),
     customerToken ? retrieveAuthenticatedCustomer(customerToken).catch(() => null) : null,
+    getPublicStorefrontSettings(),
   ]);
   const authenticatedCustomerToken = accountCustomer ? customerToken : undefined;
   const cachedAgeVerification = getAccountAgeVerificationMetadata(
@@ -238,7 +240,16 @@ export async function POST(request: Request) {
     bayBlazeAccount,
     customer,
   );
-  const ageVerification = accountAgeVerificationBypass
+  const storefrontAgeVerificationBypass = getStorefrontAgeVerificationBypassMetadata(
+    storefrontSettings.ageVerificationDisabled,
+    customer,
+  );
+  const ageVerification = storefrontAgeVerificationBypass
+    ? {
+        error: undefined,
+        metadata: storefrontAgeVerificationBypass,
+      }
+    : accountAgeVerificationBypass
     ? {
         error: undefined,
         metadata: accountAgeVerificationBypass,
@@ -816,6 +827,23 @@ function getAccountAgeVerificationBypassMetadata(
     age_verified_account_id: account.uid,
     age_verified_at: new Date().toISOString(),
     age_verified_email: accountEmail,
+  };
+}
+
+function getStorefrontAgeVerificationBypassMetadata(
+  ageVerificationDisabled: boolean,
+  checkoutCustomer: CheckoutCustomer,
+) {
+  if (!ageVerificationDisabled) {
+    return null;
+  }
+
+  const normalizedCustomer = normalizeAgeVerificationCustomer(checkoutCustomer);
+
+  return {
+    age_verification_source: "storefront_testing" as const,
+    age_verified_at: new Date().toISOString(),
+    age_verified_email: normalizedCustomer?.email ?? "",
   };
 }
 
