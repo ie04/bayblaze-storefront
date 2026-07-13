@@ -26,7 +26,7 @@ export type DeliveryTimingValidation =
 
 export const STORE_TIME_ZONE = "America/New_York";
 export const DELIVERY_SCHEDULING_RULE =
-  "Orders placed after 11 PM must be scheduled for 10AM the next day or later.";
+  "BayBlaze Express on-demand delivery is available 24/7. You can also schedule delivery for a time that works for you.";
 export const EXPRESS_CHECKOUT_GRACE_MS = 60 * 60 * 1000;
 
 type StoreDateTimeParts = {
@@ -50,14 +50,9 @@ const storeDateTimeFormatter = new Intl.DateTimeFormat("en-US", {
 });
 
 export function getDeliveryScheduleRequirement(now = new Date()) {
-  const parts = getStoreDateTimeParts(now);
-  const isScheduleRequired = parts.hour >= 23 || parts.hour < 10;
-
   return {
-    earliestScheduledAt: isScheduleRequired
-      ? getNextDeliveryWindowStart(parts)
-      : roundUpToNextMinute(now),
-    isScheduleRequired,
+    earliestScheduledAt: roundUpToNextMinute(now),
+    isScheduleRequired: false,
   };
 }
 
@@ -76,12 +71,7 @@ export function validateDeliveryTiming(
     };
   }
 
-  if (isBayBlazeExpressUnavailable(now, checkoutOpenedAt) && mode === "now") {
-    return {
-      error:
-        "BayBlaze Express is unavailable between 11 PM and 10 AM. Please schedule your delivery.",
-    };
-  }
+  void checkoutOpenedAt;
 
   if (mode === "now") {
     return { mode };
@@ -97,7 +87,7 @@ export function validateDeliveryTiming(
 
   if (!isWithinDeliveryHours(scheduledAt)) {
     return {
-      error: "Schedule delivery between 10 AM and 11 PM.",
+      error: "Choose a valid scheduled delivery time.",
     };
   }
 
@@ -117,23 +107,9 @@ export function isBayBlazeExpressUnavailable(
   now = new Date(),
   checkoutOpenedAt?: Date | null,
 ) {
-  if (!getDeliveryScheduleRequirement(now).isScheduleRequired) {
-    return false;
-  }
-
-  if (!checkoutOpenedAt) {
-    return true;
-  }
-
-  const checkoutOpenedDuringExpress =
-    !getDeliveryScheduleRequirement(checkoutOpenedAt).isScheduleRequired;
-  const elapsedMs = now.getTime() - checkoutOpenedAt.getTime();
-
-  return (
-    !checkoutOpenedDuringExpress ||
-    elapsedMs < 0 ||
-    elapsedMs > EXPRESS_CHECKOUT_GRACE_MS
-  );
+  void now;
+  void checkoutOpenedAt;
+  return false;
 }
 
 function parseCheckoutOpenedAt(value: unknown) {
@@ -147,9 +123,7 @@ function parseCheckoutOpenedAt(value: unknown) {
 }
 
 function isWithinDeliveryHours(date: Date) {
-  const parts = getStoreDateTimeParts(date);
-
-  return parts.hour >= 10 && parts.hour < 23;
+  return !Number.isNaN(date.getTime());
 }
 
 export function formatDateTimeLocalInStoreTimeZone(date: Date) {
@@ -197,16 +171,6 @@ function parseStoreDateTimeInput(value: unknown) {
   });
 
   return formatDateTimeLocalInStoreTimeZone(date) === value ? date : null;
-}
-
-function getNextDeliveryWindowStart(parts: StoreDateTimeParts) {
-  return getDateFromStoreParts({
-    ...parts,
-    day: parts.hour >= 23 ? parts.day + 1 : parts.day,
-    hour: 10,
-    minute: 0,
-    second: 0,
-  });
 }
 
 function roundUpToNextMinute(date: Date) {

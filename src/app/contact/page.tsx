@@ -20,7 +20,7 @@ const contactCards = [
   {
     icon: <TruckLineIcon />,
     label: "Delivery hours",
-    value: "Daily · 10am–11pm",
+    value: "On-demand · 24/7",
   },
   {
     icon: <MailLineIcon />,

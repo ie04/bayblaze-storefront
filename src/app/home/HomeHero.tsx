@@ -56,10 +56,10 @@ function HomeHeroInfoStrip() {
 
       <div className="border-r-2 border-black p-2 sm:p-4">
         <div className="text-base font-black leading-none text-black sm:text-xl">
-          10am–11pm
+          24/7
         </div>
         <div className="mt-1 text-[9px] font-bold uppercase leading-tight tracking-[0.12em] text-[#585858] sm:text-[11px] sm:tracking-widest">
-          Store hours
+          On-demand
         </div>
       </div>
 

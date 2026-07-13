@@ -1168,15 +1168,12 @@ export default function CheckoutPageClient({
                     activeDeliveryMode === "now"
                       ? "border-black"
                       : "border-[#d6d6d6]",
-                    isExpressUnavailable
-                      ? "cursor-not-allowed opacity-60"
-                      : "hover:border-black",
+                    "hover:border-black",
                   ].join(" ")}
                 >
                   <span className="flex items-center gap-3 text-[17px] font-semibold">
                     <input
                       checked={activeDeliveryMode === "now"}
-                      disabled={isExpressUnavailable}
                       name="delivery_mode"
                       onChange={() => setDeliveryMode("now")}
                       type="radio"
@@ -1185,8 +1182,8 @@ export default function CheckoutPageClient({
                     BayBlaze Express
                   </span>
                   <span className="text-[15px] font-medium leading-[1.45] text-[#585858]">
-                    Order will come to you in under an hour. Available from 10
-                    AM until 11 PM.
+                    On-demand delivery is available 24/7. Order will come to
+                    you in under an hour.
                   </span>
                 </label>
 
@@ -1214,14 +1211,6 @@ export default function CheckoutPageClient({
                 </label>
               </div>
 
-              {isCheckoutClockReady && isExpressUnavailable ? (
-                <p className="border border-[#d7d1c6] bg-white px-4 py-3 text-[15px] font-semibold leading-[1.5] text-black">
-                  Bayblaze Express Delivery is unavailable right now. Schedule
-                  your order for 10AM tomorrow or later. We&apos;re working on
-                  getting deliveries working 24/7 soon!
-                </p>
-              ) : null}
-
               {needsScheduledTime ? (
                 <label className="grid gap-2 text-[15px] font-semibold text-black sm:text-[16px]">
                   Scheduled delivery time
@@ -1237,7 +1226,7 @@ export default function CheckoutPageClient({
                   {scheduledMinimumLabel ? (
                     <span className="text-[14px] font-medium leading-[1.45] text-[#585858]">
                       Earliest available: {scheduledMinimumLabel}. Scheduled
-                      delivery hours are 10 AM to 11 PM.
+                      delivery is available 24/7.
                     </span>
                   ) : null}
                 </label>

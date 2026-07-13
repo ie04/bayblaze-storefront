@@ -91,7 +91,7 @@ export default function HowItWorksPage() {
           <Cell
             icon={<ClockLineIcon className="h-5 w-5 text-[var(--ast-global-color-0)]" />}
             title="Delivery hours"
-            body="Daily · 10:00am – 11:00pm. Schedule ahead when needed."
+            body="On-demand delivery is available 24/7. Schedule ahead when needed."
           />
           <Cell
             icon={<ShieldCheckLineIcon className="h-5 w-5 text-[var(--ast-global-color-0)]" />}

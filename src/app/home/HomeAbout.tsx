@@ -73,7 +73,7 @@ export default function HomeAbout() {
                   Delivery hours
                 </p>
                 <p className="mt-1 text-sm font-bold leading-[1.5] text-[#585858]">
-                  Daily · 10:00am – 11:00pm. Schedule ahead when needed.
+                  On-demand delivery is available 24/7. Schedule ahead when needed.
                 </p>
               </div>
             </div>
