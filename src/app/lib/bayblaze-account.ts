@@ -47,6 +47,7 @@ export type BayBlazeDiscountCodePreview = {
   category: string;
   code: string;
   codeType?: "discount" | "bogo";
+  commissionPercent?: number;
   discountAmountCents: number;
   discountPercent: number;
   eligible: boolean;

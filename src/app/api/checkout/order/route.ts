@@ -508,7 +508,7 @@ export async function POST(request: Request) {
     };
 
     if (appliedPromo && bayBlazeAccountToken && completedOrder.id) {
-      await recordBayBlazeDiscountCodeUse(bayBlazeAccountToken, {
+      await recordCompletedPromoUse(bayBlazeAccountToken, appliedPromo, {
         code: appliedPromo.code,
         customerEmail: customer.email,
         customerId: accountCustomer?.id ?? undefined,
@@ -526,6 +526,29 @@ export async function POST(request: Request) {
   } catch (error) {
     return jsonError(getErrorMessage(error), 502);
   }
+}
+
+async function recordCompletedPromoUse(
+  accountToken: string,
+  promo: CheckoutPromoCodePreview,
+  input: Parameters<typeof recordBayBlazeDiscountCodeUse>[1],
+) {
+  const attempts = promo.category === "referral_partner" ? 3 : 1;
+  let lastError: unknown;
+
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    try {
+      return await recordBayBlazeDiscountCodeUse(accountToken, input);
+    } catch (caught) {
+      lastError = caught;
+
+      if (attempt + 1 < attempts) {
+        await new Promise((resolve) => setTimeout(resolve, 150 * (attempt + 1)));
+      }
+    }
+  }
+
+  throw lastError;
 }
 
 function normalizeOptionalString(value: unknown) {

@@ -8,6 +8,7 @@ export type CheckoutPromoCodePreview = {
   category: string;
   code: string;
   codeType?: CheckoutPromoCodeType;
+  commissionPercent?: number;
   discountAmountCents: number;
   discountPercent: number;
   eligible: boolean;
@@ -82,6 +83,13 @@ export function getCheckoutPromoMetadata({
     return {};
   }
 
+  const referralCommissionPercent = promo.category === "referral_partner" && promo.commissionPercent
+    ? promo.commissionPercent
+    : 0;
+  const referralCommissionAmount = referralCommissionPercent > 0
+    ? roundMoney(totalAfterDiscount * (referralCommissionPercent / 100))
+    : 0;
+
   return {
     checkout_promo_bogo_buy_quantity: promo.bogoBuyQuantity ?? undefined,
     checkout_promo_bogo_discounted_quantity: promo.bogoDiscountedQuantity ?? undefined,
@@ -95,7 +103,16 @@ export function getCheckoutPromoMetadata({
     checkout_promo_status: "applied",
     checkout_promo_subtotal: subtotal,
     checkout_promo_total_after_discount: totalAfterDiscount,
+    ...(referralCommissionPercent > 0 ? {
+      checkout_referral_commission_amount: referralCommissionAmount,
+      checkout_referral_commission_basis: totalAfterDiscount,
+      checkout_referral_commission_percent: referralCommissionPercent,
+    } : {}),
   };
+}
+
+function roundMoney(value: number) {
+  return Math.round((value + Number.EPSILON) * 100) / 100;
 }
 
 export function getOrderCheckoutPromoTotal(order: {

@@ -236,6 +236,12 @@ boundary.
   allows a matching signed-in customer email to bypass AgeChecker for testing.
   Keep the final bypass check in server-side checkout order code, not only in
   client UI.
+- Unified checkout promo previews may return category `referral_partner` with a
+  commission percentage. The customer still receives the configured percent-off
+  discount and optional minimum-spend rule. On a completed referral checkout,
+  persist the commission percentage and the post-discount product-spend basis in
+  order metadata so `bayblaze-api` can verify Medusa's completed order and write
+  its idempotent referral/commission ledger entry.
 
 ### Catalog, Categories, and Shop Data
 
