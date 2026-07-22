@@ -456,3 +456,24 @@ display and data-shaping rules inside page components.
   Promo errors should degrade to metadata/copy, not checkout failure.
 - Label-printing is operationally downstream of successful order creation. A
   print failure or unavailable label-printer agent must never fail checkout.
+
+## Referral Partner Portal
+
+- The customer-facing partner entry point is `/partners`; authenticated partner
+  pages live under `/partners/dashboard` with referrals, payouts, and account
+  sections.
+- Partner routes reuse the universal BayBlaze account session and perform their
+  access check in the server layout. Browser components must never select a
+  partner UID or request another partner's records.
+- Partner self-service API endpoints do not exist yet.
+  `src/app/partners/lib/partner-portal-adapter.ts` is the replaceable server-only
+  boundary and currently supplies clearly labeled demo data scoped to the
+  signed-in account.
+- In non-production environments, any valid signed-in account may exercise the
+  demo portal. Production demo access is denied unless the account UID or email
+  is included in the server-only comma-separated
+  `BAYBLAZE_PARTNER_PORTAL_MOCK_ACCOUNTS` variable.
+- Replace the mock adapter with authenticated BayBlaze API calls once
+  partner-scoped overview, referral activity, payout history/setup, and
+  click-attribution endpoints exist. Do not expose admin promo endpoints or
+  privileged service tokens to the storefront.
