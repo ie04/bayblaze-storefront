@@ -10,6 +10,7 @@ import {
 } from "react";
 import { usePathname } from "next/navigation";
 
+import { persistCheckoutPromoCode } from "@/app/components/promo/CheckoutPromoCodeProvider";
 import {
   REFERRAL_OFFER_COOKIE,
   REFERRAL_OFFER_STORAGE_KEY,
@@ -28,6 +29,7 @@ type ReferralOfferContextValue = {
 };
 
 type PromoPreviewResponse = {
+  category?: string;
   code?: string;
   discountPercent?: number;
   eligible?: boolean;
@@ -127,7 +129,8 @@ export default function ReferralOfferProvider({
 
     const abortController = new AbortController();
 
-    previewAdminPromoOffer(promoCode, abortController.signal)
+    resolvePartnerPromoOffer(promoCode, currentPathname, abortController.signal)
+      .then((partnerOffer) => partnerOffer ?? previewAdminPromoOffer(promoCode, abortController.signal))
       .then((adminOffer) => {
         if (!isActive || !adminOffer) {
           return;
@@ -203,10 +206,31 @@ function publishOffer(
   },
 ) {
   storeOffer(offer);
+  if (offer.source === "admin_promo") {
+    persistCheckoutPromoCode(offer.code);
+  }
   window.setTimeout(() => {
     setters.setOffer(offer);
     setters.setToastOffer(offer);
   }, 0);
+}
+
+async function resolvePartnerPromoOffer(code: string, sourcePath: string, signal: AbortSignal) {
+  const response = await fetch("/api/partners/attribution", {
+    body: JSON.stringify({ code, sourcePath }),
+    headers: { "content-type": "application/json" },
+    method: "POST",
+    signal,
+  });
+
+  if (!response.ok) return null;
+  const attribution = (await response.json().catch(() => ({}))) as PromoPreviewResponse;
+
+  if (!attribution.code || !attribution.discountPercent) return null;
+  return createAdminPromoReferralOffer({
+    code: attribution.code,
+    discountPercent: attribution.discountPercent,
+  });
 }
 
 function storeOffer(offer: ReferralOffer) {

@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { redirect } from "next/navigation";
 
 import { formatPartnerDate, formatPartnerMoney, formatStatus } from "@/app/partners/lib/partner-format";
 import { getPartnerPortalSession } from "@/app/partners/lib/partner-portal-adapter";
@@ -9,7 +8,7 @@ export const metadata: Metadata = { title: "Payouts | BayBlaze Partners" };
 
 export default async function PartnerPayoutsPage() {
   const result = await getPartnerPortalSession();
-  if (result.status !== "available") redirect("/partners");
+  if (result.status !== "available") return null;
   const { data } = result;
 
   return (

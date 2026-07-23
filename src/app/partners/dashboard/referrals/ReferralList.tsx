@@ -31,7 +31,7 @@ export default function ReferralList({ referrals }: { referrals: PartnerReferral
           <select className="bayblaze-sharp-input" onChange={(event) => setStatus(event.target.value)} value={status}>
             <option value="all">All commission statuses</option>
             <option value="pending">Pending</option>
-            <option value="available">Available</option>
+            <option value="eligible">Available</option>
             <option value="paid">Paid</option>
             <option value="reversed">Reversed</option>
           </select>
@@ -76,6 +76,6 @@ export default function ReferralList({ referrals }: { referrals: PartnerReferral
 }
 
 function Status({ value }: { value: string }) {
-  const green = ["available", "completed", "delivered", "paid"].includes(value);
-  return <span className={`bayblaze-sharp-badge ${green ? "bayblaze-sharp-badge--green" : ""}`}>{formatStatus(value)}</span>;
+  const green = ["eligible", "completed", "delivered", "paid"].includes(value);
+  return <span className={`bayblaze-sharp-badge ${green ? "bayblaze-sharp-badge--green" : ""}`}>{value === "eligible" ? "Available" : formatStatus(value)}</span>;
 }

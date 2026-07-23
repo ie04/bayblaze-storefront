@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
 
 import { getPartnerPortalSession } from "@/app/partners/lib/partner-portal-adapter";
 import ReferralList from "./ReferralList";
@@ -8,7 +7,7 @@ export const metadata: Metadata = { title: "Referrals | BayBlaze Partners" };
 
 export default async function PartnerReferralsPage() {
   const result = await getPartnerPortalSession();
-  if (result.status !== "available") redirect("/partners");
+  if (result.status !== "available") return null;
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-7 sm:px-6 sm:py-9">

@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import Header from "@/app/components/layout/Header";
 import { getPartnerPortalSession } from "@/app/partners/lib/partner-portal-adapter";
 import PartnerPortalNav from "./PartnerPortalNav";
+import PartnerAccessState from "./PartnerAccessState";
 
 export default async function PartnerDashboardLayout({ children }: { children: React.ReactNode }) {
   const result = await getPartnerPortalSession();
@@ -12,11 +13,9 @@ export default async function PartnerDashboardLayout({ children }: { children: R
     redirect("/login?redirect=/partners/dashboard");
   }
 
-  if (result.status !== "available") {
-    redirect("/partners?reason=not-enrolled");
-  }
-
-  const firstName = result.data.partner.displayName.split(" ")[0] || "Partner";
+  const firstName = result.status === "available"
+    ? result.data.partner.displayName.split(" ")[0] || "Partner"
+    : "Partner";
 
   return (
     <main className="min-h-screen bg-[var(--ast-global-color-4)] pb-16 text-black md:pb-0">
@@ -32,13 +31,8 @@ export default async function PartnerDashboardLayout({ children }: { children: R
           </Link>
         </div>
       </div>
-      <PartnerPortalNav />
-      {result.data.source === "mock" ? (
-        <div className="border-b-2 border-black bg-[#fff4d8] px-4 py-2 text-center text-xs font-bold leading-[1.45]" role="status">
-          Demo partner data — no live earnings or payout information is shown.
-        </div>
-      ) : null}
-      {children}
+      {result.status === "available" ? <PartnerPortalNav /> : null}
+      {result.status === "available" ? children : <PartnerAccessState status={result.status} />}
     </main>
   );
 }

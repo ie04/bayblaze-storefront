@@ -180,7 +180,7 @@ export async function recordBayBlazeDiscountCodeUse(
   );
 }
 
-async function bayblazeApiRequest<T>(
+export async function bayblazeApiRequest<T>(
   path: string,
   options: {
     body?: unknown;

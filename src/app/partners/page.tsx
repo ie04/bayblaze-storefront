@@ -42,7 +42,7 @@ export default async function PartnersPage({
               <Link className="bayblaze-sharp-button bayblaze-sharp-button--primary px-6" href="/login?redirect=/partners/dashboard">
                 Partner Sign In
               </Link>
-              <Link className="bayblaze-sharp-button bayblaze-sharp-button--outline px-6" href="/contact">
+              <Link className="bayblaze-sharp-button bayblaze-sharp-button--outline px-6" href="/partners/application">
                 Apply to Join
               </Link>
             </div>

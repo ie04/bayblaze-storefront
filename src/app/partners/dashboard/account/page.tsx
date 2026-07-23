@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { redirect } from "next/navigation";
 
 import LogoutButton from "@/app/account/LogoutButton";
 import { formatPartnerDate } from "@/app/partners/lib/partner-format";
@@ -10,7 +9,7 @@ export const metadata: Metadata = { title: "Partner Account | BayBlaze" };
 
 export default async function PartnerAccountPage() {
   const result = await getPartnerPortalSession();
-  if (result.status !== "available") redirect("/partners");
+  if (result.status !== "available") return null;
   const { data } = result;
 
   return (

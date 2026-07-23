@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import QRCode from "qrcode";
 
 import { formatPartnerDate, formatPartnerMoney } from "@/app/partners/lib/partner-format";
@@ -11,7 +10,7 @@ export const metadata: Metadata = { title: "Partner Dashboard | BayBlaze" };
 
 export default async function PartnerDashboardPage() {
   const result = await getPartnerPortalSession();
-  if (result.status !== "available") redirect("/partners");
+  if (result.status !== "available") return null;
   const { data } = result;
   const qrDataUrl = await QRCode.toDataURL(data.referralLink, {
     color: { dark: "#000000", light: "#ffffff" },

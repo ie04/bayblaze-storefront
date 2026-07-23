@@ -203,6 +203,7 @@ export default function CheckoutPageClient({
   const checkoutFormRef = useRef<HTMLFormElement | null>(null);
   const {
     clearPromoCode: clearStoredCheckoutPromoCode,
+    promoCode: storedCheckoutPromoCode,
     setPromoCode: storeCheckoutPromoCode,
   } = useCheckoutPromoCode();
   const { clearOffer: clearReferralOffer, offer: referralOffer } =
@@ -252,6 +253,7 @@ export default function CheckoutPageClient({
   const hasHandledDrinkUpsellRef = useRef(false);
   const pendingPromoApplyAfterAuthRef = useRef("");
   const promoReapplyAfterUpsellRef = useRef("");
+  const autoAppliedPromoRef = useRef("");
 
   const subtotal = useMemo(() => {
     return items.reduce((total, item) => {
@@ -556,6 +558,23 @@ export default function CheckoutPageClient({
       setIsPromoApplying(false);
     }
   }, [clearReferralOffer, items, storeCheckoutPromoCode, subtotal]);
+
+  useEffect(() => {
+    const urlCode = typeof window === "undefined"
+      ? ""
+      : normalizeCheckoutPromoCode(new URL(window.location.href).searchParams.get("promo"));
+    const code = urlCode || storedCheckoutPromoCode;
+
+    if (!code) return;
+    window.setTimeout(() => setPromoCode((current) => current || code), 0);
+
+    if (!hasPromoAuthAccess || !hasItems || isPromoApplying) return;
+    const applyKey = `${code}:${moneyToCents(subtotal)}`;
+    if (autoAppliedPromoRef.current === applyKey) return;
+
+    autoAppliedPromoRef.current = applyKey;
+    void applyPromoCode(code);
+  }, [applyPromoCode, hasItems, hasPromoAuthAccess, isPromoApplying, storedCheckoutPromoCode, subtotal]);
 
   async function handleApplyPromoCode() {
     const normalizedCode = normalizeCheckoutPromoCode(promoCode);

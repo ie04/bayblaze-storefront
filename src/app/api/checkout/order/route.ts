@@ -34,6 +34,7 @@ import {
 import { verifyCheckoutAgeVerification } from "@/app/lib/age-verification-token";
 import { verifyCheckoutRoutingEvaluation } from "@/app/lib/pre-checkout-routing-token";
 import { getPublicStorefrontSettings } from "@/app/lib/storefront-settings";
+import { PARTNER_ATTRIBUTION_COOKIE } from "@/app/domain/partner-attribution";
 
 type CheckoutItem = {
   id?: string;
@@ -325,6 +326,9 @@ export async function POST(request: Request) {
     subtotal: discountSubtotal,
     totalAfterDiscount: totalAfterDiscounts,
   });
+  const partnerAttributionToken = appliedPromo?.category === "referral_partner"
+    ? getCookieValue(request.headers.get("cookie"), PARTNER_ATTRIBUTION_COOKIE)
+    : "";
   const addressLine2 = normalizeOptionalString(customer.address_line_2);
   const addressLine2Metadata = addressLine2
     ? {
@@ -341,6 +345,8 @@ export async function POST(request: Request) {
     ...referralOfferMetadata,
     ...checkoutPromoMetadata,
     ...addressLine2Metadata,
+    bayblaze_account_uid: bayBlazeAccount?.uid,
+    partner_attribution_token: partnerAttributionToken || undefined,
     delivery_address_1: customer.address.trim(),
     delivery_address_2: addressLine2 || undefined,
     delivery_city: customer.city.trim(),
@@ -507,8 +513,8 @@ export async function POST(request: Request) {
       },
     };
 
-    if (appliedPromo && bayBlazeAccountToken && completedOrder.id) {
-      await recordCompletedPromoUse(bayBlazeAccountToken, appliedPromo, {
+    if (appliedPromo?.category !== "referral_partner" && appliedPromo && bayBlazeAccountToken && completedOrder.id) {
+      await recordBayBlazeDiscountCodeUse(bayBlazeAccountToken, {
         code: appliedPromo.code,
         customerEmail: customer.email,
         customerId: accountCustomer?.id ?? undefined,
@@ -528,27 +534,22 @@ export async function POST(request: Request) {
   }
 }
 
-async function recordCompletedPromoUse(
-  accountToken: string,
-  promo: CheckoutPromoCodePreview,
-  input: Parameters<typeof recordBayBlazeDiscountCodeUse>[1],
-) {
-  const attempts = promo.category === "referral_partner" ? 3 : 1;
-  let lastError: unknown;
+function getCookieValue(cookieHeader: string | null, name: string) {
+  if (!cookieHeader) return "";
 
-  for (let attempt = 0; attempt < attempts; attempt += 1) {
+  for (const part of cookieHeader.split(";")) {
+    const separator = part.indexOf("=");
+    if (separator < 0) continue;
+    if (part.slice(0, separator).trim() !== name) continue;
+
     try {
-      return await recordBayBlazeDiscountCodeUse(accountToken, input);
-    } catch (caught) {
-      lastError = caught;
-
-      if (attempt + 1 < attempts) {
-        await new Promise((resolve) => setTimeout(resolve, 150 * (attempt + 1)));
-      }
+      return decodeURIComponent(part.slice(separator + 1).trim());
+    } catch {
+      return "";
     }
   }
 
-  throw lastError;
+  return "";
 }
 
 function normalizeOptionalString(value: unknown) {

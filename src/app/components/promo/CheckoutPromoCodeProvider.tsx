@@ -5,6 +5,7 @@ import {
   type ReactNode,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
 } from "react";
@@ -13,6 +14,7 @@ import { normalizeCheckoutPromoCode } from "@/app/domain/checkout-promo-codes";
 import { isFirstOrderQrOfferCode } from "@/app/domain/referral-offers";
 
 const checkoutPromoStorageKey = "bayblaze-checkout-promo-code";
+const checkoutPromoChangedEvent = "bayblaze:checkout-promo-changed";
 
 type CheckoutPromoCodeContextValue = {
   checkoutHref: string;
@@ -37,7 +39,21 @@ export default function CheckoutPromoCodeProvider({
 }: {
   children: ReactNode;
 }) {
-  const [promoCode, setStoredPromoCode] = useState(() => readStoredPromoCode());
+  const [promoCode, setStoredPromoCode] = useState("");
+
+  useEffect(() => {
+    function handleStoredPromoChanged(event: Event) {
+      const code = event instanceof CustomEvent ? event.detail : "";
+      setStoredPromoCode(normalizeCheckoutPromoCode(code));
+    }
+
+    window.addEventListener(checkoutPromoChangedEvent, handleStoredPromoChanged);
+    const timer = window.setTimeout(() => setStoredPromoCode(readStoredPromoCode()), 0);
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener(checkoutPromoChangedEvent, handleStoredPromoChanged);
+    };
+  }, []);
 
   const clearPromoCode = useCallback(() => {
     clearStoredPromoCode();
@@ -81,21 +97,37 @@ export default function CheckoutPromoCodeProvider({
 }
 
 function buildCheckoutHref(code: string) {
-  void code;
-  return "/checkout";
+  return code ? `/checkout?promo=${encodeURIComponent(code)}` : "/checkout";
 }
 
 function readStoredPromoCode() {
-  clearStoredPromoCode();
-  return "";
+  if (typeof window === "undefined") return "";
+
+  try {
+    return normalizeCheckoutPromoCode(window.sessionStorage.getItem(checkoutPromoStorageKey));
+  } catch {
+    return "";
+  }
 }
 
-function storePromoCode(code: string) {
+export function persistCheckoutPromoCode(code: string) {
+  const normalizedCode = normalizeCheckoutPromoCode(code);
+
   try {
-    window.sessionStorage.setItem(checkoutPromoStorageKey, code);
+    if (normalizedCode) {
+      window.sessionStorage.setItem(checkoutPromoStorageKey, normalizedCode);
+    } else {
+      window.sessionStorage.removeItem(checkoutPromoStorageKey);
+    }
   } catch {
     // The code still remains in component state for this page view.
   }
+
+  window.dispatchEvent(new CustomEvent(checkoutPromoChangedEvent, { detail: normalizedCode }));
+}
+
+function storePromoCode(code: string) {
+  persistCheckoutPromoCode(code);
 }
 
 function clearStoredPromoCode() {

@@ -1,6 +1,7 @@
-export type PartnerCommissionStatus = "available" | "paid" | "pending" | "reversed";
-export type PartnerOrderStatus = "cancelled" | "completed" | "delivered" | "processing";
-export type PartnerPayoutStatus = "failed" | "paid" | "processing";
+export type PartnerCommissionStatus = "eligible" | "paid" | "pending" | "reversed" | "tracked";
+export type PartnerOrderStatus = "cancelled" | "completed" | "delivered" | "historical" | "processing" | "refunded";
+export type PartnerPayoutStatus = "canceled" | "failed" | "paid" | "processing";
+export type PartnerStatus = "active" | "pending" | "rejected" | "suspended";
 
 export type PartnerReferral = {
   commissionStatus: PartnerCommissionStatus;
@@ -46,7 +47,7 @@ export type PartnerPortalData = {
     joinedAt: string;
     payoutMethodLabel: string;
     payoutStatus: "not_set" | "ready";
-    status: "active" | "paused";
+    status: PartnerStatus;
   };
   payouts: PartnerPayout[];
   program: {
@@ -57,11 +58,12 @@ export type PartnerPortalData = {
   referralCode: string;
   referralLink: string;
   referrals: PartnerReferral[];
-  source: "mock" | "production";
+  source: "production";
 };
 
 export type PartnerPortalResult =
   | { data: PartnerPortalData; status: "available" }
+  | { status: "pending" | "rejected" | "suspended" }
   | { status: "not_enrolled" }
   | { status: "unavailable" };
 

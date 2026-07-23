@@ -465,15 +465,24 @@ display and data-shaping rules inside page components.
 - Partner routes reuse the universal BayBlaze account session and perform their
   access check in the server layout. Browser components must never select a
   partner UID or request another partner's records.
-- Partner self-service API endpoints do not exist yet.
-  `src/app/partners/lib/partner-portal-adapter.ts` is the replaceable server-only
-  boundary and currently supplies clearly labeled demo data scoped to the
-  signed-in account.
-- In non-production environments, any valid signed-in account may exercise the
-  demo portal. Production demo access is denied unless the account UID or email
-  is included in the server-only comma-separated
-  `BAYBLAZE_PARTNER_PORTAL_MOCK_ACCOUNTS` variable.
-- Replace the mock adapter with authenticated BayBlaze API calls once
-  partner-scoped overview, referral activity, payout history/setup, and
-  click-attribution endpoints exist. Do not expose admin promo endpoints or
-  privileged service tokens to the storefront.
+- `src/app/partners/lib/partner-portal-adapter.ts` is server-only and calls the
+  production `/v1/partners/me` API family with the universal account bearer
+  token. There is no mock-account allowlist or browser-visible partner ID.
+- `/partners/application` submits a pending application through the authenticated
+  same-origin `/api/partners/application` bridge. Pending, suspended, rejected,
+  unenrolled, and temporarily unavailable states render inside the protected
+  dashboard shell without exposing backend errors.
+- `?promo=` partner links resolve through `/api/partners/attribution`, which
+  stores the API-signed attribution in the HttpOnly
+  `bayblaze_partner_attribution` cookie. The cookie value must never be exposed
+  to client components.
+- Referral promo codes persist in session storage and the checkout URL so the
+  signed-in checkout can validate and apply the code. The checkout server adds
+  the signed attribution token and server-derived BayBlaze account UID only to
+  trusted Medusa metadata; the browser does not report commission completion.
+- Referral-promo completion is recorded by Medusa lifecycle events, not the old
+  post-checkout client callback. Standard promo usage retains the existing API
+  callback behavior.
+- The portal reports the API-configured eligibility window. Payout setup and
+  requests remain explicitly unavailable until BayBlaze approves and integrates
+  a payout provider.
