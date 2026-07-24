@@ -5,17 +5,28 @@ import { useEffect, useState } from "react";
 
 import styles from "./LogoSplashIntro.module.css";
 
-const INTRO_DURATION_MS = 3000;
+const INTRO_DURATION_MS = 2050;
+const INTRO_SEEN_SESSION_KEY = "bayblaze-logo-intro-seen";
 
 export default function LogoSplashIntro() {
-  const [isVisible, setIsVisible] = useState(true);
+  const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
+    if (window.sessionStorage.getItem(INTRO_SEEN_SESSION_KEY) === "true") {
+      return;
+    }
+
+    window.sessionStorage.setItem(INTRO_SEEN_SESSION_KEY, "true");
+
+    const showTimer = window.setTimeout(() => {
+      setIsVisible(true);
+    }, 0);
     const introTimer = window.setTimeout(() => {
       setIsVisible(false);
     }, INTRO_DURATION_MS);
 
     return () => {
+      window.clearTimeout(showTimer);
       window.clearTimeout(introTimer);
     };
   }, []);
