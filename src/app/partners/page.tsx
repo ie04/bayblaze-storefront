@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
 import Header from "@/app/components/layout/Header";
+import { getBayBlazeAccountFromSession } from "@/app/lib/customer-session";
 
 export const metadata: Metadata = {
   description: "Grow with BayBlaze as a local referral partner.",
@@ -14,6 +16,9 @@ export default async function PartnersPage({
   searchParams: Promise<{ reason?: string }>;
 }) {
   const { reason } = await searchParams;
+  const account = await getBayBlazeAccountFromSession();
+
+  if (account) redirect("/partners/dashboard");
 
   return (
     <main className="min-h-screen bg-[var(--ast-global-color-4)] text-black">
@@ -21,7 +26,7 @@ export default async function PartnersPage({
 
       {reason === "not-enrolled" ? (
         <div className="border-b-2 border-black bg-[#fff4d8] px-4 py-3 text-center text-sm font-bold" role="status">
-          This BayBlaze account is not connected to a partner profile yet. Apply below or contact us for help.
+          This BayBlaze account is not connected to a partner profile yet. Sign up below or contact us for help.
         </div>
       ) : null}
 
@@ -42,8 +47,8 @@ export default async function PartnersPage({
               <Link className="bayblaze-sharp-button bayblaze-sharp-button--primary px-6" href="/login?redirect=/partners/dashboard">
                 Partner Sign In
               </Link>
-              <Link className="bayblaze-sharp-button bayblaze-sharp-button--outline px-6" href="/partners/application">
-                Apply to Join
+              <Link className="bayblaze-sharp-button bayblaze-sharp-button--outline px-6" href="/login?mode=register&redirect=/partners/application">
+                Create Partner Account
               </Link>
             </div>
           </div>
@@ -77,9 +82,9 @@ export default async function PartnersPage({
 
         <ol className="mt-7 grid gap-4 md:grid-cols-3">
           {[
-            ["01", "Get your code", "Once approved, your personal promo and share link live in your partner dashboard."],
+            ["01", "Create your account", "Sign up with a BayBlaze account and enroll in the partner portal immediately."],
             ["02", "Share locally", "Drop the link in your bio, group chat, event page, or wherever your people find you."],
-            ["03", "Track your cut", "See referrals, eligible orders, pending commission, and payout history in one place."],
+            ["03", "Get your code", "BayBlaze adds your personal coupon code, then your referrals, commission, and payout history live in one place."],
           ].map(([number, title, copy]) => (
             <li className="bayblaze-sharp-card bg-white p-5" key={number}>
               <span className="text-xs font-black tracking-widest text-[var(--ast-global-color-0)]">{number}</span>

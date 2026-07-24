@@ -4,15 +4,15 @@ export default function PartnerAccessState({ status }: { status: "not_enrolled" 
   const content = {
     not_enrolled: {
       copy: "This BayBlaze account is not enrolled in the local partner program yet.",
-      title: "Apply to join the crew.",
+      title: "Create your partner account.",
     },
     pending: {
-      copy: "BayBlaze is reviewing your partner application. Your dashboard will open after approval and code setup.",
-      title: "Application pending.",
+      copy: "Your partner account is created. BayBlaze still needs to attach your coupon code before referral tracking and dashboard metrics go live.",
+      title: "Coupon code setup needed.",
     },
     rejected: {
-      copy: "This application was not approved. Contact BayBlaze if your partnership details have changed.",
-      title: "Application not approved.",
+      copy: "Partner access is closed for this account. Contact BayBlaze if your partnership details have changed.",
+      title: "Partner access closed.",
     },
     suspended: {
       copy: "Partner access and new attribution are paused. Existing financial records remain preserved and can be reviewed with BayBlaze.",
@@ -31,7 +31,7 @@ export default function PartnerAccessState({ status }: { status: "not_enrolled" 
         <h1 className="mt-2 text-3xl font-black uppercase leading-none sm:text-4xl">{content.title}</h1>
         <p className="mx-auto mt-4 max-w-xl text-sm font-medium leading-[1.6] text-[#585858]">{content.copy}</p>
         <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
-          {status === "not_enrolled" ? <Link className="bayblaze-sharp-button bayblaze-sharp-button--primary" href="/partners/application">Start Application</Link> : null}
+          {status === "not_enrolled" ? <Link className="bayblaze-sharp-button bayblaze-sharp-button--primary" href="/partners/application">Create Partner Account</Link> : null}
           <Link className="bayblaze-sharp-button bayblaze-sharp-button--outline" href="/contact">Contact BayBlaze</Link>
         </div>
       </div>

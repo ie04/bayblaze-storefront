@@ -459,19 +459,22 @@ display and data-shaping rules inside page components.
 
 ## Referral Partner Portal
 
-- The customer-facing partner entry point is `/partners`; authenticated partner
-  pages live under `/partners/dashboard` with referrals, payouts, and account
-  sections.
+- The customer-facing partner entry point is `/partners`; signed-in accounts
+  redirect from `/partners` to `/partners/dashboard`. Authenticated partner pages
+  live under `/partners/dashboard` with referrals, payouts, and account sections.
 - Partner routes reuse the universal BayBlaze account session and perform their
   access check in the server layout. Browser components must never select a
   partner UID or request another partner's records.
 - `src/app/partners/lib/partner-portal-adapter.ts` is server-only and calls the
   production `/v1/partners/me` API family with the universal account bearer
   token. There is no mock-account allowlist or browser-visible partner ID.
-- `/partners/application` submits a pending application through the authenticated
-  same-origin `/api/partners/application` bridge. Pending, suspended, rejected,
-  unenrolled, and temporarily unavailable states render inside the protected
-  dashboard shell without exposing backend errors.
+- `/partners/application` is the partner signup/enrollment step for signed-in
+  accounts and submits accepted terms through the authenticated same-origin
+  `/api/partners/enrollment` bridge. Enrollment creates a pending partner profile
+  immediately; BayBlaze manually assigns the partner coupon code through admin
+  tooling before dashboard metrics and attribution go live. Pending, suspended,
+  rejected, unenrolled, and temporarily unavailable states render inside the
+  protected dashboard shell without exposing backend errors.
 - `?promo=` partner links resolve through `/api/partners/attribution`, which
   stores the API-signed attribution in the HttpOnly
   `bayblaze_partner_attribution` cookie. The cookie value must never be exposed

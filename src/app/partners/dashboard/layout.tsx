@@ -26,8 +26,8 @@ export default async function PartnerDashboardLayout({ children }: { children: R
             <p className="text-[10px] font-black uppercase tracking-[0.18em] text-white/80">BayBlaze Partner Portal</p>
             <p className="text-base font-black uppercase leading-tight">Welcome back, {firstName}.</p>
           </div>
-          <Link className="text-xs font-black uppercase tracking-wider text-white underline decoration-2 underline-offset-4" href="/partners">
-            Program info
+          <Link className="text-xs font-black uppercase tracking-wider text-white underline decoration-2 underline-offset-4" href="/contact">
+            Partner help
           </Link>
         </div>
       </div>
