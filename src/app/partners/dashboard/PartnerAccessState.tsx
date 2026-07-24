@@ -11,8 +11,8 @@ export default function PartnerAccessState({ status }: { status: "not_enrolled" 
       title: "Coupon code setup needed.",
     },
     rejected: {
-      copy: "Partner access is closed for this account. Contact BayBlaze if your partnership details have changed.",
-      title: "Partner access closed.",
+      copy: "Your partner account is created and waiting for BayBlaze to assign your coupon code. Hang tight; your dashboard will open once the code is active.",
+      title: "Coupon code coming soon.",
     },
     suspended: {
       copy: "Partner access and new attribution are paused. Existing financial records remain preserved and can be reviewed with BayBlaze.",
@@ -32,7 +32,7 @@ export default function PartnerAccessState({ status }: { status: "not_enrolled" 
         <p className="mx-auto mt-4 max-w-xl text-sm font-medium leading-[1.6] text-[#585858]">{content.copy}</p>
         <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
           {status === "not_enrolled" ? <Link className="bayblaze-sharp-button bayblaze-sharp-button--primary" href="/partners/application">Create Partner Account</Link> : null}
-          <Link className="bayblaze-sharp-button bayblaze-sharp-button--outline" href="/contact">Contact BayBlaze</Link>
+          {status === "rejected" || status === "pending" ? null : <Link className="bayblaze-sharp-button bayblaze-sharp-button--outline" href="/contact">Contact BayBlaze</Link>}
         </div>
       </div>
     </section>
