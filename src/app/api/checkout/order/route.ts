@@ -6,6 +6,7 @@ import {
   getBayBlazeAccountToken,
   previewBayBlazeDiscountCode,
   recordBayBlazeDiscountCodeUse,
+  recordBayBlazeWinFreebieClaim,
 } from "@/app/lib/bayblaze-account";
 import { verifyCheckoutAddressValidation } from "@/app/domain/address-validation";
 import {
@@ -39,15 +40,18 @@ import { PARTNER_ATTRIBUTION_COOKIE } from "@/app/domain/partner-attribution";
 type CheckoutItem = {
   id?: string;
   availableQuantity?: number;
+  cartRole?: string;
   variantId?: string;
   productId?: string;
   productHandle?: string;
   inventoryState?: string;
   image?: string;
   name?: string;
+  originalPrice?: string;
   price?: string;
   flavor?: string;
   quantity?: number;
+  winClaimToken?: string;
 };
 
 type ValidCheckoutItem = CheckoutItem & {
@@ -291,6 +295,11 @@ export async function POST(request: Request) {
     request.headers.get("cookie"),
   );
   const discountSubtotal = getCheckoutItemsSubtotal(items);
+  const winFreebies = getCheckoutWinFreebies(items);
+  const winFreebieDiscountCents = winFreebies.reduce(
+    (total, item) => total + getCheckoutWinFreebieDiscountCents(item),
+    0,
+  );
   const requestedPromoCode = normalizeCheckoutPromoCode(body.promo?.code);
   const hasPriorOrders = authenticatedCustomerToken
     ? await customerHasExistingOrders(authenticatedCustomerToken)
@@ -367,7 +376,21 @@ export async function POST(request: Request) {
     ...checkoutPromoMetadata,
     ...addressLine2Metadata,
     bayblaze_account_uid: bayBlazeAccount?.uid,
+    bayblaze_checkout_subtotal: discountSubtotal,
+    bayblaze_checkout_total_after_adjustments: totalAfterDiscounts,
     partner_attribution_token: partnerAttributionToken || undefined,
+    win_freebie_claim_tokens: winFreebies.map((item) => item.winClaimToken).filter(Boolean),
+    win_freebie_discount_cents: winFreebieDiscountCents || undefined,
+    win_freebie_items: winFreebies.map((item) => ({
+      claim_token: item.winClaimToken,
+      product_id: item.productId,
+      product_handle: item.productHandle,
+      variant_id: item.variantId,
+      name: item.name,
+      flavor: item.flavor,
+      quantity: item.quantity,
+      discount_cents: getCheckoutWinFreebieDiscountCents(item),
+    })),
     delivery_address_1: customer.address.trim(),
     delivery_address_2: addressLine2 || undefined,
     delivery_city: customer.city.trim(),
@@ -458,6 +481,11 @@ export async function POST(request: Request) {
               variant_id: item.variantId,
               inventory_state: item.inventoryState,
               available_quantity: item.availableQuantity,
+              cart_role: item.cartRole,
+              original_unit_price_cents: item.originalPrice
+                ? moneyToCents(parsePrice(item.originalPrice))
+                : undefined,
+              win_claim_token: item.winClaimToken,
             })),
           },
         },
@@ -585,6 +613,21 @@ export async function POST(request: Request) {
       });
     }
 
+    if (completedOrder.id && winFreebies.length) {
+      await Promise.all(
+        winFreebies.map((item) =>
+          recordBayBlazeWinFreebieClaim({
+            claimToken: item.winClaimToken,
+            orderId: completedOrder.id,
+            productId: item.productId,
+            variantId: item.variantId,
+          }).catch((error) => {
+            console.error("[BayBlaze] Failed to record win freebie claim.", error);
+          }),
+        ),
+      );
+    }
+
     return Response.json({
       order: completedOrder,
       message: "Order placed.",
@@ -675,6 +718,17 @@ function validateCheckout(body: CheckoutRequestBody) {
 
   if (invalidQuantity) {
     return "Cart item quantities must be whole numbers greater than zero.";
+  }
+
+  const invalidFreebie = items.find((item) => {
+    return (
+      item.cartRole === "freebie" &&
+      (typeof item.winClaimToken !== "string" || !item.winClaimToken.trim())
+    );
+  });
+
+  if (invalidFreebie) {
+    return "Open your BayBlaze win reward link again before claiming a freebie.";
   }
 
   const requiredFields: (keyof CheckoutCustomer)[] = [
@@ -1128,6 +1182,18 @@ function getCheckoutItemUnitPriceCents(item: ValidCheckoutItem) {
 
 function getCheckoutItemTotalCents(item: ValidCheckoutItem) {
   return getCheckoutItemUnitPriceCents(item) * item.quantity;
+}
+
+function getCheckoutWinFreebies(items: ValidCheckoutItem[]) {
+  return items.filter((item) => item.cartRole === "freebie");
+}
+
+function getCheckoutWinFreebieDiscountCents(item: ValidCheckoutItem) {
+  const originalUnitPrice = item.originalPrice
+    ? parsePrice(item.originalPrice)
+    : parsePrice(item.price);
+
+  return moneyToCents(originalUnitPrice) * item.quantity;
 }
 
 function parsePrice(price?: string) {

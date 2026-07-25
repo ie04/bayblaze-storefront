@@ -12,6 +12,7 @@ import {
 export type CartItem = {
   id: string;
   availableQuantity?: number;
+  cartRole?: "freebie";
   variantId?: string;
   productId?: string;
   productHandle?: string;
@@ -19,8 +20,10 @@ export type CartItem = {
   name: string;
   flavor?: string;
   image?: string;
+  originalPrice?: string;
   price?: string;
   quantity: number;
+  winClaimToken?: string;
 };
 
 type CartContextValue = {

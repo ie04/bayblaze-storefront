@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { type FormEvent, useMemo, useState } from "react";
 
+import { useCart } from "@/app/components/cart/CartContext";
 import { SearchLineIcon } from "@/app/components/icons/SharpIcons";
 import { useReferralOffer } from "@/app/components/referral/ReferralOfferProvider";
 import ReferralProductPrice from "@/app/components/products/ReferralProductPrice";
@@ -29,6 +30,7 @@ export default function ShopPageClient({
   products: ShopProductItem[];
 }) {
   const router = useRouter();
+  const { addItem } = useCart();
   const { offer } = useReferralOffer();
   const searchParams = useSearchParams();
   const availabilityFilter = searchParams.get("availability");
@@ -52,7 +54,7 @@ export default function ShopPageClient({
   const [freebiePickerOpen, setFreebiePickerOpen] = useState(shouldShowFreebiePicker);
   const [freebieQuery, setFreebieQuery] = useState("");
   const [selectedFreebieHref, setSelectedFreebieHref] = useState(() => {
-    return products[0]?.href ?? "";
+    return products.find(isEligibleFreebieProduct)?.href ?? "";
   });
 
   const selectedCategory = categories.includes(activeCategory)
@@ -117,13 +119,14 @@ export default function ShopPageClient({
   }, [availabilityFilter, normalizedSearchQuery, products, selectedCategory, sortBy]);
 
   const visibleFreebieProducts = useMemo(() => {
+    const eligibleProducts = products.filter(isEligibleFreebieProduct);
     const normalizedFreebieQuery = freebieQuery.trim().toLowerCase();
 
     if (!normalizedFreebieQuery) {
-      return products;
+      return eligibleProducts;
     }
 
-    return products.filter((product) => {
+    return eligibleProducts.filter((product) => {
       const searchableText = [
         product.name,
         product.brand,
@@ -143,25 +146,62 @@ export default function ShopPageClient({
   }
 
   function handleQuickAdd(product: ShopProductItem) {
+    if (!isEligibleCartProduct(product)) {
+      setNotice(`${product.name} is not available for quick add.`);
+      return;
+    }
+
+    addItem({
+      id: [product.variantId, product.flavor || "default"].join("::"),
+      availableQuantity: product.availableQuantity,
+      variantId: product.variantId,
+      productId: product.productId,
+      productHandle: product.productHandle,
+      inventoryState: product.inventoryState,
+      name: product.name,
+      flavor: product.flavor,
+      image: product.image,
+      price: product.salePrice || product.price,
+      quantity: 1,
+    });
     setNotice(`${product.name} added.`);
   }
 
   function handleContinueWithFreebie() {
     const selectedProduct = products.find((product) => product.href === selectedFreebieHref);
 
-    if (!selectedProduct) {
+    if (!winClaimToken) {
+      setNotice("Open this from your BayBlaze win reward link.");
+      return;
+    }
+
+    if (!selectedProduct || !isEligibleFreebieProduct(selectedProduct)) {
       setNotice("Select a freebie before continuing.");
       return;
     }
 
-    const destination = new URL(selectedProduct.href, window.location.origin);
-    destination.searchParams.set("freebie", "1");
-
-    if (winClaimToken) {
-      destination.searchParams.set("win_claim", winClaimToken);
-    }
-
-    router.push(`${destination.pathname}${destination.search}`);
+    addItem(
+      {
+        id: ["win-freebie", winClaimToken || selectedProduct.variantId].join("::"),
+        availableQuantity: 1,
+        cartRole: "freebie",
+        variantId: selectedProduct.variantId,
+        productId: selectedProduct.productId,
+        productHandle: selectedProduct.productHandle,
+        inventoryState: selectedProduct.inventoryState,
+        name: selectedProduct.name,
+        flavor: selectedProduct.flavor,
+        image: selectedProduct.image,
+        originalPrice: selectedProduct.salePrice || selectedProduct.price,
+        price: "$0.00",
+        quantity: 1,
+        winClaimToken,
+      },
+      { openCart: false },
+    );
+    setNotice(`${selectedProduct.name} freebie added.`);
+    setFreebiePickerOpen(false);
+    router.push("/checkout");
   }
 
   return (
@@ -516,13 +556,17 @@ function FreebieSelectionModal({
                 Select your freebie
               </h2>
               <p className="mt-2 max-w-2xl text-sm font-medium leading-[1.6] text-[#585858]">
-                Pick the freebie you want. BayBlaze will still verify inventory, coverage, checkout, and 21+ delivery rules before the order is finalized.
+                Pick one item. We&apos;ll add it to your cart for checkout.
               </p>
               {winClaimToken ? (
                 <p className="mt-2 text-[11px] font-bold uppercase tracking-widest text-[var(--ast-global-color-1)]">
                   Claim token ready
                 </p>
-              ) : null}
+              ) : (
+                <p className="mt-2 text-[11px] font-bold uppercase tracking-widest text-red-700">
+                  Open this from your BayBlaze win reward link
+                </p>
+              )}
             </div>
             <button
               aria-label="Close freebie picker"
@@ -579,21 +623,34 @@ function FreebieSelectionModal({
 
           <div className="sticky bottom-0 mt-6 border-2 border-black bg-white p-3 sm:flex sm:items-center sm:justify-between sm:gap-4">
             <p className="text-sm font-bold leading-[1.5] text-[#585858]">
-              Choose a tile, then continue to that product page with your win claim attached.
+              Your freebie will be added to checkout at $0.00.
             </p>
             <button
               className="bayblaze-sharp-button bayblaze-sharp-button--primary mt-3 w-full shrink-0 sm:mt-0 sm:w-auto"
               type="button"
-              disabled={!selectedHref}
+              disabled={!selectedHref || !winClaimToken}
               onClick={onContinue}
             >
-              Continue with selected freebie
+              Add freebie & checkout
             </button>
           </div>
         </div>
       </section>
     </div>
   );
+}
+
+function isEligibleCartProduct(product: ShopProductItem) {
+  return (
+    Boolean(product.variantId) &&
+    Boolean(product.productId) &&
+    Boolean(product.inventoryState) &&
+    (product.availableQuantity ?? 0) > 0
+  );
+}
+
+function isEligibleFreebieProduct(product: ShopProductItem) {
+  return isEligibleCartProduct(product);
 }
 
 function FreebieTile({

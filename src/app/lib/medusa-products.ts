@@ -116,8 +116,12 @@ export type ShopProductItem = {
   brand: string;
   inventoryState?: InventoryLocationState;
   availableQuantity?: number;
+  flavor?: string;
   image: string;
   href: string;
+  productHandle: string;
+  productId: string;
+  variantId: string;
   categories: string[];
   originalPrice?: string;
   salePrice: string;
@@ -509,14 +513,19 @@ function toShopVariantItem(
   )?.priceCents;
   const formattedPrice = formatPrice(priceCents, pricing) || "Price unavailable";
   const image = variant.images[0]?.src ?? storefrontProduct.images[0]?.src ?? "";
+  const variantName = getVariantDisplayName(variant);
 
   return {
     name: getShopVariantName(storefrontProduct, variant),
     brand: storefrontProduct.brand || "BayBlaze",
     inventoryState: variant.inventoryState,
     availableQuantity: variant.availableQuantity,
+    flavor: variantName || undefined,
     image,
     href: `/product/${product.handle}?variant=${encodeURIComponent(variant.id)}`,
+    productHandle: storefrontProduct.handle,
+    productId: storefrontProduct.id,
+    variantId: variant.id,
     categories: storefrontProduct.categories.map((category) => category.name),
     originalPrice: getOriginalPrice(priceCents, pricing),
     salePrice: formattedPrice,

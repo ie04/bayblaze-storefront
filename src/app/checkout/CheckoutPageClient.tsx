@@ -20,6 +20,7 @@ import {
 } from "@/app/domain/delivery-scheduling";
 import {
   RECENT_ORDER_STORAGE_KEY,
+  getOrderDisplayTotal,
   getOrderReference,
   getOrderTrackingHref,
 } from "@/app/domain/orders";
@@ -29,14 +30,12 @@ import {
   type AgeVerificationCustomer,
 } from "@/app/domain/age-verification";
 import {
-  getOrderFirstOrderOfferTotal,
   getReferralOfferDiscountAmount,
   getReferralOfferTotal,
 } from "@/app/domain/referral-offers";
 import {
   getCheckoutPromoDiscountAmount,
   getCheckoutPromoMessage,
-  getOrderCheckoutPromoTotal,
   centsToMoney,
   moneyToCents,
   normalizeCheckoutPromoCode,
@@ -1580,6 +1579,17 @@ export default function CheckoutPageClient({
                       {item.price ? (
                         <p className="mt-1 text-[15px] font-medium text-black">
                           {item.price}
+                          {item.cartRole === "freebie" && item.originalPrice ? (
+                            <span className="ml-2 text-[13px] font-semibold text-[#707070] line-through">
+                              {item.originalPrice}
+                            </span>
+                          ) : null}
+                        </p>
+                      ) : null}
+
+                      {item.cartRole === "freebie" ? (
+                        <p className="mt-1 text-[12px] font-extrabold uppercase tracking-[0.12em] text-[var(--ast-global-color-1)]">
+                          BayBlaze win freebie
                         </p>
                       ) : null}
 
@@ -3324,8 +3334,7 @@ function getRecentOrderSnapshot(
   subtotal: number,
   items: CartItem[],
 ): CustomerOrder {
-  const orderTotal =
-    getOrderCheckoutPromoTotal(order) ?? getOrderFirstOrderOfferTotal(order);
+  const orderTotal = getOrderDisplayTotal(order);
 
   return {
     ...order,

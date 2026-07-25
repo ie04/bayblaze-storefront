@@ -132,6 +132,7 @@ export function formatOrderTotal(total?: number | null, currencyCode = "usd") {
 
 export function getOrderDisplayTotal(order: CustomerOrder) {
   return getOrderDiscountSummary(order)?.totalAfterDiscount ??
+    readMetadataNumber(order.metadata?.bayblaze_checkout_total_after_adjustments) ??
     (typeof order.total === "number" ? order.total : null);
 }
 

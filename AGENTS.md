@@ -204,6 +204,16 @@ standalone `bayblaze-medusa` repo is retired.
   API/Medusa boundary is responsible for deleting the Medusa order and restoring
   variant availability/inventory levels.
 
+### BayBlaze Win Freebie Handoff
+
+`bayblaze-win` redirects qualified rewards to `/shop?freebie_picker=1&win_claim=...`.
+The storefront is the only freebie picker. It adds the selected variant as a
+cart item tagged with `cartRole="freebie"`, `price="$0.00"`, the original price,
+and the win claim token. Checkout still adds the real Medusa variant line so
+inventory is reserved, stores adjusted BayBlaze totals in metadata, and records
+the consumed reward through `bayblaze-api` after the order is created. Do not
+allow freebie cart items without a win claim token.
+
 ### Centralized BayBlaze Accounts
 
 The customer storefront uses the universal account system provided by

@@ -66,6 +66,7 @@ const apiBaseUrl = (
   process.env.NEXT_PUBLIC_BAYBLAZE_API_URL ||
   "http://localhost:3040"
 ).replace(/\/$/, "");
+const bayblazeApiServiceToken = process.env.BAYBLAZE_API_SERVICE_TOKEN?.trim() ?? "";
 
 export async function getBayBlazeAccountToken() {
   const cookieStore = await cookies();
@@ -180,11 +181,39 @@ export async function recordBayBlazeDiscountCodeUse(
   );
 }
 
+export async function recordBayBlazeWinFreebieClaim(input: {
+  claimToken?: string;
+  orderId: string;
+  productId?: string;
+  variantId?: string;
+}) {
+  if (!bayblazeApiServiceToken || !input.claimToken || !input.productId) {
+    return { status: "skipped" };
+  }
+
+  return bayblazeApiRequest<{
+    orderId?: string;
+    productId?: string;
+    status?: string;
+    variantId?: string;
+  }>("/v1/win/freebies/claim", {
+    body: {
+      claimToken: input.claimToken,
+      orderId: input.orderId,
+      productId: input.productId,
+      variantId: input.variantId,
+    },
+    method: "POST",
+    serviceToken: bayblazeApiServiceToken,
+  });
+}
+
 export async function bayblazeApiRequest<T>(
   path: string,
   options: {
     body?: unknown;
     method?: string;
+    serviceToken?: string;
     token?: string;
   } = {},
 ) {
@@ -195,6 +224,7 @@ export async function bayblazeApiRequest<T>(
       accept: "application/json",
       ...(options.body ? { "content-type": "application/json" } : {}),
       ...(options.token ? { authorization: `Bearer ${options.token}` } : {}),
+      ...(options.serviceToken ? { "x-bayblaze-api-token": options.serviceToken } : {}),
     },
     method: options.method || "GET",
   });
