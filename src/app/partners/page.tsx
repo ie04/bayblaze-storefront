@@ -84,7 +84,7 @@ export default async function PartnersPage({
           {[
             ["01", "Create your account", "Sign up and join the partner portal."],
             ["02", "Get your code", "BayBlaze assigns your coupon code manually."],
-            ["03", "Share and earn", "Share your code. When people use it, you can track referrals and payouts from your dashboard."],
+            ["03", "Share and earn", "Share your code and get paid each time a friend uses it! Track earnings and request payout in the dashboard."],
           ].map(([number, title, copy]) => (
             <li className="bayblaze-sharp-card bg-white p-5" key={number}>
               <span className="text-xs font-black tracking-widest text-[var(--ast-global-color-0)]">{number}</span>
