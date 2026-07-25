@@ -1,6 +1,6 @@
 "use client";
 
-import type { FormEvent, ReactNode } from "react";
+import type { FormEvent, KeyboardEvent, ReactNode } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -220,12 +220,20 @@ export default function CheckoutPageClient({
     useState<RoutingConfirmationState | null>(null);
   const pendingCheckoutRef = useRef<PendingCheckout | null>(null);
   const addressFieldRef = useRef<HTMLInputElement | null>(null);
-  const googleAutocompleteContainerRef = useRef<HTMLDivElement | null>(null);
-  const googleAutocompleteRef = useRef<GooglePlaceAutocompleteElement | null>(
-    null,
-  );
+  const cityFieldRef = useRef<HTMLInputElement | null>(null);
+  const stateFieldRef = useRef<HTMLInputElement | null>(null);
+  const zipFieldRef = useRef<HTMLInputElement | null>(null);
+  const placesServiceRef = useRef<GooglePlacesServiceBundle | null>(null);
+  const addressValidationCacheRef = useRef<CheckoutAddressValidationState | null>(null);
+  const addressBlurTimerRef = useRef<number | null>(null);
+  const suggestionRequestSeqRef = useRef(0);
   const [isPlacesAutocompleteReady, setIsPlacesAutocompleteReady] =
     useState(false);
+  const [addressInputValue, setAddressInputValue] = useState("");
+  const [isAddressFocused, setIsAddressFocused] = useState(false);
+  const [addressSuggestions, setAddressSuggestions] = useState<GooglePlaceSuggestion[]>([]);
+  const [isAddressSuggesting, setIsAddressSuggesting] = useState(false);
+  const [addressSuggestionMessage, setAddressSuggestionMessage] = useState("");
   const [validatedAddress, setValidatedAddress] =
     useState<CheckoutAddressValidationState | null>(null);
   const [isAddressValidating, setIsAddressValidating] = useState(false);
@@ -355,116 +363,87 @@ export default function CheckoutPageClient({
   }, []);
 
   useEffect(() => {
-    if (!googleMapsBrowserKey || !googleAutocompleteContainerRef.current) {
-      return;
-    }
+    if (!googleMapsBrowserKey) return;
 
     let isCancelled = false;
-    let autocompleteElement: GooglePlaceAutocompleteElement | null = null;
-    let handlePlaceSelect: ((event: Event) => void) | null = null;
 
     loadGoogleMapsPlaces(googleMapsBrowserKey)
-      .then(({ PlaceAutocompleteElement }) => {
-        const container = googleAutocompleteContainerRef.current;
-
-        if (isCancelled || !container) {
-          return;
-        }
-
-        const placeAutocomplete = new PlaceAutocompleteElement();
-        placeAutocomplete.className = "bayblaze-google-place-autocomplete";
-        placeAutocomplete.placeholder = "Start typing your delivery address";
-        placeAutocomplete.includedRegionCodes = ["us"];
-        placeAutocomplete.locationBias = {
-          center: { lat: 27.9506, lng: -82.4572 },
-          radius: 45_000,
-        };
-        placeAutocomplete.style.display = "block";
-        placeAutocomplete.style.minHeight = "52px";
-        placeAutocomplete.style.width = "100%";
-
-        handlePlaceSelect = (event: Event) => {
-          void handleGooglePlaceSelect(event);
-        };
-
-        placeAutocomplete.addEventListener("gmp-select", handlePlaceSelect);
-        container.replaceChildren(placeAutocomplete);
-
-        autocompleteElement = placeAutocomplete;
-        googleAutocompleteRef.current = placeAutocomplete;
-        setIsPlacesAutocompleteReady(true);
-        setAddressValidationMessage("");
+      .then((places) => {
+        if (isCancelled) return;
+        placesServiceRef.current = createGooglePlacesServiceBundle(places);
+        setIsPlacesAutocompleteReady(Boolean(placesServiceRef.current));
+        setAddressSuggestionMessage("");
       })
       .catch((error) => {
         console.error("[BayBlaze] Google Places autocomplete failed to load.", error);
         setIsPlacesAutocompleteReady(false);
-        setAddressValidationMessage(
-          "Address autocomplete could not load. Check the browser console for the BayBlaze Google Places loader error, or type your address manually.",
+        setAddressSuggestionMessage(
+          "Address suggestions are unavailable. You can still type the full address and verify it below.",
         );
       });
-
-    async function handleGooglePlaceSelect(event: Event) {
-      const placePrediction = (event as GooglePlacePredictionSelectEvent)
-        .placePrediction;
-      const place = placePrediction?.toPlace?.();
-
-      if (!place?.fetchFields) {
-        setValidatedAddress(null);
-        setAddressValidationMessage(
-          "Choose a complete street address from the suggestions.",
-        );
-        return;
-      }
-
-      try {
-        await place.fetchFields({
-          fields: ["id", "formattedAddress", "addressComponents", "location"],
-        });
-      } catch {
-        setValidatedAddress(null);
-        setAddressValidationMessage(
-          "Address details could not be loaded. Please choose the address again.",
-        );
-        return;
-      }
-
-      const selectedAddress = getAddressFromGooglePlace(place);
-
-      if (!selectedAddress) {
-        setValidatedAddress(null);
-        setAddressValidationMessage(
-          "Choose a complete street address from the suggestions.",
-        );
-        return;
-      }
-
-      setCheckoutAddressInputs(addressFieldRef.current?.form, selectedAddress);
-      setValidatedAddress(null);
-      setAddressValidationMessage("Validating delivery address...");
-
-      validateCheckoutAddress(selectedAddress, {
-        existingValidation: null,
-        setAddressValidation: setValidatedAddress,
-        setAddressValidationMessage,
-        setIsAddressValidating,
-      }).catch(() => {
-        setAddressValidationMessage(
-          "Address validation failed. Please review the address and try again.",
-        );
-      });
-    }
 
     return () => {
       isCancelled = true;
-
-      if (autocompleteElement && handlePlaceSelect) {
-        autocompleteElement.removeEventListener("gmp-select", handlePlaceSelect);
+      placesServiceRef.current = null;
+      if (addressBlurTimerRef.current) {
+        window.clearTimeout(addressBlurTimerRef.current);
       }
-
-      autocompleteElement?.remove();
-      googleAutocompleteRef.current = null;
     };
   }, []);
+
+  useEffect(() => {
+    const places = placesServiceRef.current;
+    const query = addressInputValue.trim();
+    const requestSeq = suggestionRequestSeqRef.current + 1;
+    suggestionRequestSeqRef.current = requestSeq;
+
+    if (!isAddressFocused || !places?.autocompleteSuggestion || query.length < 4) {
+      setAddressSuggestions([]);
+      setIsAddressSuggesting(false);
+      return;
+    }
+
+    setIsAddressSuggesting(true);
+    const timer = window.setTimeout(() => {
+      places.autocompleteSuggestion
+        .fetchAutocompleteSuggestions({
+          includedRegionCodes: ["us"],
+          input: query,
+          locationBias: {
+            east: -81.99,
+            north: 28.36,
+            south: 27.54,
+            west: -82.92,
+          },
+          region: "us",
+          sessionToken: places.sessionToken,
+        })
+        .then(({ suggestions }) => {
+          if (suggestionRequestSeqRef.current !== requestSeq) return;
+          setIsAddressSuggesting(false);
+
+          const placeSuggestions = suggestions
+            .map(toGooglePlaceSuggestion)
+            .filter((suggestion): suggestion is GooglePlaceSuggestion => Boolean(suggestion))
+            .slice(0, 5);
+
+          setAddressSuggestions(placeSuggestions);
+          setAddressSuggestionMessage(
+            placeSuggestions.length
+              ? ""
+              : "No matching suggestions. You can still enter the full address and verify it.",
+          );
+        })
+        .catch(() => {
+          if (suggestionRequestSeqRef.current !== requestSeq) return;
+          setIsAddressSuggesting(false);
+          setAddressSuggestions([]);
+          setAddressSuggestionMessage("Address suggestions are temporarily unavailable. You can still enter and verify the full address.");
+        });
+    }, 180);
+
+    return () => window.clearTimeout(timer);
+  }, [addressInputValue, isAddressFocused]);
 
   const applyPromoCode = useCallback(async function applyPromoCode(
     rawCode: string,
@@ -729,11 +708,20 @@ export default function CheckoutPageClient({
     setIsRoutingEvaluating(true);
 
     try {
+      hydrateZipFromAddressInput(event.currentTarget);
       const formData = new FormData(event.currentTarget);
       const rawCheckoutCustomer = getCheckoutCustomerFromFormData(formData);
+      const addressFingerprint = getCheckoutAddressFingerprint(rawCheckoutCustomer);
+      const cachedAddressValidation = addressValidationCacheRef.current;
       const addressValidation = await validateCheckoutAddress(rawCheckoutCustomer, {
-        existingValidation: validatedAddress,
-        setAddressValidation: setValidatedAddress,
+        existingValidation:
+          cachedAddressValidation?.fingerprint === addressFingerprint
+            ? cachedAddressValidation
+            : validatedAddress,
+        setAddressValidation: (nextValidation) => {
+          setValidatedAddress(nextValidation);
+          addressValidationCacheRef.current = nextValidation;
+        },
         setAddressValidationMessage,
         setIsAddressValidating,
       });
@@ -860,9 +848,129 @@ export default function CheckoutPageClient({
     setOrderMessage("Drink added. Review your updated total, then place your order.");
   }
 
-  function handleAddressInputChange() {
+  function handleAddressInputChange(value?: string) {
+    if (typeof value === "string") {
+      setAddressInputValue(value);
+    }
+
     setValidatedAddress(null);
+    addressValidationCacheRef.current = null;
     setAddressValidationMessage("");
+  }
+
+  function handleAddressFieldBlur() {
+    addressBlurTimerRef.current = window.setTimeout(() => {
+      setIsAddressFocused(false);
+      setAddressSuggestions([]);
+      void validateTypedAddressIfComplete("blur");
+    }, 140);
+  }
+
+  function handleAddressFieldFocus() {
+    if (addressBlurTimerRef.current) {
+      window.clearTimeout(addressBlurTimerRef.current);
+      addressBlurTimerRef.current = null;
+    }
+
+    setIsAddressFocused(true);
+  }
+
+  function handleAddressFieldKeyDown(event: KeyboardEvent<HTMLInputElement>) {
+    if (event.key !== "Enter") return;
+    event.preventDefault();
+    void validateTypedAddressIfComplete("enter");
+  }
+
+  async function validateTypedAddressIfComplete(trigger: "blur" | "continue" | "enter") {
+    const form = checkoutFormRef.current;
+    if (!form) return null;
+
+    hydrateZipFromAddressInput(form);
+    const formData = new FormData(form);
+    const customerAddress = getCheckoutCustomerFromFormData(formData);
+    const fingerprint = getCheckoutAddressFingerprint(customerAddress);
+
+    if (!fingerprint) {
+      if (trigger !== "blur" && addressInputValue.trim()) {
+        setAddressValidationMessage("Enter the street address, city, state, and ZIP before continuing.");
+      }
+      return null;
+    }
+
+    const cachedValidation = addressValidationCacheRef.current;
+    const validation = await validateCheckoutAddress(customerAddress, {
+      existingValidation:
+        cachedValidation?.fingerprint === fingerprint
+          ? cachedValidation
+          : validatedAddress,
+      setAddressValidation: (nextValidation) => {
+        setValidatedAddress(nextValidation);
+        addressValidationCacheRef.current = nextValidation;
+      },
+      setAddressValidationMessage,
+      setIsAddressValidating,
+    });
+
+    if (!("error" in validation)) {
+      setCheckoutAddressInputs(form, validation.address);
+      setAddressInputValue(validation.address.address);
+    }
+
+    return validation;
+  }
+
+  async function handleAddressSuggestionSelect(suggestion: GooglePlaceSuggestion) {
+    if (!suggestion.placePrediction?.toPlace) {
+      setAddressValidationMessage("Address details are unavailable. Type the full address and try Verify address.");
+      return;
+    }
+
+    setIsAddressFocused(false);
+    setAddressSuggestions([]);
+    setAddressSuggestionMessage("");
+    setIsAddressValidating(true);
+    setAddressValidationMessage("Checking address...");
+
+    try {
+      const place = suggestion.placePrediction.toPlace();
+      await place.fetchFields?.({
+        fields: ["id", "formattedAddress", "addressComponents", "location"],
+      });
+      const selectedAddress = getAddressFromGooglePlace(place);
+
+      if (!selectedAddress) {
+        setValidatedAddress(null);
+        addressValidationCacheRef.current = null;
+        setAddressValidationMessage("That suggestion is missing street, city, state, or ZIP. Try a more complete address.");
+        return;
+      }
+
+      const form = addressFieldRef.current?.form;
+      setCheckoutAddressInputs(form, selectedAddress);
+      setAddressInputValue(selectedAddress.address);
+      setValidatedAddress(null);
+      addressValidationCacheRef.current = null;
+
+      const validation = await validateCheckoutAddress(selectedAddress, {
+        existingValidation: null,
+        setAddressValidation: (nextValidation) => {
+          setValidatedAddress(nextValidation);
+          addressValidationCacheRef.current = nextValidation;
+        },
+        setAddressValidationMessage,
+        setIsAddressValidating,
+      });
+
+      if ("error" in validation) {
+        setCheckoutError(validation.error);
+      }
+    } catch {
+      setValidatedAddress(null);
+      addressValidationCacheRef.current = null;
+      setAddressValidationMessage("Address details could not be loaded. Type the full address or try another suggestion.");
+    } finally {
+      setIsAddressValidating(false);
+    }
   }
 
   async function completeCheckout({
@@ -1066,28 +1174,42 @@ export default function CheckoutPageClient({
             <div className="grid gap-5">
               <label className="grid gap-2 text-[15px] font-semibold text-black sm:text-[16px]">
                 Address
-                {googleMapsBrowserKey ? (
-                  <div
-                    ref={googleAutocompleteContainerRef}
-                    className={`bayblaze-google-autocomplete-container min-h-[50px] w-full min-w-0 bg-white sm:min-h-[52px] ${
-                      isPlacesAutocompleteReady ? "block" : "hidden"
-                    }`}
+                <div className="relative">
+                  <input
+                    ref={addressFieldRef}
+                    autoComplete="street-address"
+                    className="h-[50px] w-full min-w-0 border border-[#d6d6d6] bg-white px-4 text-[16px] font-normal text-black outline-none transition focus:border-black sm:h-[52px] sm:text-[17px]"
+                    name="address"
+                    onBlur={handleAddressFieldBlur}
+                    onChange={(event) => handleAddressInputChange(event.target.value)}
+                    onFocus={handleAddressFieldFocus}
+                    onKeyDown={handleAddressFieldKeyDown}
+                    placeholder="Start typing your delivery address"
+                    required
+                    type="text"
+                    value={addressInputValue}
                   />
-                ) : null}
-                <input
-                  ref={addressFieldRef}
-                  autoComplete="street-address"
-                  className={
-                    isPlacesAutocompleteReady
-                      ? "hidden"
-                      : "h-[50px] w-full min-w-0 border border-[#d6d6d6] bg-white px-4 text-[16px] font-normal text-black outline-none transition focus:border-black sm:h-[52px] sm:text-[17px]"
-                  }
-                  name="address"
-                  onChange={handleAddressInputChange}
-                  placeholder="Start typing your delivery address"
-                  required={!isPlacesAutocompleteReady}
-                  type="text"
-                />
+                  {(isAddressFocused && (addressSuggestions.length > 0 || isAddressSuggesting)) ? (
+                    <div className="absolute left-0 right-0 top-[calc(100%+6px)] z-30 max-h-[min(42svh,280px)] overflow-y-auto overscroll-contain border-2 border-black bg-white shadow-[6px_6px_0_#000]">
+                      {isAddressSuggesting ? (
+                        <p className="px-4 py-3 text-sm font-bold text-[#585858]">Finding address matches...</p>
+                      ) : null}
+                      {addressSuggestions.map((suggestion) => (
+                        <button
+                          className="block min-h-12 w-full border-b border-[#d6d6d6] px-4 py-3 text-left text-sm font-bold text-black last:border-b-0 hover:bg-[var(--ast-global-color-4)] focus:bg-[var(--ast-global-color-4)] focus:outline-none"
+                          key={suggestion.placeId}
+                          onMouseDown={(event) => event.preventDefault()}
+                          onPointerDown={(event) => event.preventDefault()}
+                          onClick={() => void handleAddressSuggestionSelect(suggestion)}
+                          type="button"
+                        >
+                          <span className="block">{suggestion.mainText}</span>
+                          {suggestion.secondaryText ? <span className="mt-0.5 block text-xs font-semibold text-[#585858]">{suggestion.secondaryText}</span> : null}
+                        </button>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
               </label>
 
               <label className="grid gap-2 text-[15px] font-semibold text-black sm:text-[16px]">
@@ -1107,13 +1229,14 @@ export default function CheckoutPageClient({
                 <label className="grid gap-2 text-[15px] font-semibold text-black sm:text-[16px]">
                   City
                   <input
-                    autoComplete="address-level2"
-                    className="h-[50px] w-full min-w-0 border border-[#d6d6d6] bg-white px-4 text-[16px] font-normal text-black outline-none transition focus:border-black sm:h-[52px] sm:text-[17px]"
-                    defaultValue="Tampa"
-                    name="city"
-                    onChange={handleAddressInputChange}
-                    required
-                    type="text"
+                  autoComplete="address-level2"
+                  className="h-[50px] w-full min-w-0 border border-[#d6d6d6] bg-white px-4 text-[16px] font-normal text-black outline-none transition focus:border-black sm:h-[52px] sm:text-[17px]"
+                  defaultValue="Tampa"
+                  name="city"
+                  ref={cityFieldRef}
+                  onChange={() => handleAddressInputChange()}
+                  required
+                  type="text"
                   />
                 </label>
 
@@ -1122,12 +1245,13 @@ export default function CheckoutPageClient({
                   <input
                     autoComplete="address-level1"
                     className="h-[50px] w-full min-w-0 border border-[#d6d6d6] bg-white px-4 text-[16px] font-normal uppercase text-black outline-none transition focus:border-black sm:h-[52px] sm:text-[17px]"
-                    defaultValue="FL"
-                    maxLength={2}
-                    name="state"
-                    onChange={handleAddressInputChange}
-                    required
-                    type="text"
+                  defaultValue="FL"
+                  maxLength={2}
+                  name="state"
+                  ref={stateFieldRef}
+                  onChange={() => handleAddressInputChange()}
+                  required
+                  type="text"
                   />
                 </label>
 
@@ -1135,12 +1259,13 @@ export default function CheckoutPageClient({
                   ZIP
                   <input
                     autoComplete="postal-code"
-                    className="h-[50px] w-full min-w-0 border border-[#d6d6d6] bg-white px-4 text-[16px] font-normal text-black outline-none transition focus:border-black sm:h-[52px] sm:text-[17px]"
-                    inputMode="numeric"
-                    name="zip"
-                    onChange={handleAddressInputChange}
-                    required
-                    type="text"
+                  className="h-[50px] w-full min-w-0 border border-[#d6d6d6] bg-white px-4 text-[16px] font-normal text-black outline-none transition focus:border-black sm:h-[52px] sm:text-[17px]"
+                  inputMode="numeric"
+                  name="zip"
+                  ref={zipFieldRef}
+                  onChange={() => handleAddressInputChange()}
+                  required
+                  type="text"
                   />
                 </label>
               </div>
@@ -1149,15 +1274,37 @@ export default function CheckoutPageClient({
                 <p className="border border-[#d7d1c6] bg-white px-4 py-3 text-[15px] font-semibold leading-[1.5] text-black">
                   {addressValidationMessage}
                 </p>
+              ) : validatedAddress ? (
+                <p className="border border-[#56833e] bg-[#f2f8ed] px-4 py-3 text-[15px] font-bold leading-[1.5] text-black">
+                  Delivery address verified.
+                </p>
+              ) : addressSuggestionMessage ? (
+                <p className="text-[14px] font-medium leading-[1.5] text-[#585858]">
+                  {addressSuggestionMessage}
+                </p>
+              ) : googleMapsBrowserKey && isPlacesAutocompleteReady ? (
+                <p className="text-[14px] font-medium leading-[1.5] text-[#585858]">
+                  Choose a suggestion or type the full address, then tap Verify address.
+                </p>
               ) : googleMapsBrowserKey ? (
                 <p className="text-[14px] font-medium leading-[1.5] text-[#585858]">
-                  Start typing and choose your address from the Google suggestions.
+                  Type the full address, then tap Verify address. Suggestions will appear when available.
                 </p>
               ) : (
                 <p className="text-[14px] font-medium leading-[1.5] text-[#585858]">
-                  Address autocomplete is unavailable until Google Maps is configured.
+                  Type the full address, then tap Verify address.
                 </p>
               )}
+              <div>
+                <button
+                  className="bayblaze-sharp-button bayblaze-sharp-button--outline min-h-12 w-full sm:w-auto"
+                  disabled={isAddressValidating}
+                  onClick={() => void validateTypedAddressIfComplete("continue")}
+                  type="button"
+                >
+                  {isAddressValidating ? "Checking address..." : validatedAddress ? "Address Verified" : "Verify address"}
+                </button>
+              </div>
 
               <label className="grid gap-2 text-[15px] font-semibold text-black sm:text-[16px]">
                 Delivery notes
@@ -1875,39 +2022,69 @@ function getFormDataString(formData: FormData, name: string) {
 }
 
 type GoogleMapsPlacesLibrary = {
-  PlaceAutocompleteElement: new (
-    options?: Record<string, unknown>,
-  ) => GooglePlaceAutocompleteElement;
+  AutocompleteSessionToken?: new () => unknown;
+  AutocompleteSuggestion?: GoogleAutocompleteSuggestionConstructor;
 };
 
-type GooglePlaceAutocompleteElement = HTMLElement & {
-  includedRegionCodes?: string[];
-  locationBias?: {
-    center: {
-      lat: number;
-      lng: number;
+type GooglePlacesServiceBundle = {
+  autocompleteSuggestion: GoogleAutocompleteSuggestionConstructor;
+  sessionToken?: unknown;
+};
+
+type GoogleAutocompleteSuggestionConstructor = {
+  fetchAutocompleteSuggestions: (request: {
+    includedRegionCodes?: string[];
+    input: string;
+    locationBias?: {
+      east: number;
+      north: number;
+      south: number;
+      west: number;
     };
-    radius: number;
-  } | null;
-  placeholder?: string;
+    region?: string;
+    sessionToken?: unknown;
+  }) => Promise<{ suggestions: GoogleAutocompleteSuggestion[] }>;
 };
 
-type GooglePlacePredictionSelectEvent = Event & {
+type GoogleAutocompleteSuggestion = {
   placePrediction?: {
+    mainText?: GooglePlacePredictionText;
+    placeId?: string;
+    secondaryText?: GooglePlacePredictionText;
+    text?: GooglePlacePredictionText;
     toPlace?: () => GooglePlace;
   };
 };
 
+type GooglePlacePredictionText = {
+  text?: string;
+  toString?: () => string;
+};
+
+type GooglePlaceSuggestion = {
+  description: string;
+  mainText: string;
+  placePrediction?: GoogleAutocompleteSuggestion["placePrediction"];
+  placeId: string;
+  secondaryText: string;
+};
+
 type GooglePlace = {
   addressComponents?: GoogleAddressComponent[];
+  address_components?: GoogleAddressComponent[];
   fetchFields?: (request: { fields: string[] }) => Promise<void>;
   formattedAddress?: string;
+  formatted_address?: string;
+  geometry?: { location?: GoogleLatLngValue };
   id?: string;
+  place_id?: string;
   location?: GoogleLatLngValue;
 };
 
 type GoogleAddressComponent = {
+  long_name?: string;
   longText?: string;
+  short_name?: string;
   shortText?: string;
   types: string[];
 };
@@ -1928,9 +2105,8 @@ declare global {
           libraryName: string,
         ) => Promise<GoogleMapsPlacesLibrary>;
         places?: {
-          PlaceAutocompleteElement?: new (
-            options?: Record<string, unknown>,
-          ) => GooglePlaceAutocompleteElement;
+          AutocompleteSessionToken?: new () => unknown;
+          AutocompleteSuggestion?: GoogleAutocompleteSuggestionConstructor;
         };
       };
     };
@@ -1938,7 +2114,7 @@ declare global {
 }
 
 function getAddressFromGooglePlace(place: GooglePlace): ValidatedCheckoutAddress | null {
-  const components = place.addressComponents ?? [];
+  const components = place.addressComponents ?? place.address_components ?? [];
   const streetNumber = getGoogleAddressComponent(components, "street_number");
   const route = getGoogleAddressComponent(components, "route");
   const subpremise = getGoogleAddressComponent(components, "subpremise");
@@ -1961,13 +2137,13 @@ function getAddressFromGooglePlace(place: GooglePlace): ValidatedCheckoutAddress
     return null;
   }
 
-  const location = getGoogleLatLng(place.location);
+  const location = getGoogleLatLng(place.location ?? place.geometry?.location);
 
   return {
     address,
     city,
-    formatted_address: place.formattedAddress,
-    google_place_id: place.id,
+    formatted_address: place.formattedAddress ?? place.formatted_address,
+    google_place_id: place.id ?? place.place_id,
     latitude: location.latitude,
     longitude: location.longitude,
     state,
@@ -1982,7 +2158,9 @@ function getGoogleAddressComponent(
 ) {
   const component = components.find((entry) => entry.types.includes(type));
 
-  return shortName ? component?.shortText ?? "" : component?.longText ?? "";
+  return shortName
+    ? component?.shortText ?? component?.short_name ?? ""
+    : component?.longText ?? component?.long_name ?? "";
 }
 
 function getGoogleLatLng(location?: GoogleLatLngValue) {
@@ -2019,6 +2197,22 @@ function setFormInputValue(
   }
 }
 
+function hydrateZipFromAddressInput(form: HTMLFormElement) {
+  const addressField = form.elements.namedItem("address");
+  const zipField = form.elements.namedItem("zip");
+
+  if (!(addressField instanceof HTMLInputElement) || !(zipField instanceof HTMLInputElement)) {
+    return;
+  }
+
+  if (zipField.value.trim()) return;
+
+  const zipMatch = addressField.value.match(/\b\d{5}(?:-\d{4})?\b/);
+  if (zipMatch?.[0]) {
+    zipField.value = zipMatch[0];
+  }
+}
+
 function loadGoogleMapsPlaces(apiKey: string) {
   if (typeof window === "undefined") {
     return Promise.reject(new Error("Google Maps is unavailable."));
@@ -2028,7 +2222,9 @@ function loadGoogleMapsPlaces(apiKey: string) {
     return window.__bayblazeGoogleMapsPlacesPromise;
   }
 
-  if (window.google?.maps?.places?.PlaceAutocompleteElement) {
+  if (
+    window.google?.maps?.places?.AutocompleteSuggestion
+  ) {
     window.__bayblazeGoogleMapsPlacesPromise = getGooglePlacesLibrary();
     return window.__bayblazeGoogleMapsPlacesPromise;
   }
@@ -2137,17 +2333,57 @@ function loadGoogleMapsPlaces(apiKey: string) {
 
 async function getGooglePlacesLibrary(): Promise<GoogleMapsPlacesLibrary> {
   const importedLibrary = await window.google?.maps?.importLibrary?.("places");
-  const PlaceAutocompleteElement =
-    importedLibrary?.PlaceAutocompleteElement ??
-    window.google?.maps?.places?.PlaceAutocompleteElement;
+  const AutocompleteSuggestion =
+    importedLibrary?.AutocompleteSuggestion ??
+    window.google?.maps?.places?.AutocompleteSuggestion;
+  const AutocompleteSessionToken =
+    importedLibrary?.AutocompleteSessionToken ??
+    window.google?.maps?.places?.AutocompleteSessionToken;
 
-  if (!PlaceAutocompleteElement) {
+  if (!AutocompleteSuggestion) {
     throw new Error(
-      "Google Places Autocomplete is unavailable after loading Maps JavaScript. Confirm Places API (New) is enabled and authorized on NEXT_PUBLIC_GOOGLE_MAPS_BROWSER_KEY.",
+      "Google Places autocomplete is unavailable after loading Maps JavaScript. Confirm Places API (New) is enabled and authorized on NEXT_PUBLIC_GOOGLE_MAPS_BROWSER_KEY.",
     );
   }
 
-  return { PlaceAutocompleteElement };
+  return { AutocompleteSessionToken, AutocompleteSuggestion };
+}
+
+function createGooglePlacesServiceBundle(
+  places: GoogleMapsPlacesLibrary,
+): GooglePlacesServiceBundle | null {
+  if (!places.AutocompleteSuggestion) return null;
+
+  return {
+    autocompleteSuggestion: places.AutocompleteSuggestion,
+    sessionToken: places.AutocompleteSessionToken
+      ? new places.AutocompleteSessionToken()
+      : undefined,
+  };
+}
+
+function toGooglePlaceSuggestion(
+  suggestion: GoogleAutocompleteSuggestion,
+): GooglePlaceSuggestion | null {
+  const prediction = suggestion.placePrediction;
+  if (!prediction?.placeId) return null;
+  const mainText = getGooglePredictionText(prediction.mainText) || getGooglePredictionText(prediction.text);
+  const secondaryText = getGooglePredictionText(prediction.secondaryText);
+
+  return {
+    description: getGooglePredictionText(prediction.text) || [mainText, secondaryText].filter(Boolean).join(", "),
+    mainText:
+      mainText ||
+      getGooglePredictionText(prediction.text) ||
+      "Address suggestion",
+    placeId: prediction.placeId,
+    placePrediction: prediction,
+    secondaryText,
+  };
+}
+
+function getGooglePredictionText(value?: GooglePlacePredictionText) {
+  return value?.text ?? value?.toString?.() ?? "";
 }
 
 async function validateCheckoutAddress(
@@ -2175,7 +2411,7 @@ async function validateCheckoutAddress(
   }
 
   setIsAddressValidating(true);
-  setAddressValidationMessage("Validating delivery address...");
+  setAddressValidationMessage("Checking address...");
 
   try {
     const response = await fetch("/api/checkout/address/validate", {

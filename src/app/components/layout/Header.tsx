@@ -149,7 +149,7 @@ export default function Header({
 
           <button
             type="button"
-            className="relative flex h-10 w-10 shrink-0 items-center justify-center border-2 border-black bg-white text-black transition-colors hover:bg-black hover:text-white md:h-[46px] md:w-[46px]"
+            className="relative flex h-11 w-11 shrink-0 items-center justify-center border-2 border-black bg-white text-black transition-colors hover:bg-black hover:text-white md:h-[46px] md:w-[46px]"
             aria-expanded={isCartOpen}
             aria-label={`Open shopping cart, ${cartCount} item${
               cartCount === 1 ? "" : "s"
@@ -167,7 +167,7 @@ export default function Header({
 
           <Link
             href={accountHref}
-            className="flex h-10 w-10 shrink-0 items-center justify-center border-2 border-black bg-white text-black transition-colors hover:bg-black hover:text-white md:h-[46px] md:w-[46px]"
+            className="flex h-11 w-11 shrink-0 items-center justify-center border-2 border-black bg-white text-black transition-colors hover:bg-black hover:text-white md:h-[46px] md:w-[46px]"
             aria-label="Account"
           >
             <AccountIcon className="size-[22px]" />

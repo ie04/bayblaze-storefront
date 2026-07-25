@@ -282,7 +282,7 @@ export default function ShopPageClient({
             <select
               value={sortBy}
               aria-label="Sort products"
-              className="h-10 w-full appearance-none border-2 border-black bg-white py-0 pl-3 pr-9 text-xs font-bold uppercase tracking-wider text-black outline-none sm:h-9 sm:w-auto"
+              className="h-11 w-full appearance-none border-2 border-black bg-white py-0 pl-3 pr-9 text-xs font-bold uppercase tracking-wider text-black outline-none sm:h-10 sm:w-auto"
               onChange={(event) =>
                 setSortBy(event.target.value as SortValue)
               }
