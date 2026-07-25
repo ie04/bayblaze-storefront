@@ -203,6 +203,9 @@ standalone `bayblaze-medusa` repo is retired.
   Browser code must not call Medusa admin routes or hold service tokens. The
   API/Medusa boundary is responsible for deleting the Medusa order and restoring
   variant availability/inventory levels.
+- Customer order lists and order lookups must hide orders with
+  `metadata.bayblaze_deleted === true`, `metadata.bayblaze_order_status`
+  of `deleted`, or `metadata.order_status` of `deleted`.
 
 ### BayBlaze Win Freebie Handoff
 

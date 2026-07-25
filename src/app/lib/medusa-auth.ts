@@ -593,7 +593,7 @@ export async function retrieveCustomerOrders(
       },
     );
 
-  return Promise.all(
+  const orders = await Promise.all(
     data.orders.map(async (order) => {
       try {
         return await retrieveOrder(
@@ -610,6 +610,8 @@ export async function retrieveCustomerOrders(
       }
     }),
   );
+
+  return orders.filter(isCustomerVisibleOrder);
 }
 
 export async function retrieveOrder(orderId: string, token?: string) {
@@ -624,7 +626,13 @@ export async function retrieveOrder(orderId: string, token?: string) {
     },
   );
 
-  return normalizeCustomerOrder(data.order);
+  const order = normalizeCustomerOrder(data.order);
+
+  if (!isCustomerVisibleOrder(order)) {
+    throw new Error("Order not found.");
+  }
+
+  return order;
 }
 
 export async function retrieveOrderByReference(
@@ -639,7 +647,13 @@ export async function retrieveOrderByReference(
       },
     );
 
-    return normalizeCustomerOrder(data.order);
+    const order = normalizeCustomerOrder(data.order);
+
+    if (!isCustomerVisibleOrder(order)) {
+      throw new Error("Order not found.");
+    }
+
+    return order;
   } catch {
     // Fall through to Medusa's native order retrieve route for deployments
     // that do not have the public lookup endpoint yet.
@@ -668,4 +682,28 @@ export async function retrieveOrderByReference(
 
     return order;
   }
+}
+
+function isCustomerVisibleOrder(order: CustomerOrder) {
+  const metadata = order.metadata ?? {};
+  const orderStatus = readMetadataString(
+    metadata.bayblaze_order_status,
+    metadata.order_status,
+  ).toLowerCase();
+
+  return (
+    metadata.bayblaze_deleted !== true &&
+    order.status !== "deleted" &&
+    orderStatus !== "deleted"
+  );
+}
+
+function readMetadataString(...values: unknown[]) {
+  for (const value of values) {
+    if (typeof value === "string" && value.trim()) {
+      return value.trim();
+    }
+  }
+
+  return "";
 }
