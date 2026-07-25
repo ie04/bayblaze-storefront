@@ -560,6 +560,18 @@ export async function POST(request: Request) {
       },
     };
 
+    if (appliedPromo?.category === "referral_partner" && appliedPromo && completedOrder.id) {
+      await recordPartnerCheckoutOrderEvent({
+        customerEmail: customer.email,
+        customerUid: bayBlazeAccount?.uid,
+        eventAt: new Date().toISOString(),
+        metadata: completedOrder.metadata,
+        orderId: completedOrder.id,
+      }).catch((error) => {
+        console.error("[BayBlaze] Failed to record referral partner checkout event.", error);
+      });
+    }
+
     if (appliedPromo?.category !== "referral_partner" && appliedPromo && bayBlazeAccountToken && completedOrder.id) {
       await recordBayBlazeDiscountCodeUse(bayBlazeAccountToken, {
         code: appliedPromo.code,
@@ -1148,6 +1160,51 @@ function getBayBlazeApiConfig() {
     process.env.BAYBLAZE_API_SERVICE_TOKEN?.trim() ?? "";
 
   return { bayblazeApiToken, bayblazeApiUrl };
+}
+
+async function recordPartnerCheckoutOrderEvent({
+  customerEmail,
+  customerUid,
+  eventAt,
+  metadata,
+  orderId,
+}: {
+  customerEmail?: string;
+  customerUid?: string;
+  eventAt: string;
+  metadata?: Record<string, unknown> | null;
+  orderId: string;
+}) {
+  const { bayblazeApiToken, bayblazeApiUrl } = getBayBlazeApiConfig();
+
+  if (!bayblazeApiToken) {
+    throw new Error("BAYBLAZE_API_SERVICE_TOKEN is not configured for partner checkout events.");
+  }
+
+  const response = await fetch(`${bayblazeApiUrl}/v1/partners/order-events`, {
+    body: JSON.stringify({
+      eventAt,
+      eventId: `storefront_checkout:order_placed:${orderId}`,
+      eventType: "order_placed",
+      order: {
+        customerUid,
+        email: customerEmail,
+        id: orderId,
+        metadata: metadata ?? {},
+        status: "placed",
+      },
+    }),
+    headers: {
+      "content-type": "application/json",
+      "x-bayblaze-service-token": bayblazeApiToken,
+    },
+    method: "POST",
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw new Error(`Partner checkout event failed with HTTP ${response.status}: ${await response.text()}`);
+  }
 }
 
 async function medusaStoreRequest<T>(
