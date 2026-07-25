@@ -145,6 +145,23 @@ type MedusaPaymentCollection = {
   id: string;
 };
 
+type CheckoutInventoryVariant = {
+  id?: string;
+  metadata?: {
+    availableQuantity?: number | string;
+    inventoryState?: string;
+  };
+};
+
+type CheckoutInventoryProduct = {
+  status?: string;
+  variants?: CheckoutInventoryVariant[];
+};
+
+type CheckoutInventorySnapshot = {
+  products?: CheckoutInventoryProduct[];
+};
+
 type MedusaCompleteCartResponse =
   | {
       type: "order";
@@ -405,24 +422,14 @@ export async function POST(request: Request) {
     }
 
     for (const item of items) {
-      try {
-        await medusaStoreRequest<{ cart: MedusaCart }>(
-          `/store/carts/${activeCart.id}/line-items`,
-          {
-            method: "POST",
-            body: {
-              variant_id: item.variantId,
-              quantity: item.quantity,
-            },
-          },
-          authenticatedCustomerToken,
-        );
-      } catch (error) {
-        if (isMedusaRequiredInventoryError(error)) {
-          return jsonError(getCartItemUnavailableMessage(item), 409);
-        }
+      const lineItemAdded = await addCartLineItemWithInventoryRepair({
+        cartId: activeCart.id,
+        customerToken: authenticatedCustomerToken,
+        item,
+      });
 
-        throw error;
+      if (!lineItemAdded) {
+        return jsonError(getCartItemUnavailableMessage(item), 409);
       }
     }
 
@@ -500,13 +507,37 @@ export async function POST(request: Request) {
       authenticatedCustomerToken,
     );
 
-    const completedCart = await medusaStoreRequest<MedusaCompleteCartResponse>(
+    let completedCart = await medusaStoreRequest<MedusaCompleteCartResponse>(
       `/store/carts/${addressedCart.id}/complete`,
       {
         method: "POST",
       },
       authenticatedCustomerToken,
     );
+
+    if (
+      completedCart.type === "cart" &&
+      isMedusaRequiredInventoryError(completedCart.error?.message)
+    ) {
+      const inventoryRepaired = await repairCheckoutInventoryItems(items);
+
+      if (inventoryRepaired) {
+        completedCart = await medusaStoreRequest<MedusaCompleteCartResponse>(
+          `/store/carts/${addressedCart.id}/complete`,
+          {
+            method: "POST",
+          },
+          authenticatedCustomerToken,
+        );
+      }
+
+      if (
+        completedCart.type === "cart" &&
+        isMedusaRequiredInventoryError(completedCart.error?.message)
+      ) {
+        return jsonError(checkoutInventoryUnavailableMessage, 409);
+      }
+    }
 
     if (completedCart.type === "cart") {
       if (isMedusaRequiredInventoryError(completedCart.error?.message)) {
@@ -726,6 +757,52 @@ async function selectPaymentProvider(cart: MedusaCart, customerToken?: string) {
   );
 }
 
+async function addCartLineItemWithInventoryRepair({
+  cartId,
+  customerToken,
+  item,
+}: {
+  cartId: string;
+  customerToken?: string;
+  item: ValidCheckoutItem;
+}) {
+  try {
+    await addCartLineItem(cartId, item, customerToken);
+    return true;
+  } catch (error) {
+    if (!isMedusaRequiredInventoryError(error)) {
+      throw error;
+    }
+  }
+
+  const inventoryRepaired = await repairCheckoutInventoryItem(item);
+
+  if (!inventoryRepaired) {
+    return false;
+  }
+
+  await addCartLineItem(cartId, item, customerToken);
+  return true;
+}
+
+async function addCartLineItem(
+  cartId: string,
+  item: ValidCheckoutItem,
+  customerToken?: string,
+) {
+  await medusaStoreRequest<{ cart: MedusaCart }>(
+    `/store/carts/${cartId}/line-items`,
+    {
+      method: "POST",
+      body: {
+        variant_id: item.variantId,
+        quantity: item.quantity,
+      },
+    },
+    customerToken,
+  );
+}
+
 async function createPaymentCollection(
   cart: MedusaCart,
   customerToken?: string,
@@ -749,6 +826,123 @@ async function createPaymentCollection(
     );
 
   return paymentCollection;
+}
+
+async function repairCheckoutInventoryItems(items: ValidCheckoutItem[]) {
+  const snapshot = await fetchCheckoutInventorySnapshot().catch((error) => {
+    console.error("[BayBlaze] Unable to load inventory for checkout repair.", error);
+    return null;
+  });
+
+  if (!snapshot) {
+    return false;
+  }
+
+  const repairResults = await Promise.all(
+    items.map((item) => repairCheckoutInventoryItemFromSnapshot(item, snapshot)),
+  );
+
+  return repairResults.some(Boolean);
+}
+
+async function repairCheckoutInventoryItem(item: ValidCheckoutItem) {
+  const snapshot = await fetchCheckoutInventorySnapshot().catch((error) => {
+    console.error("[BayBlaze] Unable to load inventory for checkout repair.", error);
+    return null;
+  });
+
+  return snapshot ? repairCheckoutInventoryItemFromSnapshot(item, snapshot) : false;
+}
+
+async function repairCheckoutInventoryItemFromSnapshot(
+  item: ValidCheckoutItem,
+  snapshot: CheckoutInventorySnapshot,
+) {
+  const variant = findCheckoutInventoryVariant(snapshot, item.variantId);
+  const availableQuantity = normalizeInventoryQuantity(
+    variant?.metadata?.availableQuantity,
+  );
+  const inventoryState = variant?.metadata?.inventoryState;
+
+  if (
+    !variant ||
+    availableQuantity === undefined ||
+    availableQuantity < item.quantity ||
+    (inventoryState !== "ON_VEHICLE" && inventoryState !== "IN_WAREHOUSE")
+  ) {
+    return false;
+  }
+
+  const { bayblazeApiToken, bayblazeApiUrl } = getBayBlazeApiConfig();
+
+  if (!bayblazeApiToken) {
+    return false;
+  }
+
+  const response = await fetch(`${bayblazeApiUrl}/v1/inventory`, {
+    body: JSON.stringify({
+      quantity: availableQuantity,
+      type: "update-quantity",
+      variantId: item.variantId,
+    }),
+    headers: {
+      Authorization: `Bearer ${bayblazeApiToken}`,
+      "content-type": "application/json",
+      "x-bayblaze-api-token": bayblazeApiToken,
+    },
+    method: "POST",
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    console.error(
+      `[BayBlaze] Checkout inventory repair failed for ${item.variantId}: HTTP ${response.status}.`,
+    );
+    return false;
+  }
+
+  return true;
+}
+
+async function fetchCheckoutInventorySnapshot() {
+  const { bayblazeApiToken, bayblazeApiUrl } = getBayBlazeApiConfig();
+
+  if (!bayblazeApiToken) {
+    throw new Error("BAYBLAZE_API_SERVICE_TOKEN is not configured for checkout inventory repair.");
+  }
+
+  const response = await fetch(`${bayblazeApiUrl}/v1/inventory`, {
+    headers: {
+      Authorization: `Bearer ${bayblazeApiToken}`,
+      "x-bayblaze-api-token": bayblazeApiToken,
+    },
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw new Error(`Unable to load checkout inventory: HTTP ${response.status}.`);
+  }
+
+  return (await response.json()) as CheckoutInventorySnapshot;
+}
+
+function findCheckoutInventoryVariant(
+  snapshot: CheckoutInventorySnapshot,
+  variantId: string,
+) {
+  for (const product of snapshot.products ?? []) {
+    if (product.status && product.status !== "published") {
+      continue;
+    }
+
+    const variant = product.variants?.find((item) => item.id === variantId);
+
+    if (variant) {
+      return variant;
+    }
+  }
+
+  return undefined;
 }
 
 async function retrieveAuthenticatedCustomer(customerToken: string) {
@@ -931,6 +1125,29 @@ function parsePrice(price?: string) {
   const number = Number(price.replace(/[^0-9.]/g, ""));
 
   return Number.isFinite(number) ? number : 0;
+}
+
+function normalizeInventoryQuantity(value: unknown) {
+  if (typeof value === "string" && !value.trim()) {
+    return undefined;
+  }
+
+  const quantity =
+    typeof value === "number" || typeof value === "string"
+      ? Number(value)
+      : Number.NaN;
+
+  return Number.isInteger(quantity) && quantity >= 0 ? quantity : undefined;
+}
+
+function getBayBlazeApiConfig() {
+  const bayblazeApiUrl =
+    process.env.BAYBLAZE_API_URL?.trim().replace(/\/$/, "") ??
+    "https://api.bayblaze.net";
+  const bayblazeApiToken =
+    process.env.BAYBLAZE_API_SERVICE_TOKEN?.trim() ?? "";
+
+  return { bayblazeApiToken, bayblazeApiUrl };
 }
 
 async function medusaStoreRequest<T>(
