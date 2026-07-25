@@ -172,6 +172,10 @@ const preferredShippingOptionId =
 const preferredPaymentProviderId =
   process.env.MEDUSA_PAYMENT_PROVIDER_ID ??
   process.env.NEXT_PUBLIC_MEDUSA_PAYMENT_PROVIDER_ID;
+const medusaRequiredInventoryMessage =
+  "Some variant does not have the required inventory";
+const checkoutInventoryUnavailableMessage =
+  "One or more items in your cart are no longer available for delivery. Please remove them or re-add them from the shop so BayBlaze can confirm current stock.";
 
 export async function POST(request: Request) {
   let body: CheckoutRequestBody;
@@ -401,17 +405,25 @@ export async function POST(request: Request) {
     }
 
     for (const item of items) {
-      await medusaStoreRequest<{ cart: MedusaCart }>(
-        `/store/carts/${activeCart.id}/line-items`,
-        {
-          method: "POST",
-          body: {
-            variant_id: item.variantId,
-            quantity: item.quantity,
+      try {
+        await medusaStoreRequest<{ cart: MedusaCart }>(
+          `/store/carts/${activeCart.id}/line-items`,
+          {
+            method: "POST",
+            body: {
+              variant_id: item.variantId,
+              quantity: item.quantity,
+            },
           },
-        },
-        authenticatedCustomerToken,
-      );
+          authenticatedCustomerToken,
+        );
+      } catch (error) {
+        if (isMedusaRequiredInventoryError(error)) {
+          return jsonError(getCartItemUnavailableMessage(item), 409);
+        }
+
+        throw error;
+      }
     }
 
     const { cart: addressedCart } = await medusaStoreRequest<{
@@ -497,6 +509,10 @@ export async function POST(request: Request) {
     );
 
     if (completedCart.type === "cart") {
+      if (isMedusaRequiredInventoryError(completedCart.error?.message)) {
+        return jsonError(checkoutInventoryUnavailableMessage, 409);
+      }
+
       return jsonError(
         completedCart.error?.message ??
           "Medusa could not complete this cart. Please review the order details and try again.",
@@ -530,6 +546,10 @@ export async function POST(request: Request) {
       message: "Order placed.",
     });
   } catch (error) {
+    if (isMedusaRequiredInventoryError(error)) {
+      return jsonError(checkoutInventoryUnavailableMessage, 409);
+    }
+
     return jsonError(getErrorMessage(error), 502);
   }
 }
@@ -983,6 +1003,20 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
 
 function jsonError(message: string, status: number, details?: Record<string, unknown>) {
   return Response.json({ error: message, ...(details ?? {}) }, { status });
+}
+
+function isMedusaRequiredInventoryError(error: unknown) {
+  const message = getErrorMessage(error);
+
+  return message.toLowerCase().includes(medusaRequiredInventoryMessage.toLowerCase());
+}
+
+function getCartItemUnavailableMessage(item: ValidCheckoutItem) {
+  const itemName = item.name.trim();
+
+  return itemName
+    ? `${itemName} is no longer available for delivery. Please remove it or re-add it from the shop so BayBlaze can confirm current stock.`
+    : checkoutInventoryUnavailableMessage;
 }
 
 class CheckoutPromoError extends Error {
