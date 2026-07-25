@@ -563,6 +563,7 @@ export async function POST(request: Request) {
     if (appliedPromo?.category === "referral_partner" && appliedPromo && completedOrder.id) {
       await recordPartnerCheckoutOrderEvent({
         customerEmail: customer.email,
+        customerName: [customer.first_name, customer.last_name].map((value) => value.trim()).filter(Boolean).join(" "),
         customerUid: bayBlazeAccount?.uid,
         eventAt: new Date().toISOString(),
         metadata: completedOrder.metadata,
@@ -1164,12 +1165,14 @@ function getBayBlazeApiConfig() {
 
 async function recordPartnerCheckoutOrderEvent({
   customerEmail,
+  customerName,
   customerUid,
   eventAt,
   metadata,
   orderId,
 }: {
   customerEmail?: string;
+  customerName?: string;
   customerUid?: string;
   eventAt: string;
   metadata?: Record<string, unknown> | null;
@@ -1187,6 +1190,7 @@ async function recordPartnerCheckoutOrderEvent({
       eventId: `storefront_checkout:order_placed:${orderId}`,
       eventType: "order_placed",
       order: {
+        customerName,
         customerUid,
         email: customerEmail,
         id: orderId,
