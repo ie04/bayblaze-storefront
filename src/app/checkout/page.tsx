@@ -25,14 +25,12 @@ export default async function CheckoutPage() {
 
   return (
     <CheckoutPageClient
-      accountAgeVerificationDisabled={
-        storefrontSettings.ageVerificationDisabled ||
-        account?.settings.ageVerificationDisabled === true
-      }
+      accountAgeVerificationDisabled={account?.settings.ageVerificationDisabled === true}
       accountEmail={account?.email}
       customer={customer}
       drinkUpsellItems={drinkUpsellItems}
       isAccountSignedIn={Boolean(account)}
+      storefrontAgeVerificationDisabled={storefrontSettings.ageVerificationDisabled}
     />
   );
 }

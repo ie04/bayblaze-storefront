@@ -190,12 +190,14 @@ export default function CheckoutPageClient({
   customer,
   drinkUpsellItems = [],
   isAccountSignedIn = false,
+  storefrontAgeVerificationDisabled = false,
 }: {
   accountAgeVerificationDisabled?: boolean;
   accountEmail?: string;
   customer?: Customer;
   drinkUpsellItems?: CheckoutDrinkUpsellItem[];
   isAccountSignedIn?: boolean;
+  storefrontAgeVerificationDisabled?: boolean;
 }) {
   const router = useRouter();
   const { addItem, cartCount, clearCart, items, removeItem } = useCart();
@@ -338,7 +340,10 @@ export default function CheckoutPageClient({
     !isAgeVerifying &&
     (!isExpressUnavailable || activeDeliveryMode === "scheduled") &&
     (!needsScheduledTime || Boolean(scheduledInputValue));
-  const isAgeCheckerEnabled = Boolean(ageCheckerPublicKey) && !isAgeCheckerTestingBypass;
+  const isAgeCheckerEnabled =
+    Boolean(ageCheckerPublicKey) &&
+    !isAgeCheckerTestingBypass &&
+    !storefrontAgeVerificationDisabled;
   const hasSavedAgeVerification = hasAcceptedAccountAgeVerification(customer);
   const hasPromoAuthAccess = isAccountSignedIn || hasCompletedPromoAuth;
 
@@ -992,6 +997,7 @@ export default function CheckoutPageClient({
         key: ageCheckerPublicKey,
         setIsAgeVerifying,
         setMessage: setAgeVerificationMessage,
+        storefrontAgeVerificationDisabled,
       });
 
       if (ageVerification.error) {
@@ -1755,6 +1761,10 @@ function canUseAccountAgeVerificationBypass({
   );
 }
 
+function canUseStorefrontAgeVerificationBypass(ageVerificationDisabled: boolean) {
+  return ageVerificationDisabled;
+}
+
 function normalizeEmail(value: unknown) {
   return typeof value === "string" ? value.trim().toLowerCase() : "";
 }
@@ -1767,6 +1777,7 @@ async function verifyAgeIfNeeded({
   key,
   setIsAgeVerifying,
   setMessage,
+  storefrontAgeVerificationDisabled,
 }: {
   accountAgeVerificationDisabled: boolean;
   accountCustomer?: Customer;
@@ -1775,8 +1786,14 @@ async function verifyAgeIfNeeded({
   key: string;
   setIsAgeVerifying: (isVerifying: boolean) => void;
   setMessage: (message: string) => void;
+  storefrontAgeVerificationDisabled: boolean;
 }): Promise<{ error?: string; token?: string }> {
   if (!key) {
+    return {};
+  }
+
+  if (canUseStorefrontAgeVerificationBypass(storefrontAgeVerificationDisabled)) {
+    setMessage("Age verification is disabled for storefront testing.");
     return {};
   }
 
