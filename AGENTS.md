@@ -502,3 +502,17 @@ display and data-shaping rules inside page components.
 - The portal reports the API-configured eligibility window. Payout setup and
   requests remain explicitly unavailable until BayBlaze approves and integrates
   a payout provider.
+
+## October 2026 Backend Rebuild
+
+- `https://api.bayblaze.net` now resolves to OVHcloud `40.160.239.20`;
+  HTTPS and API/Medusa health checks pass. The old VPS database/uploads were
+  lost. Existing Firebase cloud accounts and operational records survive.
+- Commerce starts with an empty catalog. Do not reuse old product, variant,
+  region, customer, or order identifiers from the retired commerce database.
+- Vercel production and preview commerce settings were replaced with the new
+  publishable key and local-delivery region; backend URL stays
+  `https://api.bayblaze.net`. Redeploy after changing these settings.
+- New local delivery region: `reg_01M4WAXSJ1YZ6KTY1GMFA94RZC` (USD, US).
+- Backend Google OAuth, web push, and label printer credentials remain pending
+  restoration. Do not describe these integrations as working until verified.
