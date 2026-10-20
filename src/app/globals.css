@@ -637,7 +637,6 @@ main {
   isolation: isolate;
   margin-top: 0;
   overflow: hidden;
-  padding-top: 5rem;
   position: relative;
   z-index: 1;
 }
@@ -661,22 +660,6 @@ main {
   z-index: 1;
 }
 
-@media (min-width: 40rem) {
-  .bayblaze-home-contact {
-    padding-top: 6rem;
-  }
-}
-
-@media (min-width: 48rem) {
-  .bayblaze-home-contact {
-    padding-top: 160px;
-  }
-
-  .bayblaze-home-contact-bg {
-    background-position: center 24px;
-    background-size: 100% auto;
-  }
-}
 
 .bayblaze-contact-title {
   color: var(--ast-global-color-1);

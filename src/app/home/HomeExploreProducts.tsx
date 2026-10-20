@@ -52,16 +52,13 @@ export default function HomeExploreProducts({
           </div>
         ) : (
           <div className="bayblaze-sharp-card bayblaze-sharp-card--cream p-6 text-center sm:p-8">
-            <p className="text-[20px] font-bold uppercase leading-tight text-black">
-              No fast delivery products are marked on vehicle yet.
+            <p className="text-[20px] font-semibold leading-snug text-black">
+              More delivery picks are on the way.
             </p>
 
             <p className="mx-auto mt-2 max-w-[520px] text-[15px] font-medium leading-[1.55] text-[#585858]">
-              Once Medusa inventory variants are marked{" "}
-              <code className="border border-black bg-white px-1 py-0.5 text-[12px] text-black">
-                ON_VEHICLE
-              </code>{" "}
-              with available quantity, they will appear here automatically.
+              Check the shop for available products, or come back soon for more
+              delivery options.
             </p>
           </div>
         )}

@@ -31,14 +31,14 @@ export default function HomeAbout() {
       id="about"
       className="bayblaze-home-about bg-[var(--ast-global-color-4)] font-[var(--font-jost)]"
     >
-      <div className="mx-auto w-full max-w-[1240px] px-4 py-0 sm:px-5">
-        <div className="grid gap-0 border-x-2 border-black bg-white lg:grid-cols-[minmax(0,0.92fr)_minmax(320px,0.58fr)] lg:items-stretch">
+      <div className="mx-auto w-full max-w-[1240px] px-4 py-12 sm:px-5 sm:py-16">
+        <div className="grid gap-0 border-2 border-black bg-white lg:grid-cols-[minmax(0,0.92fr)_minmax(320px,0.58fr)] lg:items-stretch">
           <div className="bg-white p-6 sm:p-8 lg:border-r-2 lg:border-black lg:p-10">
             <p className="text-[11px] font-bold uppercase tracking-widest text-[var(--ast-global-color-1)]">
               About BayBlaze
             </p>
 
-            <h2 className="mt-1 max-w-3xl text-4xl font-black uppercase leading-none text-black sm:text-5xl lg:text-6xl">
+            <h2 className="mt-3 max-w-xl text-3xl font-semibold leading-[1.15] tracking-tight text-black sm:text-4xl lg:text-5xl">
               A mobile smoke shop built for Tampa.
             </h2>
 

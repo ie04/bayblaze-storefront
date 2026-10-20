@@ -146,18 +146,18 @@
 
 .searchOverlayClose {
   align-items: center;
-  border-radius: 999px;
+  border-radius: 0;
   color: #6b7567;
   display: flex;
   flex: 0 0 auto;
   font-size: 28px;
-  height: 40px;
+  height: 44px;
   justify-content: center;
   line-height: 1;
   transition:
     background-color 160ms ease,
     color 160ms ease;
-  width: 40px;
+  width: 44px;
 }
 
 .searchOverlayClose:hover {
@@ -195,6 +195,9 @@
   font-size: 0.9rem;
   font-weight: 600;
   line-height: 1;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
   padding: 0.58rem 0.82rem;
   text-decoration: none;
   transition:

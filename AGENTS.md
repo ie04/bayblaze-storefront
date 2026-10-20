@@ -516,5 +516,15 @@ display and data-shaping rules inside page components.
 - New local delivery region: `reg_01M4WAXSJ1YZ6KTY1GMFA94RZC` (USD, US).
 - Backend Google OAuth credentials were restored on October 20, 2026; the
   storefront callback remains `https://bayblaze.net/api/auth/oauth/google/callback`.
-  OAuth start checks pass; interactive sign-in must be confirmed by a user.
+  OAuth start checks pass; the user confirmed interactive Google sign-in works.
   Web push and label printer credentials remain pending restoration.
+
+## October 2026 Conservative Visual Pass
+
+- Keep hero search, delivery summary, and paired actions aligned to a shared
+  520px desktop / 360px mobile maximum width. Preserve the skyline artwork.
+- Homepage About typography should match the weight of other section headings;
+  avoid oversized heavy uppercase text. Use existing sharp button primitives
+  for Contact actions and a responsive grid for the footer to avoid overlap.
+- Empty catalog/delivery states are customer-facing. Do not expose backend
+  service names, inventory enum values, or staff setup instructions in them.
