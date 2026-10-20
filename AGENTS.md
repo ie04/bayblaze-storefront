@@ -514,5 +514,7 @@ display and data-shaping rules inside page components.
   publishable key and local-delivery region; backend URL stays
   `https://api.bayblaze.net`. Redeploy after changing these settings.
 - New local delivery region: `reg_01M4WAXSJ1YZ6KTY1GMFA94RZC` (USD, US).
-- Backend Google OAuth, web push, and label printer credentials remain pending
-  restoration. Do not describe these integrations as working until verified.
+- Backend Google OAuth credentials were restored on October 20, 2026; the
+  storefront callback remains `https://bayblaze.net/api/auth/oauth/google/callback`.
+  OAuth start checks pass; interactive sign-in must be confirmed by a user.
+  Web push and label printer credentials remain pending restoration.
