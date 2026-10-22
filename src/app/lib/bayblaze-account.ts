@@ -3,10 +3,8 @@ import { cookies } from "next/headers";
 export const BAYBLAZE_ACCOUNT_TOKEN_COOKIE = "bayblaze_account_token";
 
 export type BayBlazeAccountRole = "admin" | "driver" | "inventory";
-export type BayBlazeAccountBadge = "customer" | "employee";
 
 export type BayBlazeAccount = {
-  badges: BayBlazeAccountBadge[];
   disabled: boolean;
   displayName: string;
   email: string;

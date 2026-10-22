@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
       state,
     });
 
-    if (!accountSession.account.badges.includes("customer")) {
+    if (accountSession.account.disabled) {
       throw new Error("This BayBlaze account is not enabled for storefront access.");
     }
 

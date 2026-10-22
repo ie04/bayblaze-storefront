@@ -148,7 +148,7 @@ export default async function Page() {
                       Account
                     </dt>
                     <dd className="mt-1 font-medium text-[#585858]">
-                      {formatAccountBadges(account.badges)}
+                      {account.disabled ? "Disabled" : "Active"}
                     </dd>
                   </div>
 
@@ -201,10 +201,4 @@ export default async function Page() {
       </div>
     </main>
   );
-}
-
-function formatAccountBadges(badges: string[]) {
-  return badges.length
-    ? badges.map((badge) => badge[0]?.toUpperCase() + badge.slice(1)).join(", ")
-    : "Customer";
 }

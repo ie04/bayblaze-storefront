@@ -235,9 +235,8 @@ boundary.
   the storefront route.
 - Account pages and checkout policy checks should require a valid BayBlaze
   account session when they are using account-owned settings.
-- Account records have `customer` or `employee` badges. Storefront access uses
-  the `customer` badge. Employee accounts can be granted `driver`, `inventory`,
-  and/or `admin` roles in `bayblaze-admin`.
+- Every enabled account has customer access; staff roles are independent.
+
 - Google OAuth must route through `bayblaze-api`, not Medusa OAuth. The
   storefront start/callback routes call `bayblaze-api`
   universal `/v1/auth/google/start` and `/v1/auth/google/callback` routes,
@@ -537,3 +536,14 @@ display and data-shaping rules inside page components.
 - Redeploy after Vercel environment changes. Service-token synchronization and
   browser session recovery are separate concerns; old account sessions may
   require a fresh sign-in after the backend signing secret changes.
+
+## October 2026 Role-Only Account Authorization
+
+- Every enabled universal account can use customer features. Staff privileges
+  are explicit `roles: ["admin", "driver", "inventory"]` subsets; ordinary
+  customers have `roles: []`. `disabled` remains the account-wide access gate.
+- Authorization badges (`customer` / `employee`) are retired. Do not read,
+  write, display, or require them. Removing staff roles leaves customer access.
+- API middleware re-reads account permissions on requests, so revoking a role
+  does not depend on an old session expiring. Existing signed sessions remain
+  compatible; new sessions and account responses omit badges.
