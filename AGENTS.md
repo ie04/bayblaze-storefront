@@ -528,3 +528,12 @@ display and data-shaping rules inside page components.
   for Contact actions and a responsive grid for the footer to avoid overlap.
 - Empty catalog/delivery states are customer-facing. Do not expose backend
   service names, inventory enum values, or staff setup instructions in them.
+
+## October 2026 Frontend Configuration Refresh
+
+- Production and preview Vercel backend configuration was refreshed after the
+  OVHcloud migration. Server-only `BAYBLAZE_API_SERVICE_TOKEN` is synchronized with the running
+  OVHcloud API; `BAYBLAZE_API_URL=https://api.bayblaze.net`.
+- Redeploy after Vercel environment changes. Service-token synchronization and
+  browser session recovery are separate concerns; old account sessions may
+  require a fresh sign-in after the backend signing secret changes.
