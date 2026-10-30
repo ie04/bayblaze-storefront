@@ -4,7 +4,7 @@ export default function TampaBayGraphic() {
       aria-hidden="true"
       viewBox="0 0 560 160"
       fill="none"
-      className="pointer-events-none absolute inset-x-6 bottom-4 -z-10 block h-auto max-h-28 w-[calc(100%-3rem)] text-[var(--ast-global-color-1)] opacity-70 sm:inset-x-8 sm:bottom-6 sm:max-h-32 sm:w-[calc(100%-4rem)] lg:inset-x-10 lg:w-[calc(100%-5rem)]"
+      className="pointer-events-none absolute inset-x-6 bottom-4 -z-10 block h-auto max-h-28 w-[calc(100%-3rem)] text-[var(--ast-global-color-1)] opacity-70 sm:inset-x-8 sm:w-[calc(100%-4rem)] lg:inset-x-10 lg:w-[calc(100%-5rem)]"
     >
       <circle cx="425" cy="38" r="24" fill="currentColor" opacity="0.06" />
       <path
