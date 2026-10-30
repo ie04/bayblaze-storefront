@@ -694,8 +694,9 @@ function FreebieTile({
         <span className="line-clamp-2 text-[14px] font-bold uppercase leading-tight text-black sm:text-[16px]">
           {product.name}
         </span>
-        <span className="mt-3 text-[15px] font-bold leading-none text-black sm:text-[17px]">
-          {product.salePrice || product.price}
+        <span className="mt-3 flex flex-wrap items-baseline gap-2 text-[15px] font-bold leading-none sm:text-[17px]">
+          <del className="text-[#7a7a7a]">{product.salePrice || product.price}</del>
+          <ins className="text-[var(--ast-global-color-1)] no-underline">$0.00</ins>
         </span>
       </span>
     </button>
