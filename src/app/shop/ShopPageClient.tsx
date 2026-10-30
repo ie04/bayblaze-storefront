@@ -600,7 +600,8 @@ function FreebieSelectionModal({
           </form>
         </div>
 
-        <div className="p-4 sm:p-6">
+        {/* Contain tile badges below the sticky search header. */}
+        <div className="relative z-0 p-4 sm:p-6">
           {products.length === 0 ? (
             <div className="bayblaze-sharp-card bg-white p-8 text-center">
               <div className="text-2xl font-black uppercase">No matches</div>
@@ -621,7 +622,7 @@ function FreebieSelectionModal({
             </div>
           )}
 
-          <div className="sticky bottom-0 mt-6 border-2 border-black bg-white p-3 sm:flex sm:items-center sm:justify-between sm:gap-4">
+          <div className="sticky bottom-0 z-10 mt-6 border-2 border-black bg-white p-3 sm:flex sm:items-center sm:justify-between sm:gap-4">
             <p className="text-sm font-bold leading-[1.5] text-[#585858]">
               Your freebie will be added to checkout at $0.00.
             </p>
