@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import TampaBayGraphic from "@/app/home/TampaBayGraphic";
+
 import {
   ClockLineIcon,
   MapPinLineIcon,
@@ -63,6 +65,8 @@ export default function HomeAbout() {
                 How it works
               </Link>
             </div>
+
+            <TampaBayGraphic />
           </div>
 
           <aside className="grid border-t-2 border-black bg-white lg:border-t-0">
