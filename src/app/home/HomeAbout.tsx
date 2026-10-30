@@ -35,7 +35,7 @@ export default function HomeAbout() {
     >
       <div className="mx-auto w-full max-w-[1240px] px-4 py-12 sm:px-5 sm:py-16">
         <div className="grid gap-0 border-2 border-black bg-white lg:grid-cols-[minmax(0,0.92fr)_minmax(320px,0.58fr)] lg:items-stretch">
-          <div className="bg-white p-6 sm:p-8 lg:border-r-2 lg:border-black lg:p-10">
+          <div className="relative isolate overflow-hidden bg-white p-6 sm:p-8 lg:border-r-2 lg:border-black lg:p-10">
             <p className="text-[11px] font-bold uppercase tracking-widest text-[var(--ast-global-color-1)]">
               About BayBlaze
             </p>

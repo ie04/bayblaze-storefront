@@ -4,7 +4,7 @@ export default function TampaBayGraphic() {
       aria-hidden="true"
       viewBox="0 0 560 160"
       fill="none"
-      className="mt-8 block h-auto w-full text-[var(--ast-global-color-1)]"
+      className="pointer-events-none absolute inset-x-6 bottom-4 -z-10 block h-auto max-h-28 w-[calc(100%-3rem)] text-[var(--ast-global-color-1)] opacity-70 sm:inset-x-8 sm:bottom-6 sm:max-h-32 sm:w-[calc(100%-4rem)] lg:inset-x-10 lg:w-[calc(100%-5rem)]"
     >
       <circle cx="425" cy="38" r="24" fill="currentColor" opacity="0.06" />
       <path
@@ -28,18 +28,6 @@ export default function TampaBayGraphic() {
       <g stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" opacity="0.18">
         <path d="M19 126h152m20 0h45m94 5h106M60 139h57m20 0h141m187-2h49M224 150h67m-245 0h23" />
       </g>
-      <text
-        x="541"
-        y="155"
-        textAnchor="end"
-        fill="currentColor"
-        opacity="0.55"
-        fontSize="9"
-        fontWeight="600"
-        letterSpacing="3"
-      >
-        TAMPA BAY
-      </text>
     </svg>
   );
 }
